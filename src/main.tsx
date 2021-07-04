@@ -41,12 +41,13 @@ class App extends Component {
 		scene.add(star)
 	}
 
-	addPlanet(pos: THREE.Vector3, size: number, texture: any, metalness: number){
+	addPlanet(pos: THREE.Vector3, size: number, texture: any, bumpMap: any, metalness: number){
 
 		const celestialEntity = new THREE.Mesh(
-			new THREE.SphereGeometry(size, 32, 32),
+			new THREE.SphereGeometry(size, 128, 128),
 			new THREE.MeshStandardMaterial({map: texture, metalness: metalness})
 		)
+		celestialEntity.material.normalMap = bumpMap
 		if(texture == null) celestialEntity.material.color = new Color("black") //if there is a texture, color covers over it
 		celestialEntity.position.set(pos.x, pos.y, pos.z)
 		scene.add(celestialEntity)
@@ -54,7 +55,7 @@ class App extends Component {
 	}
 
 	//Adjust the orbit of an entity, distance specifies how far away and theta is what degree it is with respect to what it orbits
-	adjustOrbit(entity: THREE.Mesh, distance: number, theta: number, phi: number):number {
+	adjustOrbit(entity: THREE.Mesh, distance: number, theta: number, phi: number) {
 		/*
 		(0,r) ends up at x = rsin(Theta), y = rcos(Theta) for a circle
 
@@ -65,17 +66,26 @@ class App extends Component {
 		ρ = r/sin(ϕ)
 		*/
 		const alpha = 0.005
-		const p = distance/Math.sin(phi)
-		entity.position.x = p * Math.sin(phi) * Math.cos(theta)
-		entity.position.y = p * Math.sin(phi) * Math.sin(theta)
-		entity.position.z = p * Math.cos(phi)
-
-		phi += (0.0025 / (alpha*distance)) //orbiting speed is a function of distance from celestial mass
+		entity.position.x = distance*Math.sin(theta)
+		entity.position.y = distance*Math.cos(theta)
+		//entity.position.z = distance*Math.sin(theta)
 		theta += (0.0025 / (alpha*distance)) //orbiting speed is a function of distance from celestial mass
-		if(phi >= 360) phi = 0
 		if(theta >= 360) theta = 0
 
 		return theta
+
+		// const alpha = 0.005
+		// const p = distance/Math.sin(phi)
+		// entity.position.x = p * Math.sin(phi) * Math.cos(theta)
+		// entity.position.y = p * Math.sin(phi) * Math.sin(theta)
+		// entity.position.z = p * Math.cos(phi)
+
+		// phi += (0.0025 / (alpha*distance)) //orbiting speed is a function of distance from celestial mass
+		// theta += (0.0025 / (alpha*distance)) //orbiting speed is a function of distance from celestial mass
+		// if(phi >= 360) phi = 0
+		// if(theta >= 360) theta = 0
+
+		// return new Array(theta, phi)
 	}
 
 	componentDidMount() {
@@ -98,8 +108,6 @@ class App extends Component {
 		const geometry = new THREE.TorusGeometry(10, 3, 16, 100)
 		const material = new THREE.MeshStandardMaterial({color: 0xFF6347, wireframe: false});
 		const torus = new THREE.Mesh(geometry, material);
-		torus.position.x = 100
-		torus.position.y = 0
 		scene.add(torus)
 
 		//Add some light
@@ -121,21 +129,39 @@ class App extends Component {
 
 		//Populate the universe
 		Array(500).fill(0).forEach(this.addStar)
-		let blackHole = this.addPlanet(new THREE.Vector3(0, 0, 0), 9, null, 1.0)
+		let blackHole = this.addPlanet(new THREE.Vector3(0, 0, 0), 9, null, null, 1.0)
 		const moonTexture = new THREE.TextureLoader().load('src/moon.jpg')
-		let moon = this.addPlanet(new THREE.Vector3(150, 0, 0), 18, moonTexture, 0.0)
+		const moonBump = new THREE.TextureLoader().load('src/moonbumpmap.jpg')
+		let moon = this.addPlanet(new THREE.Vector3(0, 0, 0), 18, moonTexture, moonBump, 0.0)
+		//let moon2 = this.addPlanet(new THREE.Vector3(25, 25, 30), 27, moonTexture, null, 0.0)
+		const ce = new THREE.Mesh(
+			new THREE.SphereGeometry(27, 64, 64),
+			new THREE.MeshStandardMaterial({map: moonTexture, normalMap: moonBump, metalness: 0})
+		)
+		ce.position.set(25, 25, 30)
+		scene.add(ce)
+		
+		console.log(moon.material.normalMap)
 		
 		let thetaDonut: number = 0 //degrees
 		let phiDonut = 0
 		let thetaMoon: number = 90
 		let phiMoon = 0
-		
+
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
 
+			
 			thetaDonut = this.adjustOrbit(torus, 100, thetaDonut, phiDonut)
 			thetaMoon = this.adjustOrbit(moon, 150, thetaMoon, phiMoon)
+			// var arr1 = this.adjustOrbit(torus, 100, thetaDonut, phiDonut)
+			// var arr2 = this.adjustOrbit(moon, 150, thetaMoon, phiMoon)
+
+			// thetaDonut = arr1[0]
+			// phiDonut = arr1[1]
+			// thetaMoon = arr2[0]
+			// phiMoon = arr2[1]
 
 			torus.rotation.z += 0.001
 			torus.rotation.x += 0.01
@@ -143,7 +169,7 @@ class App extends Component {
 
 			//moon.rotation.z += 0.001
 			moon.rotation.x += 0.001
-			moon.rotation.y += 0.005
+			moon.rotation.y += 0.001
 
 			controls.update()
 			
