@@ -9,11 +9,17 @@ import { randFloat } from 'three/src/math/MathUtils'
 let scene: THREE.Scene;
 let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
-let spaceTexture: THREE.Texture;
+const CAM_START = {
+	x: 0,
+	y: -50,
+	z: 120
+}
+let assetsLoaded = 0
+const numAssets = 3
 
-function onLoad(){
+function onTextureLoad(){
 	console.log("Texture is loaded now")
-	scene.background = spaceTexture
+	assetsLoaded++
 }
 
 class App extends Component {
@@ -41,7 +47,7 @@ class App extends Component {
 		scene.add(star)
 	}
 
-	addPlanet(pos: THREE.Vector3, size: number, texture: any, bumpMap: any, metalness: number){
+	addCelestialEntity(pos: THREE.Vector3, size: number, texture: any, bumpMap: any, metalness: number){
 
 		const celestialEntity = new THREE.Mesh(
 			new THREE.SphereGeometry(size, 128, 128),
@@ -92,16 +98,29 @@ class App extends Component {
 
 		let debug = false
 
-		//three.js init
-		scene = new THREE.Scene();
-		spaceTexture = new THREE.TextureLoader().load('src/pillarsofcreation.jpg', onLoad)
+		scene = new THREE.Scene(); //Instantiate the scene
+
+		//Start loading in any textures
+		let spaceTexture = new THREE.TextureLoader().loadAsync('src/pillarsofcreation.jpg', onTextureLoad)
+		spaceTexture.then(value => {
+			console.log("space texture loaded")
+			scene.background = value
+		})
+
+		let moonTexture = new THREE.TextureLoader().load('src/moon.jpg')
+		let moonNormal = new THREE.TextureLoader().load('src/moonbumpmap.jpg')
+
+		//Instantiate and set up camera
 		camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000)
+		camera.position.z = CAM_START.z //Move camera back so its not in center of scene
+		camera.position.y = CAM_START.y //Move camera back so its not in center of scene
+
+		//Instantiate and set up renderer
 		renderer = new THREE.WebGLRenderer({
 				canvas: document.querySelector('#bg') as HTMLCanvasElement,
 		})
 		renderer.setPixelRatio(window.devicePixelRatio) //
 		renderer.setSize(window.innerWidth, window.innerHeight) //Fullscreen
-		camera.position.z = 120 //Move camera back so its not in center of scene
 		document.body.appendChild(renderer.domElement); //Add renderer to the dom, which is responsible for drawing camera and scene
 
 		//define some Geometry
@@ -125,32 +144,40 @@ class App extends Component {
 		if(debug) scene.add(gH)
 
 		//Move around in the scene with your mouse!
-		const controls = new OrbitControls(camera, renderer.domElement);
+		let controls: OrbitControls
+		if(debug) controls = new OrbitControls(camera, renderer.domElement);
 
 		//Populate the universe
-		Array(500).fill(0).forEach(this.addStar)
-		let blackHole = this.addPlanet(new THREE.Vector3(0, 0, 0), 9, null, null, 1.0)
-		const moonTexture = new THREE.TextureLoader().load('src/moon.jpg')
-		const moonBump = new THREE.TextureLoader().load('src/moonbumpmap.jpg')
-		let moon = this.addPlanet(new THREE.Vector3(0, 0, 0), 18, moonTexture, moonBump, 0.0)
-		//let moon2 = this.addPlanet(new THREE.Vector3(25, 25, 30), 27, moonTexture, null, 0.0)
-		const ce = new THREE.Mesh(
-			new THREE.SphereGeometry(27, 64, 64),
-			new THREE.MeshStandardMaterial({map: moonTexture, normalMap: moonBump, metalness: 0})
-		)
-		ce.position.set(25, 25, 30)
-		scene.add(ce)
-		
-		console.log(moon.material.normalMap)
+		Array(500).fill(0).forEach(this.addStar) //with stars
+
+		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 9, null, null, 1.0) //with a black hole so massive everything orbits around it
+
+		let moon = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 18, moonTexture, moonNormal, 0.0) //with a moon!
 		
 		let thetaDonut: number = 0 //degrees
 		let phiDonut = 0
 		let thetaMoon: number = 90
 		let phiMoon = 0
 
+		//Tell the DOM to move our camera whenever the user scrolls
+		function moveCamera() {
+			const top = document.body.getBoundingClientRect().top //Find out the top of the user's viewport (screen basically)
+			camera.position.z = (top * 0.05) + CAM_START.z
+			//camera.position.x = top * -0.002
+			camera.position.y = (top * -0.05) + CAM_START.y
+			console.log("Top is now equal to " + top)
+			console.log("Camera x: " + camera.position.x)
+			console.log("Camera y: " + camera.position.y)
+			console.log("Camera z: " + camera.position.z)
+		}
+
+		window.onscroll = moveCamera
+
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
+
+			//ce.material.normalMap.needsUpdate = true
 
 			
 			thetaDonut = this.adjustOrbit(torus, 100, thetaDonut, phiDonut)
@@ -171,7 +198,7 @@ class App extends Component {
 			moon.rotation.x += 0.001
 			moon.rotation.y += 0.001
 
-			controls.update()
+			if (debug) controls.update()
 			
 			renderer.render(scene, camera);
 		}
@@ -181,7 +208,76 @@ class App extends Component {
 
 	render() {
 		return (
-			<canvas id="bg"></canvas>
+			<>
+				<canvas id="bg"></canvas>
+				<main>
+					<header>
+					<h1>Jeff Delaney</h1>
+					<p>🚀 Welcome to my website!</p>
+					</header>
+			
+					<blockquote>
+					<p>I like making stuff and putting it on the internet</p>
+					</blockquote>
+			
+					<section>
+					<h2>📜 Manifesto</h2>
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+			
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+			
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+					</section>
+			
+					<section className="light">
+					<h2>👩🏽‍🚀 Projects</h2>
+			
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+			
+					<h2>🏆 Accomplishments</h2>
+			
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+			
+					</section>
+			
+					<blockquote>
+					<p>The best way out is always through</p>
+					<br></br>
+					<p>-Robert Frost</p>
+					</blockquote>
+			
+					<section className="left">
+					<h2>🌮 Work History</h2>
+			
+					<h3>McDonalds</h3>
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+					<h3>Burger King</h3>
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+					<h3>Taco Bell</h3>
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+					</section>
+			
+					<blockquote>
+					<p>Thanks for watching!</p>
+					</blockquote>
+				</main>
+			</>
 		)
 	}
 }
