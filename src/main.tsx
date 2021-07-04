@@ -34,7 +34,7 @@ class App extends Component {
 		xIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
 		yIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
 		zIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
-		const outerBound = 200
+		const outerBound = 300
 
 		if(xIsNeg == -1) x = THREE.MathUtils.randFloat(0, -1 * outerBound)
 		else x = THREE.MathUtils.randFloat(15, outerBound)
@@ -214,8 +214,8 @@ class App extends Component {
 				<canvas id="bg"></canvas>
 				<main>
 					<header>
-					<h1>Wayne Hylic</h1>
-					<p>🚀 Welcome to my website!</p>
+					<h1>Alan Munirji</h1>
+					<p>Welcome to my portfolio!</p>
 					</header>
 			
 					<blockquote>
@@ -253,7 +253,8 @@ class App extends Component {
 					</section>
 			
 					<blockquote>
-					<p>The best way out is always through</p>
+					<p>"The best way out is always through."</p>
+					<br></br>
 					<br></br>
 					<p>-Robert Frost</p>
 					</blockquote>
