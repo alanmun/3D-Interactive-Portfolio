@@ -153,7 +153,9 @@ class App extends Component {
 		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 9, null, null, 1.0) //with a black hole so massive everything orbits around it
 
 		let moon = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 18, moonTexture, moonNormal, 0.0) //with a moon!
-		
+		console.log(moon.material.map) //Neither of these are loaded at this point, yet map works fine.
+		console.log(moon.material.normalMap)
+
 		let thetaDonut: number = 0 //degrees
 		let phiDonut = 0
 		let thetaMoon: number = 90
@@ -212,7 +214,7 @@ class App extends Component {
 				<canvas id="bg"></canvas>
 				<main>
 					<header>
-					<h1>Jeff Delaney</h1>
+					<h1>Wayne Hylic</h1>
 					<p>🚀 Welcome to my website!</p>
 					</header>
 			
@@ -274,7 +276,7 @@ class App extends Component {
 					</section>
 			
 					<blockquote>
-					<p>Thanks for watching!</p>
+					<p>Thank you for visiting my site!</p>
 					</blockquote>
 				</main>
 			</>
@@ -286,5 +288,5 @@ ReactDOM.render(
 	<React.StrictMode>
 		<App />
 	</React.StrictMode>,
-	document.getElementById('root')
+	document.getElementById('root') //Inject the above App Component into our root div in index.html
 )
