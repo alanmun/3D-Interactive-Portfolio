@@ -97,6 +97,7 @@ class App extends Component {
 	componentDidMount() {
 
 		let debug = false
+		let scrollMode = false
 
 		scene = new THREE.Scene(); //Instantiate the scene
 
@@ -145,7 +146,7 @@ class App extends Component {
 
 		//Move around in the scene with your mouse!
 		let controls: OrbitControls
-		if(debug) controls = new OrbitControls(camera, renderer.domElement);
+		if(!scrollMode) controls = new OrbitControls(camera, renderer.domElement);
 
 		//Populate the universe
 		Array(500).fill(0).forEach(this.addStar) //with stars

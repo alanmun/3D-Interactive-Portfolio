@@ -13,7 +13,12 @@ canvas {
   font-style: normal;
 }
 
-main{
+body {
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+main {
   color: white;
   z-index: 99;
   position: absolute;
@@ -23,6 +28,9 @@ main{
   
   display: grid;
   grid-template-columns: repeat(12, 1fr);
+
+  overflow-x: hidden;
+
 }
 
 h1, h2, h3, blockquote {
@@ -62,4 +70,14 @@ blockquote p {
   display: inline;
   line-height: 1;
   padding: 20px 10px;
+}
+
+.container {
+  -ms-overflow-style: none;  /* Hide scroll bar on Internet Explorer 10+ */
+  scrollbar-width: none;  /* Hide scroll bar on Firefox */
+}
+.container::-webkit-scrollbar { 
+  display: none;  /* Hide scroll bar on Safari and Chrome */
+  width: 0;
+  height: 0;
 }
