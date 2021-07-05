@@ -19,6 +19,7 @@ body {
 }
 
 main {
+  visibility: hidden;
   color: white;
   z-index: 99;
   position: absolute;
@@ -30,7 +31,6 @@ main {
   grid-template-columns: repeat(12, 1fr);
 
   overflow-x: hidden;
-
 }
 
 h1, h2, h3, blockquote {

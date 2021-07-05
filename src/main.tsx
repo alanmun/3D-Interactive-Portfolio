@@ -14,6 +14,10 @@ const CAM_START = {
 	y: -50,
 	z: 120
 }
+type cameraLockType = {
+	isLocked: boolean,
+	target: any
+}
 let assetsLoaded = 0
 const numAssets = 3
 
@@ -94,10 +98,49 @@ class App extends Component {
 		// return new Array(theta, phi)
 	}
 
+	adjustCamera(target: THREE.Object3D){
+		const xdiff = camera.position.x - target.position.x
+		const ydiff = camera.position.y - target.position.y
+		const zdiff = camera.position.z - target.position.z
+		const fastInc = 0.75
+		const slowInc = 0.001
+		
+		//Handle x
+		console.log("xdiff: " + xdiff + " ydiff: " + ydiff)
+		if(xdiff > 20) camera.position.x -= fastInc //Too far away in positive direction
+		if(xdiff > 15 && xdiff <= 20) camera.position.x -= xdiff * slowInc //Too far away in positive direction
+
+		if(xdiff < -20) camera.position.x += fastInc //Too far away in negative direction
+		if(xdiff < -15 && xdiff >= -20) camera.position.x += xdiff * slowInc //Too far away in negative direction
+		
+		//if(xdiff < 15 && xdiff > -15) camera.position.x = target.position.x + xdiff
+
+		//Handle y
+		if(ydiff > 20) camera.position.y -= fastInc //Too far away in positive direction
+		if(ydiff > 15 && ydiff <= 20) camera.position.y -= ydiff * slowInc //Too far away in positive direction
+
+		if(ydiff < -20) camera.position.y += fastInc //Too far away in negative direction
+		if(ydiff < -15 && ydiff >= -20) camera.position.y += ydiff * slowInc //Too far away in negative direction
+
+		//if(ydiff < 15 && ydiff > -15) camera.position.y = target.position.y + ydiff
+		
+		//Handle z
+		if(zdiff > 20) camera.position.z -= fastInc //Too far away in positive direction
+		if(zdiff > 15 && zdiff <= 20) camera.position.z -= zdiff * slowInc //Too far away in positive direction
+
+		if(zdiff < -20) camera.position.z += fastInc //Too far away in negative direction
+		if(zdiff < -15 && zdiff >= -20) camera.position.z += zdiff * slowInc //Too far away in negative direction
+
+		//if(zdiff < 15 && zdiff > -15) camera.position.z = target.position.z + zdiff
+	}
+
 	componentDidMount() {
 
-		let debug = false
-		let scrollMode = false
+		let debug = true
+		let scrollMode = true
+
+		let cameraLock:cameraLockType = {isLocked: false, target: null} //Instantiate a cameraLock struct
+
 
 		scene = new THREE.Scene(); //Instantiate the scene
 
@@ -115,6 +158,20 @@ class App extends Component {
 		camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000)
 		camera.position.z = CAM_START.z //Move camera back so its not in center of scene
 		camera.position.y = CAM_START.y //Move camera back so its not in center of scene
+
+		//Set up mouse clicking functionality
+		var raycaster = new THREE.Raycaster(); 
+		var mouse = new THREE.Vector2();
+		var wasClicked = false;
+
+		function onMouseClick(event: THREE.Event) { 
+			// calculate mouse position in normalized device coordinates 
+			// (-1 to +1) for both components
+			wasClicked = true;
+			mouse.x = (event.clientX / window.innerWidth) * 2 - 1; //I believe these convert to centered normalized coordinates x,y at 0,0 is exact center of screen
+			mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; // height 100, click at 5, -5/100 = -0.05*2 is -slowInc + 1 means click was registered at y = 0.9
+		}
+		window.addEventListener("mousedown", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
 
 		//Instantiate and set up renderer
 		renderer = new THREE.WebGLRenderer({
@@ -164,6 +221,9 @@ class App extends Component {
 
 		//Tell the DOM to move our camera whenever the user scrolls
 		function moveCamera() {
+			cameraLock.isLocked = false //turn off camera lock on
+			console.log(cameraLock.isLocked)
+
 			const top = document.body.getBoundingClientRect().top //Find out the top of the user's viewport (screen basically)
 			camera.position.z = (top * 0.05) + CAM_START.z
 			//camera.position.x = top * -0.002
@@ -174,14 +234,11 @@ class App extends Component {
 			console.log("Camera z: " + camera.position.z)
 		}
 
-		window.onscroll = moveCamera
+		if(scrollMode) window.onscroll = moveCamera
 
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
-
-			//ce.material.normalMap.needsUpdate = true
-
 			
 			thetaDonut = this.adjustOrbit(torus, 100, thetaDonut, phiDonut)
 			thetaMoon = this.adjustOrbit(moon, 150, thetaMoon, phiMoon)
@@ -201,7 +258,29 @@ class App extends Component {
 			moon.rotation.x += 0.001
 			moon.rotation.y += 0.001
 
-			if (debug) controls.update()
+			if(!scrollMode) controls.update()
+
+			//ray cast detect objects on mouse click
+			if(wasClicked) {
+				raycaster.setFromCamera(mouse, camera); // update the picking ray with the camera and mouse position
+				raycaster.intersectObjects(scene.children); // calculate objects intersecting the picking ray   
+				var intersects = raycaster.intersectObjects(scene.children);
+				for(var i = 0; i < intersects.length; i++){
+					if(intersects[i].object as THREE.Mesh) {
+						//This code may be firing by accident if camera is too close to an Object3D
+						let obj = intersects[i].object as THREE.Mesh;
+						console.log(typeof(obj));
+						cameraLock.isLocked = true;
+						cameraLock.target = obj;
+						wasClicked = false;
+						//playSoundEffect()
+						(obj as any).material.color.set(0xff0000); //Unfortunately TS doesn't like Object3Ds
+						break //I guess? What am I even going to do with two intersects lol
+					}
+				}
+			}
+
+			if(cameraLock.isLocked) this.adjustCamera(cameraLock.target)
 			
 			renderer.render(scene, camera);
 		}
