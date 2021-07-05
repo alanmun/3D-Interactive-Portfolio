@@ -9,10 +9,11 @@ import { randFloat } from 'three/src/math/MathUtils'
 let scene: THREE.Scene;
 let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
+var zoomOutAudio = new Audio('src/assets/zoomout.wav');
 const CAM_START = {
 	x: 0,
-	y: -50,
-	z: 120
+	y: -27.5, //For some reason the grid and black hole seem to be centered here instead of at 0...
+	z: 240
 }
 type cameraLockType = {
 	isLocked: boolean,
@@ -98,12 +99,10 @@ class App extends Component {
 		// return new Array(theta, phi)
 	}
 
-	adjustCamera(target: THREE.Object3D){
+	adjustCamera(target: THREE.Object3D, fastInc: number = 1, slowInc: number = 0.001){
 		const xdiff = camera.position.x - target.position.x
 		const ydiff = camera.position.y - target.position.y
 		const zdiff = camera.position.z - target.position.z
-		const fastInc = 0.75
-		const slowInc = 0.001
 		
 		//Handle x
 		console.log("xdiff: " + xdiff + " ydiff: " + ydiff)
@@ -136,8 +135,9 @@ class App extends Component {
 
 	componentDidMount() {
 
-		let debug = true
-		let scrollMode = true
+		let debug = false
+		let scrollMode = false
+		let orbitControlsMode = false
 
 		let cameraLock:cameraLockType = {isLocked: false, target: null} //Instantiate a cameraLock struct
 
@@ -145,14 +145,14 @@ class App extends Component {
 		scene = new THREE.Scene(); //Instantiate the scene
 
 		//Start loading in any textures
-		let spaceTexture = new THREE.TextureLoader().loadAsync('src/pillarsofcreation.jpg', onTextureLoad)
+		let spaceTexture = new THREE.TextureLoader().loadAsync('src/assets/pillarsofcreation.jpg', onTextureLoad)
 		spaceTexture.then(value => {
 			console.log("space texture loaded")
 			scene.background = value
 		})
 
-		let moonTexture = new THREE.TextureLoader().load('src/moon.jpg')
-		let moonNormal = new THREE.TextureLoader().load('src/moonbumpmap.jpg')
+		let moonTexture = new THREE.TextureLoader().load('src/assets/moon.jpg')
+		let moonNormal = new THREE.TextureLoader().load('src/assets/moonbumpmap.jpg')
 
 		//Instantiate and set up camera
 		camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000)
@@ -172,6 +172,21 @@ class App extends Component {
 			mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; // height 100, click at 5, -5/100 = -0.05*2 is -slowInc + 1 means click was registered at y = 0.9
 		}
 		window.addEventListener("mousedown", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
+
+		//Register listener for and set up callback for space and esc key
+		function onBackOutKey(event: any){
+			var keyCode = event.which
+			if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
+				wasClicked = false; //Turn off checking for raycast hits on any Object3Ds
+				let fakeObj = {
+					position: CAM_START
+				}
+				cameraLock.isLocked = true
+				cameraLock.target = fakeObj
+				zoomOutAudio.play();
+			}
+		}
+		window.addEventListener("keydown", onBackOutKey, false)
 
 		//Instantiate and set up renderer
 		renderer = new THREE.WebGLRenderer({
@@ -203,7 +218,7 @@ class App extends Component {
 
 		//Move around in the scene with your mouse!
 		let controls: OrbitControls
-		if(!scrollMode) controls = new OrbitControls(camera, renderer.domElement);
+		if(orbitControlsMode) controls = new OrbitControls(camera, renderer.domElement);
 
 		//Populate the universe
 		Array(500).fill(0).forEach(this.addStar) //with stars
@@ -258,7 +273,7 @@ class App extends Component {
 			moon.rotation.x += 0.001
 			moon.rotation.y += 0.001
 
-			if(!scrollMode) controls.update()
+			if(orbitControlsMode) controls.update()
 
 			//ray cast detect objects on mouse click
 			if(wasClicked) {
