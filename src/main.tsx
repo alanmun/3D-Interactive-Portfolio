@@ -27,6 +27,26 @@ function onTextureLoad(){
 	assetsLoaded++
 }
 
+//Fades out screen. Returns true if completed
+function fade(){
+	var element = document.getElementById("fader")
+	if(element == null) return true
+
+	//Find what alpha was, increment
+	const style = getComputedStyle(element)
+	var rgb = style.backgroundColor
+	var vals = rgb.split(',')
+	var oldAlpha = vals[vals.length-1].replace(')', '')
+	const newAlpha = (0.03 + parseFloat(oldAlpha)).toString()
+
+	//Set new alpha
+	var newRGB = rgb.replace(/[^,]+(?=\))/, newAlpha)
+	//console.log(newRGB)
+	element.style.backgroundColor = newRGB
+	if(parseFloat(newAlpha) >= 1) return true
+	return false //false if not done
+}
+
 class App extends Component {
 
 	addStar(){
@@ -141,7 +161,6 @@ class App extends Component {
 
 		let cameraLock:cameraLockType = {isLocked: false, target: null} //Instantiate a cameraLock struct
 
-
 		scene = new THREE.Scene(); //Instantiate the scene
 
 		//Start loading in any textures
@@ -251,9 +270,11 @@ class App extends Component {
 
 		if(scrollMode) window.onscroll = moveCamera
 
+		var doneFading: boolean = false
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
+			if(!doneFading) doneFading = fade()
 			
 			thetaDonut = this.adjustOrbit(torus, 100, thetaDonut, phiDonut)
 			thetaMoon = this.adjustOrbit(moon, 150, thetaMoon, phiMoon)
@@ -308,72 +329,10 @@ class App extends Component {
 			<>
 				<canvas id="bg"></canvas>
 				<main>
-					<header>
-					<h1>Alan Munirji</h1>
-					<p>Welcome to my portfolio!</p>
-					</header>
-			
-					<blockquote>
-					<p>I like making stuff and putting it on the internet</p>
-					</blockquote>
-			
-					<section>
-					<h2>📜 Manifesto</h2>
-					<p>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-					</p>
-			
-					<p>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-					</p>
-			
-					<p>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-					</p>
-					</section>
-			
-					<section className="light">
-					<h2>👩🏽‍🚀 Projects</h2>
-			
-					<p>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-					</p>
-			
-					<h2>🏆 Accomplishments</h2>
-			
-					<p>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-					</p>
-			
-					</section>
-			
-					<blockquote>
-					<p>"The best way out is always through."</p>
-					<br></br>
-					<br></br>
-					<p>-Robert Frost</p>
-					</blockquote>
-			
-					<section className="left">
-					<h2>🌮 Work History</h2>
-			
-					<h3>McDonalds</h3>
-					<p>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-					</p>
-					<h3>Burger King</h3>
-					<p>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-					</p>
-					<h3>Taco Bell</h3>
-					<p>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-					</p>
-					</section>
-			
-					<blockquote>
-					<p>Thank you for visiting my site!</p>
-					</blockquote>
+					<span id="fader"></span>
+					<div id="text">
+						Here's some fucken text
+					</div>
 				</main>
 			</>
 		)

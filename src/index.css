@@ -4,6 +4,32 @@ canvas {
   left: 0;
 }
 
+#faderTest {
+  visibility: visible;
+  color: white;
+  z-index: 99;
+  position: absolute;
+  width: 100%;
+  margin: 0px auto;
+  padding: 120px 0px;
+  
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+
+  overflow-x: hidden;
+}
+
+#fader {
+  background: rgb(0, 0, 0, 0);
+  visibility: visible;
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0px;
+  height: 100%;
+  width: 100%;
+}
+
 #root {
   --dark-bg: rgba(15, 15, 15, 0.6);
   --spacing: 300px;
@@ -18,22 +44,22 @@ body {
   overflow-y: visible;
 }
 
-main {
-  visibility: hidden;
+div {
+  visibility: visible;
   color: white;
   z-index: 99;
   position: absolute;
   width: 100%;
-  margin: 0px auto;
-  padding: 120px 0px;
-  
+  margin: 0px;
+
   display: grid;
   grid-template-columns: repeat(12, 1fr);
 
   overflow-x: hidden;
 }
 
-h1, h2, h3, blockquote {
+/*
+ h1, h2, h3, blockquote {
   font-family: elevon, sans-serif;
   font-weight: 700;
   font-style: normal;
@@ -64,13 +90,15 @@ blockquote {
 }
 
 blockquote p {
-  /* background: var(--dark-bg); */
+  /* background: var(--dark-bg);
   color: white;
   font-size: 4rem;
   display: inline;
   line-height: 1;
   padding: 20px 10px;
-}
+} 
+
+*/
 
 .container {
   -ms-overflow-style: none;  /* Hide scroll bar on Internet Explorer 10+ */
