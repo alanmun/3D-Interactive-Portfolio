@@ -4,19 +4,9 @@ canvas {
   left: 0;
 }
 
-#faderTest {
-  visibility: visible;
-  color: white;
-  z-index: 99;
-  position: absolute;
-  width: 100%;
-  margin: 0px auto;
-  padding: 120px 0px;
-  
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-
-  overflow-x: hidden;
+#bg {
+  opacity: 1;
+  transition: opacity 730ms;
 }
 
 #fader {
@@ -40,6 +30,7 @@ canvas {
 }
 
 body {
+  background: rgb(0, 0, 0, 0);
   overflow-x: hidden;
   overflow-y: visible;
 }

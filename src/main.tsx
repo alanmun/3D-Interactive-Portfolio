@@ -10,6 +10,9 @@ let scene: THREE.Scene;
 let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
 var zoomOutAudio = new Audio('src/assets/zoomout.wav');
+var shouldFade = false //If close to a celestial entity while either approaching or leaving, a fade should occur.
+var wasClicked = false //bool that tracks if a recent click was made
+var mouse = new THREE.Vector2(); //2D representation of where a mouse click occurs
 const CAM_START = {
 	x: 0,
 	y: -27.5, //For some reason the grid and black hole seem to be centered here instead of at 0...
@@ -19,33 +22,7 @@ type cameraLockType = {
 	isLocked: boolean,
 	target: any
 }
-let assetsLoaded = 0
-const numAssets = 3
-
-function onTextureLoad(){
-	console.log("Texture is loaded now")
-	assetsLoaded++
-}
-
-//Fades out screen. Returns true if completed
-function fade(){
-	var element = document.getElementById("fader")
-	if(element == null) return true
-
-	//Find what alpha was, increment
-	const style = getComputedStyle(element)
-	var rgb = style.backgroundColor
-	var vals = rgb.split(',')
-	var oldAlpha = vals[vals.length-1].replace(')', '')
-	const newAlpha = (0.03 + parseFloat(oldAlpha)).toString()
-
-	//Set new alpha
-	var newRGB = rgb.replace(/[^,]+(?=\))/, newAlpha)
-	//console.log(newRGB)
-	element.style.backgroundColor = newRGB
-	if(parseFloat(newAlpha) >= 1) return true
-	return false //false if not done
-}
+let cameraLock:cameraLockType = {isLocked: false, target: null} //Instantiate a cameraLock struct
 
 class App extends Component {
 
@@ -119,38 +96,69 @@ class App extends Component {
 		// return new Array(theta, phi)
 	}
 
-	adjustCamera(target: THREE.Object3D, fastInc: number = 1, slowInc: number = 0.001){
+	adjustCamera(target: THREE.Object3D, fastInc: number = 1, slowInc: number = 0.1){
 		const xdiff = camera.position.x - target.position.x
 		const ydiff = camera.position.y - target.position.y
 		const zdiff = camera.position.z - target.position.z
+		var xMatched = false
+		var yMatched = false
+		var zMatched = false
 		
 		//Handle x
 		console.log("xdiff: " + xdiff + " ydiff: " + ydiff)
 		if(xdiff > 20) camera.position.x -= fastInc //Too far away in positive direction
-		if(xdiff > 15 && xdiff <= 20) camera.position.x -= xdiff * slowInc //Too far away in positive direction
+		if(xdiff > 3 && xdiff <= 20) camera.position.x -= xdiff * slowInc //Too far away in positive direction
+		if(xdiff >= 0 && xdiff <= 3){
+			camera.position.x = target.position.x
+			xMatched = true
+		} 
 
 		if(xdiff < -20) camera.position.x += fastInc //Too far away in negative direction
-		if(xdiff < -15 && xdiff >= -20) camera.position.x += xdiff * slowInc //Too far away in negative direction
-		
-		//if(xdiff < 15 && xdiff > -15) camera.position.x = target.position.x + xdiff
+		if(xdiff < -3 && xdiff >= -20) camera.position.x += Math.abs(xdiff) * slowInc //Too far away in negative direction
+		if(xdiff >= -3 && xdiff <= 0) {
+			camera.position.x = target.position.x
+			xMatched = true
+		}
 
 		//Handle y
 		if(ydiff > 20) camera.position.y -= fastInc //Too far away in positive direction
-		if(ydiff > 15 && ydiff <= 20) camera.position.y -= ydiff * slowInc //Too far away in positive direction
+		if(ydiff > 3 && ydiff <= 20) camera.position.y -= ydiff * slowInc //Too far away in positive direction
+		if(ydiff >= 0 && ydiff <= 3) {
+			camera.position.y = target.position.y
+			yMatched = true
+		}
 
 		if(ydiff < -20) camera.position.y += fastInc //Too far away in negative direction
-		if(ydiff < -15 && ydiff >= -20) camera.position.y += ydiff * slowInc //Too far away in negative direction
-
-		//if(ydiff < 15 && ydiff > -15) camera.position.y = target.position.y + ydiff
+		if(ydiff < -3 && ydiff >= -20) camera.position.y += Math.abs(ydiff) * slowInc //Too far away in negative direction
+		if(ydiff >= -3 && ydiff <= 0) {
+			camera.position.y = target.position.y
+			yMatched = true
+		}
 		
 		//Handle z
 		if(zdiff > 20) camera.position.z -= fastInc //Too far away in positive direction
-		if(zdiff > 15 && zdiff <= 20) camera.position.z -= zdiff * slowInc //Too far away in positive direction
+		if(zdiff > 3 && zdiff <= 20) camera.position.z -= zdiff * slowInc //Too far away in positive direction
+		if(zdiff >= 0 && zdiff <= 3) {
+			camera.position.z = target.position.z
+			zMatched = true
+		}
 
 		if(zdiff < -20) camera.position.z += fastInc //Too far away in negative direction
-		if(zdiff < -15 && zdiff >= -20) camera.position.z += zdiff * slowInc //Too far away in negative direction
+		if(zdiff < -3 && zdiff >= -20) camera.position.z += Math.abs(zdiff) * slowInc //Too far away in negative direction
+		if(zdiff >= -3 && zdiff <= 0) {
+			camera.position.z = target.position.z
+			zMatched = true
+		}
 
-		//if(zdiff < 15 && zdiff > -15) camera.position.z = target.position.z + zdiff
+		//Special case to see if camera is at the original spawn point, disable target lock
+		if(camera.position.x == CAM_START.x && camera.position.y == CAM_START.y && camera.position.z == CAM_START.z){
+			cameraLock = {isLocked: false, target: null}
+			console.log("Matched: " + camera.position.x + "  " + CAM_START.x)
+		} 
+		else if(xMatched && yMatched && zMatched) {
+			shouldFade = true //Tell fade it can run
+			cameraLock = {isLocked: false, target: null}
+		}
 	}
 
 	componentDidMount() {
@@ -158,8 +166,6 @@ class App extends Component {
 		let debug = false
 		let scrollMode = false
 		let orbitControlsMode = false
-
-		let cameraLock:cameraLockType = {isLocked: false, target: null} //Instantiate a cameraLock struct
 
 		scene = new THREE.Scene(); //Instantiate the scene
 
@@ -180,31 +186,8 @@ class App extends Component {
 
 		//Set up mouse clicking functionality
 		var raycaster = new THREE.Raycaster(); 
-		var mouse = new THREE.Vector2();
-		var wasClicked = false;
 
-		function onMouseClick(event: THREE.Event) { 
-			// calculate mouse position in normalized device coordinates 
-			// (-1 to +1) for both components
-			wasClicked = true;
-			mouse.x = (event.clientX / window.innerWidth) * 2 - 1; //I believe these convert to centered normalized coordinates x,y at 0,0 is exact center of screen
-			mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; // height 100, click at 5, -5/100 = -0.05*2 is -slowInc + 1 means click was registered at y = 0.9
-		}
 		window.addEventListener("mousedown", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
-
-		//Register listener for and set up callback for space and esc key
-		function onBackOutKey(event: any){
-			var keyCode = event.which
-			if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
-				wasClicked = false; //Turn off checking for raycast hits on any Object3Ds
-				let fakeObj = {
-					position: CAM_START
-				}
-				cameraLock.isLocked = true
-				cameraLock.target = fakeObj
-				zoomOutAudio.play();
-			}
-		}
 		window.addEventListener("keydown", onBackOutKey, false)
 
 		//Instantiate and set up renderer
@@ -253,43 +236,22 @@ class App extends Component {
 		let thetaMoon: number = 90
 		let phiMoon = 0
 
-		//Tell the DOM to move our camera whenever the user scrolls
-		function moveCamera() {
-			cameraLock.isLocked = false //turn off camera lock on
-			console.log(cameraLock.isLocked)
-
-			const top = document.body.getBoundingClientRect().top //Find out the top of the user's viewport (screen basically)
-			camera.position.z = (top * 0.05) + CAM_START.z
-			//camera.position.x = top * -0.002
-			camera.position.y = (top * -0.05) + CAM_START.y
-			console.log("Top is now equal to " + top)
-			console.log("Camera x: " + camera.position.x)
-			console.log("Camera y: " + camera.position.y)
-			console.log("Camera z: " + camera.position.z)
-		}
-
 		if(scrollMode) window.onscroll = moveCamera
-
-		var doneFading: boolean = false
+		
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
-			if(!doneFading) doneFading = fade()
+
+			if(shouldFade) shouldFade = fade()
 			
+			//Adjust orbits
 			thetaDonut = this.adjustOrbit(torus, 100, thetaDonut, phiDonut)
 			thetaMoon = this.adjustOrbit(moon, 150, thetaMoon, phiMoon)
-			// var arr1 = this.adjustOrbit(torus, 100, thetaDonut, phiDonut)
-			// var arr2 = this.adjustOrbit(moon, 150, thetaMoon, phiMoon)
 
-			// thetaDonut = arr1[0]
-			// phiDonut = arr1[1]
-			// thetaMoon = arr2[0]
-			// phiMoon = arr2[1]
-
+			//Adjust rotations
 			torus.rotation.z += 0.001
 			torus.rotation.x += 0.01
 			torus.rotation.y += 0.005
-
 			//moon.rotation.z += 0.001
 			moon.rotation.x += 0.001
 			moon.rotation.y += 0.001
@@ -317,7 +279,7 @@ class App extends Component {
 			}
 
 			if(cameraLock.isLocked) this.adjustCamera(cameraLock.target)
-			
+
 			renderer.render(scene, camera);
 		}
 
@@ -329,7 +291,7 @@ class App extends Component {
 			<>
 				<canvas id="bg"></canvas>
 				<main>
-					<span id="fader"></span>
+					{/* <span id="fader"></span> */}
 					<div id="text">
 						Here's some fucken text
 					</div>
@@ -338,6 +300,80 @@ class App extends Component {
 		)
 	}
 }
+
+function onMouseClick(event: THREE.Event) { 
+	// calculate mouse position in normalized device coordinates 
+	// (-1 to +1) for both components
+	wasClicked = true;
+	mouse.x = (event.clientX / window.innerWidth) * 2 - 1; //I believe these convert to centered normalized coordinates x,y at 0,0 is exact center of screen
+	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; // height 100, click at 5, -5/100 = -0.05*2 is -slowInc + 1 means click was registered at y = 0.9
+}
+
+//Register listener for and set up callback for space and esc key
+function onBackOutKey(event: any){
+	var keyCode = event.which
+	if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
+		wasClicked = false; //Turn off checking for raycast hits on any Object3Ds
+		shouldFade = true; //Ask fade function to fade us again
+		let fakeObj = {
+			position: CAM_START
+		}
+		cameraLock.isLocked = true
+		cameraLock.target = fakeObj
+		zoomOutAudio.play();
+	}
+}
+
+//Tell the DOM to move our camera whenever the user scrolls
+function moveCamera() {
+	cameraLock.isLocked = false //turn off camera lock on
+	console.log(cameraLock.isLocked)
+
+	const top = document.body.getBoundingClientRect().top //Find out the top of the user's viewport (screen basically)
+	camera.position.z = (top * 0.05) + CAM_START.z
+	//camera.position.x = top * -0.002
+	camera.position.y = (top * -0.05) + CAM_START.y
+	console.log("Top is now equal to " + top)
+	console.log("Camera x: " + camera.position.x)
+	console.log("Camera y: " + camera.position.y)
+	console.log("Camera z: " + camera.position.z)
+}
+
+function onTextureLoad(){
+	console.log("Texture is loaded now")
+}
+
+//Fades out screen.
+function fade(){
+	var canvas = document.getElementById("bg");
+	if(canvas != null){
+		var computedStyle = getComputedStyle(canvas)
+		var oldOpacity = computedStyle.opacity  //Unwrap as oldOpacity is an optional that could be null if canvas doesn't exist, undefined if opacity was never defined
+		if(oldOpacity === "1") canvas.style.opacity = "0"
+		else if(oldOpacity === "0") canvas.style.opacity = "1" 
+	}
+	return false
+}
+
+
+// function fade(){
+// 	var element = document.getElementById("fader")
+// 	if(element == null) return true
+
+// 	//Find what alpha was, increment
+// 	const style = getComputedStyle(element)
+// 	var rgb = style.backgroundColor
+// 	var vals = rgb.split(',')
+// 	var oldAlpha = vals[vals.length-1].replace(')', '')
+// 	const newAlpha = (0.03 + parseFloat(oldAlpha)).toString()
+
+// 	//Set new alpha
+// 	var newRGB = rgb.replace(/[^,]+(?=\))/, newAlpha)
+// 	//console.log(newRGB)
+// 	element.style.backgroundColor = newRGB
+// 	if(parseFloat(newAlpha) >= 1) return true
+// 	return false //false if not done
+// }
 
 ReactDOM.render(
 	<React.StrictMode>
