@@ -10,8 +10,15 @@ let scene: THREE.Scene;
 let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
 var zoomOutAudio = new Audio('src/assets/zoomout.wav');
-var shouldFade = false //If close to a celestial entity while either approaching or leaving, a fade should occur.
-var wasClicked = false //bool that tracks if a recent click was made
+
+//Used by adjustCamera, persisting across calls to know if we are close in the z, x, or y coord, and the second three tell if we were already close
+var xIsClose = false
+var yIsClose = false
+var zIsClose = false
+var alreadyFadedThisTarget = false //Prevents accidental fading when still close to a target
+
+//Set up mouse clicking functionality
+var raycaster = new THREE.Raycaster(); 
 var mouse = new THREE.Vector2(); //2D representation of where a mouse click occurs
 const CAM_START = {
 	x: 0,
@@ -96,7 +103,7 @@ class App extends Component {
 		// return new Array(theta, phi)
 	}
 
-	adjustCamera(target: THREE.Object3D, fastInc: number = 1, slowInc: number = 0.1){
+	adjustCamera(target: THREE.Object3D, fastInc: number = 0.1, slowInc: number = 0.01){
 		const xdiff = camera.position.x - target.position.x
 		const ydiff = camera.position.y - target.position.y
 		const zdiff = camera.position.z - target.position.z
@@ -106,45 +113,63 @@ class App extends Component {
 		
 		//Handle x
 		console.log("xdiff: " + xdiff + " ydiff: " + ydiff)
-		if(xdiff > 20) camera.position.x -= fastInc //Too far away in positive direction
-		if(xdiff > 3 && xdiff <= 20) camera.position.x -= xdiff * slowInc //Too far away in positive direction
+		if(xdiff > 9) camera.position.x -= xdiff * fastInc //Too far away in positive direction
+		if(xdiff > 3 && xdiff <= 9) {
+			xIsClose = true
+			camera.position.x -= xdiff * slowInc //Too far away in positive direction
+		}
 		if(xdiff >= 0 && xdiff <= 3){
 			camera.position.x = target.position.x
 			xMatched = true
 		} 
 
-		if(xdiff < -20) camera.position.x += fastInc //Too far away in negative direction
-		if(xdiff < -3 && xdiff >= -20) camera.position.x += Math.abs(xdiff) * slowInc //Too far away in negative direction
-		if(xdiff >= -3 && xdiff <= 0) {
+		if(xdiff < -9) camera.position.x += Math.abs(xdiff) * fastInc //Too far away in negative direction
+		if(xdiff < -3 && xdiff >= -9) {
+			xIsClose = true
+			camera.position.x += Math.abs(xdiff) * slowInc //Too far away in negative direction
+		}
+		if(xdiff >= -3 && xdiff <= 0) { //Only perform this block once per target, and we don't make this false again until you are back at original spawn
 			camera.position.x = target.position.x
 			xMatched = true
 		}
 
 		//Handle y
-		if(ydiff > 20) camera.position.y -= fastInc //Too far away in positive direction
-		if(ydiff > 3 && ydiff <= 20) camera.position.y -= ydiff * slowInc //Too far away in positive direction
+		if(ydiff > 9) camera.position.y -= ydiff * fastInc //Too far away in positive direction
+		if(ydiff > 3 && ydiff <= 9) {
+			yIsClose = true
+			camera.position.y -= ydiff * slowInc //Too far away in positive direction
+		}
 		if(ydiff >= 0 && ydiff <= 3) {
 			camera.position.y = target.position.y
 			yMatched = true
 		}
 
-		if(ydiff < -20) camera.position.y += fastInc //Too far away in negative direction
-		if(ydiff < -3 && ydiff >= -20) camera.position.y += Math.abs(ydiff) * slowInc //Too far away in negative direction
+		if(ydiff < -9) camera.position.y += Math.abs(ydiff) * fastInc //Too far away in negative direction
+		if(ydiff < -3 && ydiff >= -9) {
+			yIsClose = true
+			camera.position.y += Math.abs(ydiff) * slowInc //Too far away in negative direction
+		}
 		if(ydiff >= -3 && ydiff <= 0) {
 			camera.position.y = target.position.y
 			yMatched = true
 		}
 		
 		//Handle z
-		if(zdiff > 20) camera.position.z -= fastInc //Too far away in positive direction
-		if(zdiff > 3 && zdiff <= 20) camera.position.z -= zdiff * slowInc //Too far away in positive direction
+		if(zdiff > 9) camera.position.z -= zdiff * fastInc //Too far away in positive direction
+		if(zdiff > 3 && zdiff <= 9) {
+			zIsClose = true
+			camera.position.z -= zdiff * slowInc //Too far away in positive direction
+		}
 		if(zdiff >= 0 && zdiff <= 3) {
 			camera.position.z = target.position.z
 			zMatched = true
 		}
 
-		if(zdiff < -20) camera.position.z += fastInc //Too far away in negative direction
-		if(zdiff < -3 && zdiff >= -20) camera.position.z += Math.abs(zdiff) * slowInc //Too far away in negative direction
+		if(zdiff < -9) camera.position.z += Math.abs(zdiff) * fastInc //Too far away in negative direction
+		if(zdiff < -3 && zdiff >= -9) {
+			zIsClose = true
+			camera.position.z += Math.abs(zdiff) * slowInc //Too far away in negative direction
+		}
 		if(zdiff >= -3 && zdiff <= 0) {
 			camera.position.z = target.position.z
 			zMatched = true
@@ -154,11 +179,17 @@ class App extends Component {
 		if(camera.position.x == CAM_START.x && camera.position.y == CAM_START.y && camera.position.z == CAM_START.z){
 			cameraLock = {isLocked: false, target: null}
 			console.log("Matched: " + camera.position.x + "  " + CAM_START.x)
+			xIsClose = false
+			yIsClose = false
+			zIsClose = false
+			alreadyFadedThisTarget = false
 		} 
-		else if(xMatched && yMatched && zMatched) {
-			shouldFade = true //Tell fade it can run
-			cameraLock = {isLocked: false, target: null}
+		else if(xIsClose && yIsClose && zIsClose) {
+			if(alreadyFadedThisTarget == false) fade()
+			alreadyFadedThisTarget = true
 		}
+		//else if(xMatched && yMatched && zMatched) cameraLock = {isLocked: false, target: null} //This may not be necessary...
+
 	}
 
 	componentDidMount() {
@@ -183,9 +214,6 @@ class App extends Component {
 		camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000)
 		camera.position.z = CAM_START.z //Move camera back so its not in center of scene
 		camera.position.y = CAM_START.y //Move camera back so its not in center of scene
-
-		//Set up mouse clicking functionality
-		var raycaster = new THREE.Raycaster(); 
 
 		window.addEventListener("mousedown", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
 		window.addEventListener("keydown", onBackOutKey, false)
@@ -241,8 +269,6 @@ class App extends Component {
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
-
-			if(shouldFade) shouldFade = fade()
 			
 			//Adjust orbits
 			thetaDonut = this.adjustOrbit(torus, 100, thetaDonut, phiDonut)
@@ -257,26 +283,6 @@ class App extends Component {
 			moon.rotation.y += 0.001
 
 			if(orbitControlsMode) controls.update()
-
-			//ray cast detect objects on mouse click
-			if(wasClicked) {
-				raycaster.setFromCamera(mouse, camera); // update the picking ray with the camera and mouse position
-				raycaster.intersectObjects(scene.children); // calculate objects intersecting the picking ray   
-				var intersects = raycaster.intersectObjects(scene.children);
-				for(var i = 0; i < intersects.length; i++){
-					if(intersects[i].object as THREE.Mesh) {
-						//This code may be firing by accident if camera is too close to an Object3D
-						let obj = intersects[i].object as THREE.Mesh;
-						console.log(typeof(obj));
-						cameraLock.isLocked = true;
-						cameraLock.target = obj;
-						wasClicked = false;
-						//playSoundEffect()
-						(obj as any).material.color.set(0xff0000); //Unfortunately TS doesn't like Object3Ds
-						break //I guess? What am I even going to do with two intersects lol
-					}
-				}
-			}
 
 			if(cameraLock.isLocked) this.adjustCamera(cameraLock.target)
 
@@ -304,17 +310,31 @@ class App extends Component {
 function onMouseClick(event: THREE.Event) { 
 	// calculate mouse position in normalized device coordinates 
 	// (-1 to +1) for both components
-	wasClicked = true;
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1; //I believe these convert to centered normalized coordinates x,y at 0,0 is exact center of screen
 	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; // height 100, click at 5, -5/100 = -0.05*2 is -slowInc + 1 means click was registered at y = 0.9
+
+	raycaster.setFromCamera(mouse, camera); // update the picking ray with the camera and mouse position
+	raycaster.intersectObjects(scene.children); // calculate objects intersecting the picking ray   
+	var intersects = raycaster.intersectObjects(scene.children);
+	for(var i = 0; i < intersects.length; i++){
+		if(intersects[i].object as THREE.Mesh) {
+			//This code may be firing by accident if camera is too close to an Object3D
+			let obj = intersects[i].object as THREE.Mesh;
+			console.log(typeof(obj));
+			cameraLock.isLocked = true;
+			cameraLock.target = obj;
+			//playSoundEffect()
+			//(obj as any).material.color.set(0xff0000); //Unfortunately TS doesn't like Object3Ds
+			break //I guess? What am I even going to do with two intersects lol
+		}
+	}
 }
 
 //Register listener for and set up callback for space and esc key
 function onBackOutKey(event: any){
 	var keyCode = event.which
 	if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
-		wasClicked = false; //Turn off checking for raycast hits on any Object3Ds
-		shouldFade = true; //Ask fade function to fade us again
+		fade(); //Ask fade function to fade us again
 		let fakeObj = {
 			position: CAM_START
 		}
