@@ -9,7 +9,7 @@ canvas {
   transition: opacity 730ms;
 }
 
-#fader {
+#fader { /* Currently unused */
   background: rgb(0, 0, 0, 0);
   visibility: visible;
   position: fixed;

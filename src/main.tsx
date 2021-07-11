@@ -11,7 +11,7 @@ let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
 var zoomOutAudio = new Audio('src/assets/zoomout.wav');
 zoomOutAudio.volume = 0.9
-var backgroundAudio = new Audio('src/assets/background.wav')
+var backgroundAudio = new Audio('src/assets/background.mp3')
 backgroundAudio.volume = 0.65
 
 //Used by adjustCamera, persisting across calls to know if we are close in the z, x, or y coord, and the second three tell if we were already close
