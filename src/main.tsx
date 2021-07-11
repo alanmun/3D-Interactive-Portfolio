@@ -10,6 +10,9 @@ let scene: THREE.Scene;
 let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
 var zoomOutAudio = new Audio('src/assets/zoomout.wav');
+zoomOutAudio.volume = 0.9
+var backgroundAudio = new Audio('src/assets/background.wav')
+backgroundAudio.volume = 0.65
 
 //Used by adjustCamera, persisting across calls to know if we are close in the z, x, or y coord, and the second three tell if we were already close
 var xIsClose = false
@@ -103,75 +106,83 @@ class App extends Component {
 		// return new Array(theta, phi)
 	}
 
-	adjustCamera(target: THREE.Object3D, fastInc: number = 0.1, slowInc: number = 0.01){
+	adjustCamera(target: THREE.Object3D, fastInc: number = 0.08, slowInc: number = 0.05){
 		const xdiff = camera.position.x - target.position.x
 		const ydiff = camera.position.y - target.position.y
 		const zdiff = camera.position.z - target.position.z
 		var xMatched = false
 		var yMatched = false
 		var zMatched = false
+
+		//Might be able to simplify bottom code to not have a positive and negative version, by comparing with abs(diff), and always += the diff, no abs after +=
 		
 		//Handle x
-		console.log("xdiff: " + xdiff + " ydiff: " + ydiff)
-		if(xdiff > 9) camera.position.x -= xdiff * fastInc //Too far away in positive direction
-		if(xdiff > 3 && xdiff <= 9) {
-			xIsClose = true
+		console.log("xdiff: " + xdiff + " ydiff: " + ydiff + "zdiff: " + zdiff)
+		if(xdiff > 16) camera.position.x -= xdiff * fastInc //Too far away in positive direction
+		if(xdiff > 3 && xdiff <= 16) {
 			camera.position.x -= xdiff * slowInc //Too far away in positive direction
+			xIsClose = true
 		}
 		if(xdiff >= 0 && xdiff <= 3){
 			camera.position.x = target.position.x
+			xIsClose = true
 			xMatched = true
 		} 
 
-		if(xdiff < -9) camera.position.x += Math.abs(xdiff) * fastInc //Too far away in negative direction
-		if(xdiff < -3 && xdiff >= -9) {
-			xIsClose = true
+		if(xdiff < -16) camera.position.x += Math.abs(xdiff) * fastInc //Too far away in negative direction
+		if(xdiff < -3 && xdiff >= -16) {
 			camera.position.x += Math.abs(xdiff) * slowInc //Too far away in negative direction
+			xIsClose = true
 		}
 		if(xdiff >= -3 && xdiff <= 0) { //Only perform this block once per target, and we don't make this false again until you are back at original spawn
 			camera.position.x = target.position.x
+			xIsClose = true
 			xMatched = true
 		}
 
 		//Handle y
-		if(ydiff > 9) camera.position.y -= ydiff * fastInc //Too far away in positive direction
-		if(ydiff > 3 && ydiff <= 9) {
-			yIsClose = true
+		if(ydiff > 16) camera.position.y -= ydiff * fastInc //Too far away in positive direction
+		if(ydiff > 3 && ydiff <= 16) {
 			camera.position.y -= ydiff * slowInc //Too far away in positive direction
+			yIsClose = true
 		}
 		if(ydiff >= 0 && ydiff <= 3) {
 			camera.position.y = target.position.y
+			yIsClose = true
 			yMatched = true
 		}
 
-		if(ydiff < -9) camera.position.y += Math.abs(ydiff) * fastInc //Too far away in negative direction
-		if(ydiff < -3 && ydiff >= -9) {
-			yIsClose = true
+		if(ydiff < -16) camera.position.y += Math.abs(ydiff) * fastInc //Too far away in negative direction
+		if(ydiff < -3 && ydiff >= -16) {
 			camera.position.y += Math.abs(ydiff) * slowInc //Too far away in negative direction
+			yIsClose = true
 		}
 		if(ydiff >= -3 && ydiff <= 0) {
 			camera.position.y = target.position.y
+			yIsClose = true
 			yMatched = true
 		}
 		
 		//Handle z
-		if(zdiff > 9) camera.position.z -= zdiff * fastInc //Too far away in positive direction
-		if(zdiff > 3 && zdiff <= 9) {
-			zIsClose = true
+		if(zdiff > 16) camera.position.z -= zdiff * fastInc //Too far away in positive direction
+		if(zdiff > 3 && zdiff <= 16) {
 			camera.position.z -= zdiff * slowInc //Too far away in positive direction
+			zIsClose = true
 		}
 		if(zdiff >= 0 && zdiff <= 3) {
 			camera.position.z = target.position.z
+			zIsClose = true
 			zMatched = true
 		}
 
-		if(zdiff < -9) camera.position.z += Math.abs(zdiff) * fastInc //Too far away in negative direction
-		if(zdiff < -3 && zdiff >= -9) {
-			zIsClose = true
+		if(zdiff < -16) camera.position.z += Math.abs(zdiff) * fastInc //Too far away in negative direction
+		if(zdiff < -3 && zdiff >= -16) {
 			camera.position.z += Math.abs(zdiff) * slowInc //Too far away in negative direction
+			zIsClose = true
 		}
 		if(zdiff >= -3 && zdiff <= 0) {
 			camera.position.z = target.position.z
+			zIsClose = true
 			zMatched = true
 		}
 
@@ -199,6 +210,10 @@ class App extends Component {
 		let orbitControlsMode = false
 
 		scene = new THREE.Scene(); //Instantiate the scene
+
+		document.body.addEventListener("mousemove", function () {
+			backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
+		})
 
 		//Start loading in any textures
 		let spaceTexture = new THREE.TextureLoader().loadAsync('src/assets/pillarsofcreation.jpg', onTextureLoad)
@@ -310,6 +325,8 @@ class App extends Component {
 function onMouseClick(event: THREE.Event) { 
 	// calculate mouse position in normalized device coordinates 
 	// (-1 to +1) for both components
+	//Potential Issue: window resizes seem to confuse three.js and it doesn't know where things are anymore. If you open up console when it wasn't 
+	//opened, that resizes the window and shifts the black hole over, but where it was originally located is where three js reports an object intersection
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1; //I believe these convert to centered normalized coordinates x,y at 0,0 is exact center of screen
 	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; // height 100, click at 5, -5/100 = -0.05*2 is -slowInc + 1 means click was registered at y = 0.9
 
@@ -335,11 +352,8 @@ function onBackOutKey(event: any){
 	var keyCode = event.which
 	if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
 		fade(); //Ask fade function to fade us again
-		let fakeObj = {
-			position: CAM_START
-		}
 		cameraLock.isLocked = true
-		cameraLock.target = fakeObj
+		cameraLock.target = { position: CAM_START }
 		zoomOutAudio.play();
 	}
 }
