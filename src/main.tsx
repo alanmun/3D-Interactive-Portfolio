@@ -12,6 +12,8 @@ let scene: THREE.Scene;
 let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
 
+let twitter: THREE.Group //For twitter.obj model
+
 var zoomOutAudio = new Audio('src/assets/zoomout.wav');
 zoomOutAudio.volume = 0.9
 var backgroundAudio = new Audio('src/assets/background.mp3')
@@ -59,16 +61,16 @@ class App extends Component {
 		else z = THREE.MathUtils.randFloat(15, outerBound)
 
 		star.position.set(x, y, z);
+		star.name = "star"
 		mainScene.add(star)
 	}
 
-	addCelestialEntity(pos: THREE.Vector3, size: number, texture: any, bumpMap: any, metalness: number){
+	addCelestialEntity(pos: THREE.Vector3, size: number, texture: any, norMap: any, metalness: number){
 
 		const celestialEntity = new THREE.Mesh(
 			new THREE.SphereGeometry(size, 128, 128),
-			new THREE.MeshStandardMaterial({map: texture, metalness: metalness})
+			new THREE.MeshStandardMaterial({map: texture, metalness: metalness, normalMap: norMap})
 		)
-		celestialEntity.material.normalMap = bumpMap
 		if(texture == null) celestialEntity.material.color = new Color("black") //if there is a texture, color covers over it
 		celestialEntity.position.set(pos.x, pos.y, pos.z)
 		mainScene.add(celestialEntity)
@@ -126,8 +128,8 @@ class App extends Component {
 		
 		//Handle x
 		//console.log("xdiff: " + xdiff + " ydiff: " + ydiff + "zdiff: " + zdiff)
-		if(xdiff > 16) camera.position.x -= xdiff * fastInc //Too far away in positive direction
-		if(xdiff > 3 && xdiff <= 16) {
+		if(xdiff > 18) camera.position.x -= xdiff * fastInc //Too far away in positive direction
+		if(xdiff > 3 && xdiff <= 18) {
 			camera.position.x -= xdiff * slowInc //Too far away in positive direction
 			xIsClose = true
 		}
@@ -137,8 +139,8 @@ class App extends Component {
 			xMatched = true
 		} 
 
-		if(xdiff < -16) camera.position.x += Math.abs(xdiff) * fastInc //Too far away in negative direction
-		if(xdiff < -3 && xdiff >= -16) {
+		if(xdiff < -18) camera.position.x += Math.abs(xdiff) * fastInc //Too far away in negative direction
+		if(xdiff < -3 && xdiff >= -18) {
 			camera.position.x += Math.abs(xdiff) * slowInc //Too far away in negative direction
 			xIsClose = true
 		}
@@ -149,8 +151,8 @@ class App extends Component {
 		}
 
 		//Handle y
-		if(ydiff > 16) camera.position.y -= ydiff * fastInc //Too far away in positive direction
-		if(ydiff > 3 && ydiff <= 16) {
+		if(ydiff > 18) camera.position.y -= ydiff * fastInc //Too far away in positive direction
+		if(ydiff > 3 && ydiff <= 18) {
 			camera.position.y -= ydiff * slowInc //Too far away in positive direction
 			yIsClose = true
 		}
@@ -160,8 +162,8 @@ class App extends Component {
 			yMatched = true
 		}
 
-		if(ydiff < -16) camera.position.y += Math.abs(ydiff) * fastInc //Too far away in negative direction
-		if(ydiff < -3 && ydiff >= -16) {
+		if(ydiff < -18) camera.position.y += Math.abs(ydiff) * fastInc //Too far away in negative direction
+		if(ydiff < -3 && ydiff >= -18) {
 			camera.position.y += Math.abs(ydiff) * slowInc //Too far away in negative direction
 			yIsClose = true
 		}
@@ -172,8 +174,8 @@ class App extends Component {
 		}
 		
 		//Handle z
-		if(zdiff > 16) camera.position.z -= zdiff * fastInc //Too far away in positive direction
-		if(zdiff > 3 && zdiff <= 16) {
+		if(zdiff > 18) camera.position.z -= zdiff * fastInc //Too far away in positive direction
+		if(zdiff > 3 && zdiff <= 18) {
 			camera.position.z -= zdiff * slowInc //Too far away in positive direction
 			zIsClose = true
 		}
@@ -183,8 +185,8 @@ class App extends Component {
 			zMatched = true
 		}
 
-		if(zdiff < -16) camera.position.z += Math.abs(zdiff) * fastInc //Too far away in negative direction
-		if(zdiff < -3 && zdiff >= -16) {
+		if(zdiff < -18) camera.position.z += Math.abs(zdiff) * fastInc //Too far away in negative direction
+		if(zdiff < -3 && zdiff >= -18) {
 			camera.position.z += Math.abs(zdiff) * slowInc //Too far away in negative direction
 			zIsClose = true
 		}
@@ -285,18 +287,17 @@ class App extends Component {
 		if(orbitControlsMode) controls = new OrbitControls(camera, renderer.domElement);
 
 		//Populate the universe
-		Array(500).fill(0).forEach(this.addStar) //with stars
+		//Array(500).fill(0).forEach(this.addStar) //with stars
 
 		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 9, null, null, 1.0) //with a black hole so massive everything orbits around it
 
-		let twitter: THREE.Group
-		let twitterMaterial = new THREE.MeshStandardMaterial({ color: 0x3fbcff, roughness: 0.0, flatShading: true })
 		let twitterLoader = new OBJLoader().load('src/assets/twitter.obj', function(object){
 			twitter = object
 			twitter.traverse(function(child){
 				if(child instanceof THREE.Mesh){
-					child.material = twitterMaterial
-					child.rotation.y += 7
+					console.log(child)
+					child.material = new THREE.MeshStandardMaterial({ color: 0x3fbcff, roughness: 0.7, flatShading: true})
+					child.rotation.y += 7.5
 				}
 			})
 			console.log(twitter)
@@ -323,9 +324,9 @@ class App extends Component {
 			
 			if(scene === mainScene){
 				//Adjust orbits
-				//thetaDonut = this.adjustOrbit(torus, 100, thetaDonut)
-				//thetaMoon = this.adjustOrbit(moon, 150, thetaMoon)
-				thetaTwitter = this.adjustOrbit(twitter, 60, thetaTwitter)
+				thetaDonut = this.adjustOrbit(torus, 100, thetaDonut)
+				thetaMoon = this.adjustOrbit(moon, 150, thetaMoon)
+				thetaTwitter = this.adjustOrbit(twitter, 50, thetaTwitter)
 
 				//Adjust rotations
 				torus.rotation.z += 0.001
@@ -334,8 +335,7 @@ class App extends Component {
 				//moon.rotation.z += 0.001
 				moon.rotation.x += 0.001
 				moon.rotation.y += 0.001
-				twitter.rotation.x += 0.001
-				twitter.rotation.y += 0.002
+				twitter.rotation.z += 0.002
 
 				if(orbitControlsMode) controls.update()
 
@@ -346,7 +346,6 @@ class App extends Component {
 			}
 			renderer.render(scene, camera);
 		}
-
 		animate()
 	}
 
@@ -374,16 +373,21 @@ function onMouseClick(event: THREE.Event) {
 	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; // height 100, click at 5, -5/100 = -0.05*2 is -slowInc + 1 means click was registered at y = 0.9
 
 	raycaster.setFromCamera(mouse, camera); // update the picking ray with the camera and mouse position
-	raycaster.intersectObjects(scene.children); // calculate objects intersecting the picking ray   
+	raycaster.intersectObjects(scene.children); // calculate objects intersecting the picking ray
+	if(raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(twitter))){
+		//We intersected on our twitter.obj model which is a THREE.Group and so can't be detected the normal way below
+		cameraLock.isLocked = true;
+		cameraLock.target = twitter;
+		return
+	}
+	//Check for intersections on any mesh
 	var intersects = raycaster.intersectObjects(scene.children);
 	for(var i = 0; i < intersects.length; i++){
-		if(intersects[i].object as THREE.Mesh) {
-			//This code may be firing by accident if camera is too close to an Object3D
-			let obj = intersects[i].object as THREE.Mesh;
+		if(intersects[i].object.name != "star") {
 			cameraLock.isLocked = true;
-			cameraLock.target = obj;
+			cameraLock.target = intersects[i].object;
 			//(obj as any).material.color.set(0xff0000); //Unfortunately TS doesn't like Object3Ds
-			break //I guess? What am I even going to do with two intersects lol
+			return
 		}
 	}
 }
