@@ -6,6 +6,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Color, MathUtils } from 'three';
 import { randFloat } from 'three/src/math/MathUtils'
 
+let mainScene: THREE.Scene;
+let scene2: THREE.Scene;
 let scene: THREE.Scene;
 let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
@@ -56,7 +58,7 @@ class App extends Component {
 		else z = THREE.MathUtils.randFloat(15, outerBound)
 
 		star.position.set(x, y, z);
-		scene.add(star)
+		mainScene.add(star)
 	}
 
 	addCelestialEntity(pos: THREE.Vector3, size: number, texture: any, bumpMap: any, metalness: number){
@@ -68,7 +70,7 @@ class App extends Component {
 		celestialEntity.material.normalMap = bumpMap
 		if(texture == null) celestialEntity.material.color = new Color("black") //if there is a texture, color covers over it
 		celestialEntity.position.set(pos.x, pos.y, pos.z)
-		scene.add(celestialEntity)
+		mainScene.add(celestialEntity)
 		return celestialEntity
 	}
 
@@ -113,11 +115,15 @@ class App extends Component {
 		var xMatched = false
 		var yMatched = false
 		var zMatched = false
+		
+		//Because target isn't an Object3D when going to spawn, it won't have a name property. You can use below to check if target is a celestial
+		//entity, or if we're just going back to spawn
+		//console.log(target.hasOwnProperty("name"))
 
 		//Might be able to simplify bottom code to not have a positive and negative version, by comparing with abs(diff), and always += the diff, no abs after +=
 		
 		//Handle x
-		console.log("xdiff: " + xdiff + " ydiff: " + ydiff + "zdiff: " + zdiff)
+		//console.log("xdiff: " + xdiff + " ydiff: " + ydiff + "zdiff: " + zdiff)
 		if(xdiff > 16) camera.position.x -= xdiff * fastInc //Too far away in positive direction
 		if(xdiff > 3 && xdiff <= 16) {
 			camera.position.x -= xdiff * slowInc //Too far away in positive direction
@@ -195,7 +201,7 @@ class App extends Component {
 			zIsClose = false
 			alreadyFadedThisTarget = false
 		} 
-		else if(xIsClose && yIsClose && zIsClose) {
+		else if(xIsClose && yIsClose && zIsClose) { //We are approaching something that isn't 
 			if(alreadyFadedThisTarget == false) fade()
 			alreadyFadedThisTarget = true
 		}
@@ -209,17 +215,19 @@ class App extends Component {
 		let scrollMode = false
 		let orbitControlsMode = false
 
-		scene = new THREE.Scene(); //Instantiate the scene
+		mainScene = new THREE.Scene(); //Instantiate the scene
+		scene2 = new THREE.Scene();
 
 		document.body.addEventListener("mousemove", function () {
 			backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
 		})
 
 		//Start loading in any textures
+		let giantsDeep = new THREE.TextureLoader().load('src/assets/giantsdeep.png')
 		let spaceTexture = new THREE.TextureLoader().loadAsync('src/assets/pillarsofcreation.jpg', onTextureLoad)
 		spaceTexture.then(value => {
 			console.log("space texture loaded")
-			scene.background = value
+			mainScene.background = value
 		})
 
 		let moonTexture = new THREE.TextureLoader().load('src/assets/moon.jpg')
@@ -245,21 +253,21 @@ class App extends Component {
 		const geometry = new THREE.TorusGeometry(10, 3, 16, 100)
 		const material = new THREE.MeshStandardMaterial({color: 0xFF6347, wireframe: false});
 		const torus = new THREE.Mesh(geometry, material);
-		scene.add(torus)
+		mainScene.add(torus)
 
 		//Add some light
 		const pL = new THREE.PointLight(new Color("black"))
 		const lH = new THREE.PointLightHelper(pL)
 		pL.position.set(5,5,5)
-		scene.add(pL)
-		if(debug) scene.add(lH)
+		mainScene.add(pL)
+		if(debug) mainScene.add(lH)
 
 		const aL = new THREE.AmbientLight(new Color("white"))
-		scene.add(aL)
+		mainScene.add(aL)
 
 		//GridHelper
 		const gH = new THREE.GridHelper(200, 50)
-		if(debug) scene.add(gH)
+		if(debug) mainScene.add(gH)
 
 		//Move around in the scene with your mouse!
 		let controls: OrbitControls
@@ -280,27 +288,29 @@ class App extends Component {
 		let phiMoon = 0
 
 		if(scrollMode) window.onscroll = moveCamera
+		scene = mainScene;
 		
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
 			
-			//Adjust orbits
-			thetaDonut = this.adjustOrbit(torus, 100, thetaDonut, phiDonut)
-			thetaMoon = this.adjustOrbit(moon, 150, thetaMoon, phiMoon)
+			if(scene === mainScene){
+				//Adjust orbits
+				thetaDonut = this.adjustOrbit(torus, 100, thetaDonut, phiDonut)
+				thetaMoon = this.adjustOrbit(moon, 150, thetaMoon, phiMoon)
 
-			//Adjust rotations
-			torus.rotation.z += 0.001
-			torus.rotation.x += 0.01
-			torus.rotation.y += 0.005
-			//moon.rotation.z += 0.001
-			moon.rotation.x += 0.001
-			moon.rotation.y += 0.001
+				//Adjust rotations
+				torus.rotation.z += 0.001
+				torus.rotation.x += 0.01
+				torus.rotation.y += 0.005
+				//moon.rotation.z += 0.001
+				moon.rotation.x += 0.001
+				moon.rotation.y += 0.001
 
-			if(orbitControlsMode) controls.update()
+				if(orbitControlsMode) controls.update()
 
-			if(cameraLock.isLocked) this.adjustCamera(cameraLock.target)
-
+				if(cameraLock.isLocked) this.adjustCamera(cameraLock.target)
+			}
 			renderer.render(scene, camera);
 		}
 
@@ -337,10 +347,8 @@ function onMouseClick(event: THREE.Event) {
 		if(intersects[i].object as THREE.Mesh) {
 			//This code may be firing by accident if camera is too close to an Object3D
 			let obj = intersects[i].object as THREE.Mesh;
-			console.log(typeof(obj));
 			cameraLock.isLocked = true;
 			cameraLock.target = obj;
-			//playSoundEffect()
 			//(obj as any).material.color.set(0xff0000); //Unfortunately TS doesn't like Object3Ds
 			break //I guess? What am I even going to do with two intersects lol
 		}
@@ -351,7 +359,7 @@ function onMouseClick(event: THREE.Event) {
 function onBackOutKey(event: any){
 	var keyCode = event.which
 	if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
-		fade(); //Ask fade function to fade us again
+		fade(false); //Ask fade function to fade us again
 		cameraLock.isLocked = true
 		cameraLock.target = { position: CAM_START }
 		zoomOutAudio.play();
@@ -377,15 +385,28 @@ function onTextureLoad(){
 	console.log("Texture is loaded now")
 }
 
-//Fades out screen.
-function fade(){
-	var canvas = document.getElementById("bg");
-	if(canvas != null){
-		var computedStyle = getComputedStyle(canvas)
-		var oldOpacity = computedStyle.opacity  //Unwrap as oldOpacity is an optional that could be null if canvas doesn't exist, undefined if opacity was never defined
-		if(oldOpacity === "1") canvas.style.opacity = "0"
-		else if(oldOpacity === "0") canvas.style.opacity = "1" 
+function changeWorld(toPlanet=true){
+	if(toPlanet){
+		scene = scene2;
 	}
+	else{
+
+	}
+}
+
+//Fades out screen.
+function fade(out:boolean=true, speed: string="730ms"){
+	var canvas = document.getElementById("bg")!;
+	var computedStyle = getComputedStyle(canvas)
+
+	//Set the speed of fade
+	canvas.style.transitionDuration = speed
+
+	//Begin fade
+	var oldOpacity = computedStyle.opacity
+	if(out) canvas.style.opacity = "0"
+	else canvas.style.opacity = "1"
+
 	return false
 }
 
