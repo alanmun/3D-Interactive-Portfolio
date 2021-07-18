@@ -2,15 +2,16 @@ import React, {Component} from 'react'
 import ReactDOM from 'react-dom'
 import './index.css'
 import * as THREE from 'three'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Color, MathUtils } from 'three';
-import { randFloat } from 'three/src/math/MathUtils'
 
 let mainScene: THREE.Scene;
 let scene2: THREE.Scene;
 let scene: THREE.Scene;
 let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
+
 var zoomOutAudio = new Audio('src/assets/zoomout.wav');
 zoomOutAudio.volume = 0.9
 var backgroundAudio = new Audio('src/assets/background.mp3')
@@ -20,7 +21,7 @@ backgroundAudio.volume = 0.65
 var xIsClose = false
 var yIsClose = false
 var zIsClose = false
-var alreadyFadedThisTarget = false //Prevents accidental fading when still close to a target
+var reachedTargetFirstTime = false //Prevents accidental fading when still close to a target
 
 //Set up mouse clicking functionality
 var raycaster = new THREE.Raycaster(); 
@@ -75,7 +76,7 @@ class App extends Component {
 	}
 
 	//Adjust the orbit of an entity, distance specifies how far away and theta is what degree it is with respect to what it orbits
-	adjustOrbit(entity: THREE.Mesh, distance: number, theta: number, phi: number) {
+	adjustOrbit(entity: any, distance: number, theta: number, phi: number=0) {
 		/*
 		(0,r) ends up at x = rsin(Theta), y = rcos(Theta) for a circle
 
@@ -85,9 +86,10 @@ class App extends Component {
 		z = ρcos(ϕ)
 		ρ = r/sin(ϕ)
 		*/
-		const alpha = 0.005
-		entity.position.x = distance*Math.sin(theta)
-		entity.position.y = distance*Math.cos(theta)
+		//console.log(entity)
+		const alpha = 0.005;
+		entity.position.x = distance*Math.sin(theta);
+		entity.position.y = distance*Math.cos(theta);
 		//entity.position.z = distance*Math.sin(theta)
 		theta += (0.0025 / (alpha*distance)) //orbiting speed is a function of distance from celestial mass
 		if(theta >= 360) theta = 0
@@ -199,11 +201,17 @@ class App extends Component {
 			xIsClose = false
 			yIsClose = false
 			zIsClose = false
-			alreadyFadedThisTarget = false
+			reachedTargetFirstTime = false
 		} 
 		else if(xIsClose && yIsClose && zIsClose) { //We are approaching something that isn't 
-			if(alreadyFadedThisTarget == false) fade()
-			alreadyFadedThisTarget = true
+			if(reachedTargetFirstTime == false){
+				fade()
+				setTimeout(function(){
+					changeWorld("planet")
+					fade(false)
+				}, 1000)
+			}
+			reachedTargetFirstTime = true
 		}
 		//else if(xMatched && yMatched && zMatched) cameraLock = {isLocked: false, target: null} //This may not be necessary...
 
@@ -224,6 +232,7 @@ class App extends Component {
 
 		//Start loading in any textures
 		let giantsDeep = new THREE.TextureLoader().load('src/assets/giantsdeep.png')
+		scene2.background = giantsDeep
 		let spaceTexture = new THREE.TextureLoader().loadAsync('src/assets/pillarsofcreation.jpg', onTextureLoad)
 		spaceTexture.then(value => {
 			console.log("space texture loaded")
@@ -264,6 +273,8 @@ class App extends Component {
 
 		const aL = new THREE.AmbientLight(new Color("white"))
 		mainScene.add(aL)
+		const aL2 = new THREE.AmbientLight(new Color("white"))
+		scene2.add(aL2)
 
 		//GridHelper
 		const gH = new THREE.GridHelper(200, 50)
@@ -278,17 +289,33 @@ class App extends Component {
 
 		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 9, null, null, 1.0) //with a black hole so massive everything orbits around it
 
+		let twitter: THREE.Group
+		let twitterMaterial = new THREE.MeshStandardMaterial({ color: 0x3fbcff, roughness: 0.0, flatShading: true })
+		let twitterLoader = new OBJLoader().load('src/assets/twitter.obj', function(object){
+			twitter = object
+			twitter.traverse(function(child){
+				if(child instanceof THREE.Mesh){
+					child.material = twitterMaterial
+					child.rotation.y += 7
+				}
+			})
+			console.log(twitter)
+			scene.add(twitter)
+			console.log("Done loading twitter model")
+		})
+
 		let moon = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 18, moonTexture, moonNormal, 0.0) //with a moon!
 		console.log(moon.material.map) //Neither of these are loaded at this point, yet map works fine.
 		console.log(moon.material.normalMap)
 
 		let thetaDonut: number = 0 //degrees
-		let phiDonut = 0
+		//let phiDonut = 0
 		let thetaMoon: number = 90
-		let phiMoon = 0
+		//let phiMoon = 0
+		let thetaTwitter: number = 0
 
 		if(scrollMode) window.onscroll = moveCamera
-		scene = mainScene;
+		scene = mainScene; //Set active scene to main universe at start up
 		
 		//three.js "game" loop
 		const animate = () =>{
@@ -296,8 +323,9 @@ class App extends Component {
 			
 			if(scene === mainScene){
 				//Adjust orbits
-				thetaDonut = this.adjustOrbit(torus, 100, thetaDonut, phiDonut)
-				thetaMoon = this.adjustOrbit(moon, 150, thetaMoon, phiMoon)
+				//thetaDonut = this.adjustOrbit(torus, 100, thetaDonut)
+				//thetaMoon = this.adjustOrbit(moon, 150, thetaMoon)
+				thetaTwitter = this.adjustOrbit(twitter, 60, thetaTwitter)
 
 				//Adjust rotations
 				torus.rotation.z += 0.001
@@ -306,10 +334,15 @@ class App extends Component {
 				//moon.rotation.z += 0.001
 				moon.rotation.x += 0.001
 				moon.rotation.y += 0.001
+				twitter.rotation.x += 0.001
+				twitter.rotation.y += 0.002
 
 				if(orbitControlsMode) controls.update()
 
 				if(cameraLock.isLocked) this.adjustCamera(cameraLock.target)
+			}
+			else if(scene === scene2){
+				console.log("in scene2 animate")
 			}
 			renderer.render(scene, camera);
 		}
@@ -358,8 +391,10 @@ function onMouseClick(event: THREE.Event) {
 //Register listener for and set up callback for space and esc key
 function onBackOutKey(event: any){
 	var keyCode = event.which
+	if(scene === mainScene) return //Do not have any effect when already in mainScene
 	if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
 		fade(false); //Ask fade function to fade us again
+		changeWorld("spawn")
 		cameraLock.isLocked = true
 		cameraLock.target = { position: CAM_START }
 		zoomOutAudio.play();
@@ -385,12 +420,13 @@ function onTextureLoad(){
 	console.log("Texture is loaded now")
 }
 
-function changeWorld(toPlanet=true){
-	if(toPlanet){
+function changeWorld(to: string){
+	if(to == "planet"){
 		scene = scene2;
 	}
-	else{
-
+	else if(to == "spawn"){
+		console.log("setting scene to mainScene")
+		scene = mainScene
 	}
 }
 
