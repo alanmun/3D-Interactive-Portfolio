@@ -7,7 +7,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Color, MathUtils } from 'three';
 
 let mainScene: THREE.Scene;
-let scene2: THREE.Scene;
+let planetScene: THREE.Scene;
 let scene: THREE.Scene;
 let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
@@ -30,7 +30,7 @@ var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2(); //2D representation of where a mouse click occurs
 const CAM_START = {
 	x: 0,
-	y: -27.5, //For some reason the grid and black hole seem to be centered here instead of at 0...
+	y: 0,//-27.5, //For some reason the grid and black hole seem to be centered here instead of at 0...
 	z: 240
 }
 type cameraLockType = {
@@ -41,17 +41,19 @@ let cameraLock:cameraLockType = {isLocked: false, target: null} //Instantiate a 
 
 class App extends Component {
 
-	addStar(){
-		const starGeo = new THREE.SphereGeometry(0.25, 24, 24)
-		const starMat = new THREE.MeshStandardMaterial({color: new Color("white")})
+	//Adds a star in a random spot, if negZOnly is passed in as true, it won't put any stars in pos z, helping to "background" the stars better
+	addStar(negZOnly=false){
+		const starGeo = new THREE.SphereGeometry(THREE.MathUtils.randFloat(0.25, 0.75), 24, 24)
+		const starMat = new THREE.MeshBasicMaterial({color: new Color("white")})
 		const star = new THREE.Mesh(starGeo, starMat)
 
 		let x,y,z;
 		let xIsNeg, yIsNeg, zIsNeg
 		xIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
 		yIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
-		zIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
-		const outerBound = 300
+		if(!negZOnly) zIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
+		else zIsNeg = -1
+		const outerBound = 600 //300
 
 		if(xIsNeg == -1) x = THREE.MathUtils.randFloat(0, -1 * outerBound)
 		else x = THREE.MathUtils.randFloat(15, outerBound)
@@ -65,15 +67,13 @@ class App extends Component {
 		mainScene.add(star)
 	}
 
-	addCelestialEntity(pos: THREE.Vector3, size: number, texture: any, norMap: any, metalness: number){
+	addCelestialEntity(pos: THREE.Vector3, size: number, texture: any, norMap: any, metalness: number, color=new Color("black")){
 
 		const celestialEntity = new THREE.Mesh(
 			new THREE.SphereGeometry(size, 128, 128),
-			new THREE.MeshStandardMaterial({map: texture, metalness: metalness, normalMap: norMap})
+			new THREE.MeshStandardMaterial({color: color, map: texture, metalness: metalness, normalMap: norMap})
 		)
-		if(texture == null) celestialEntity.material.color = new Color("black") //if there is a texture, color covers over it
 		celestialEntity.position.set(pos.x, pos.y, pos.z)
-		mainScene.add(celestialEntity)
 		return celestialEntity
 	}
 
@@ -89,7 +89,7 @@ class App extends Component {
 		ρ = r/sin(ϕ)
 		*/
 		//console.log(entity)
-		const alpha = 0.005;
+		const alpha = 0.01;
 		entity.position.x = distance*Math.sin(theta);
 		entity.position.y = distance*Math.cos(theta);
 		//entity.position.z = distance*Math.sin(theta)
@@ -221,12 +221,12 @@ class App extends Component {
 
 	componentDidMount() {
 
-		let debug = false
+		let debug = true
 		let scrollMode = false
 		let orbitControlsMode = false
 
 		mainScene = new THREE.Scene(); //Instantiate the scene
-		scene2 = new THREE.Scene();
+		planetScene = new THREE.Scene();
 
 		document.body.addEventListener("mousemove", function () {
 			backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
@@ -234,11 +234,11 @@ class App extends Component {
 
 		//Start loading in any textures
 		let giantsDeep = new THREE.TextureLoader().load('src/assets/giantsdeep.png')
-		scene2.background = giantsDeep
-		let spaceTexture = new THREE.TextureLoader().loadAsync('src/assets/pillarsofcreation.jpg', onTextureLoad)
+		planetScene.background = giantsDeep
+		let spaceTexture = new THREE.TextureLoader().loadAsync('src/assets/realisticspace.png', onTextureLoad)
 		spaceTexture.then(value => {
 			console.log("space texture loaded")
-			mainScene.background = value
+			//mainScene.background = value
 		})
 
 		let moonTexture = new THREE.TextureLoader().load('src/assets/moon.jpg')
@@ -262,21 +262,15 @@ class App extends Component {
 
 		//define some Geometry
 		const geometry = new THREE.TorusGeometry(10, 3, 16, 100)
-		const material = new THREE.MeshStandardMaterial({color: 0xFF6347, wireframe: false});
+		const material = new THREE.MeshStandardMaterial({color: 0xFF6347, roughness: 1, wireframe: false});
 		const torus = new THREE.Mesh(geometry, material);
 		mainScene.add(torus)
 
 		//Add some light
-		const pL = new THREE.PointLight(new Color("black"))
-		const lH = new THREE.PointLightHelper(pL)
-		pL.position.set(5,5,5)
-		mainScene.add(pL)
-		if(debug) mainScene.add(lH)
-
-		const aL = new THREE.AmbientLight(new Color("white"))
+		const aL = new THREE.AmbientLight(new Color("white"), 0.2)
 		mainScene.add(aL)
 		const aL2 = new THREE.AmbientLight(new Color("white"))
-		scene2.add(aL2)
+		planetScene.add(aL2)
 
 		//GridHelper
 		const gH = new THREE.GridHelper(200, 50)
@@ -287,33 +281,43 @@ class App extends Component {
 		if(orbitControlsMode) controls = new OrbitControls(camera, renderer.domElement);
 
 		//Populate the universe
-		//Array(500).fill(0).forEach(this.addStar) //with stars
+		for(let i = 0; i < 500; i++) this.addStar(true) //with stars
 
-		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 9, null, null, 1.0) //with a black hole so massive everything orbits around it
+		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, null, null, 1.0) //with a black hole so massive everything orbits around it
+		mainScene.add(blackHole)
 
+		//Create star that belongs to solar system and provides light to the system
+		let systemStar = new THREE.Group();
+		const pL = new THREE.PointLight(new Color("white"), 1, 0) //light source
+		const lH = new THREE.PointLightHelper(pL) //debugging tool
+		pL.position.set(0,0,0)
+		if(debug) mainScene.add(lH) //Debugging object doesn't need to be part of the group
+		systemStar.add(this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 18, null, null, 0, new Color("gold"))) //Create a star that belongs to this solar system
+		systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
+		mainScene.add(systemStar)
+
+		//Create the twitter planet from an .obj model
 		let twitterLoader = new OBJLoader().load('src/assets/twitter.obj', function(object){
 			twitter = object
 			twitter.traverse(function(child){
 				if(child instanceof THREE.Mesh){
-					console.log(child)
-					child.material = new THREE.MeshStandardMaterial({ color: 0x3fbcff, roughness: 0.7, flatShading: true})
-					child.rotation.y += 7.5
+					//console.log(child)
+					child.material = new THREE.MeshStandardMaterial({ color: 0x3fbcff, roughness: 0, metalness: 0, flatShading: false})
+					child.rotation.y += 7.5 //For start up sake I like to start it at this rotation so it looks more presentable, not that important
 				}
 			})
-			console.log(twitter)
-			scene.add(twitter)
-			console.log("Done loading twitter model")
+			//console.log(twitter)
+			mainScene.add(twitter)
 		})
 
-		let moon = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 18, moonTexture, moonNormal, 0.0) //with a moon!
+		let moon = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, moonTexture, moonNormal, 0.0) //with a moon!
 		console.log(moon.material.map) //Neither of these are loaded at this point, yet map works fine.
 		console.log(moon.material.normalMap)
 
 		let thetaDonut: number = 0 //degrees
-		//let phiDonut = 0
 		let thetaMoon: number = 90
-		//let phiMoon = 0
 		let thetaTwitter: number = 0
+		let thetaSystemStar: number = 0
 
 		if(scrollMode) window.onscroll = moveCamera
 		scene = mainScene; //Set active scene to main universe at start up
@@ -324,9 +328,10 @@ class App extends Component {
 			
 			if(scene === mainScene){
 				//Adjust orbits
-				thetaDonut = this.adjustOrbit(torus, 100, thetaDonut)
-				thetaMoon = this.adjustOrbit(moon, 150, thetaMoon)
-				thetaTwitter = this.adjustOrbit(twitter, 50, thetaTwitter)
+				thetaDonut = this.adjustOrbit(torus, 150, thetaDonut)
+				thetaMoon = this.adjustOrbit(moon, 200, thetaMoon)
+				thetaTwitter = this.adjustOrbit(twitter, 100, thetaTwitter)
+				thetaSystemStar = this.adjustOrbit(systemStar, 50, thetaSystemStar)
 
 				//Adjust rotations
 				torus.rotation.z += 0.001
@@ -341,8 +346,8 @@ class App extends Component {
 
 				if(cameraLock.isLocked) this.adjustCamera(cameraLock.target)
 			}
-			else if(scene === scene2){
-				console.log("in scene2 animate")
+			else if(scene === planetScene){
+				console.log("in planetScene animate")
 			}
 			renderer.render(scene, camera);
 		}
@@ -426,10 +431,9 @@ function onTextureLoad(){
 
 function changeWorld(to: string){
 	if(to == "planet"){
-		scene = scene2;
+		scene = planetScene;
 	}
 	else if(to == "spawn"){
-		console.log("setting scene to mainScene")
 		scene = mainScene
 	}
 }
