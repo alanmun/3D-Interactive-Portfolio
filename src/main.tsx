@@ -13,6 +13,7 @@ let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
 
 let twitter: THREE.Group //For twitter.obj model
+let systemStar: THREE.Group
 
 var zoomOutAudio = new Audio('src/assets/zoomout.wav');
 zoomOutAudio.volume = 0.9
@@ -44,7 +45,7 @@ class App extends Component {
 	//Adds a star in a random spot, if negZOnly is passed in as true, it won't put any stars in pos z, helping to "background" the stars better
 	addStar(negZOnly=false){
 		const starGeo = new THREE.SphereGeometry(THREE.MathUtils.randFloat(0.25, 0.75), 24, 24)
-		const starMat = new THREE.MeshBasicMaterial({color: new Color("white")})
+		const starMat = new THREE.MeshBasicMaterial({color: new Color("white")}) //MeshBasicMaterials do not cast shadows, good for tiny star balls
 		const star = new THREE.Mesh(starGeo, starMat)
 
 		let x,y,z;
@@ -53,15 +54,17 @@ class App extends Component {
 		yIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
 		if(!negZOnly) zIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
 		else zIsNeg = -1
+
+		//Set the closest and farthest stars can be
+		const innerBound = 250
 		const outerBound = 600 //300
 
-		if(xIsNeg == -1) x = THREE.MathUtils.randFloat(0, -1 * outerBound)
-		else x = THREE.MathUtils.randFloat(15, outerBound)
-		if(yIsNeg == -1) y = THREE.MathUtils.randFloat(0, -1 * outerBound)
-		else y = THREE.MathUtils.randFloat(15, outerBound)
-		if(zIsNeg == -1) z = THREE.MathUtils.randFloat(0, -1 * outerBound)
-		else z = THREE.MathUtils.randFloat(15, outerBound)
-
+		x = THREE.MathUtils.randFloat(0, xIsNeg * outerBound)
+		z = THREE.MathUtils.randFloat(0, zIsNeg * outerBound)
+		if(Math.abs(z) > innerBound || Math.abs(x) > innerBound) //Ignore bounding rules, if x or z accidentally abide by them
+			y = THREE.MathUtils.randFloat(0, yIsNeg * outerBound)
+		else //This way, we get a nice box in the center of our system devoid of star clutter and they stick to the edges of the world only
+			y = THREE.MathUtils.randFloat(yIsNeg * innerBound, yIsNeg * outerBound) 
 		star.position.set(x, y, z);
 		star.name = "star"
 		mainScene.add(star)
@@ -223,7 +226,7 @@ class App extends Component {
 
 		let debug = true
 		let scrollMode = false
-		let orbitControlsMode = false
+		let orbitControlsMode = true
 
 		mainScene = new THREE.Scene(); //Instantiate the scene
 		planetScene = new THREE.Scene();
@@ -235,10 +238,10 @@ class App extends Component {
 		//Start loading in any textures
 		let giantsDeep = new THREE.TextureLoader().load('src/assets/giantsdeep.png')
 		planetScene.background = giantsDeep
-		let spaceTexture = new THREE.TextureLoader().loadAsync('src/assets/realisticspace.png', onTextureLoad)
-		spaceTexture.then(value => {
+		let spaceTexturePromise = new THREE.TextureLoader().loadAsync('src/assets/pillarsofcreation.jpg', onTextureLoad)
+		spaceTexturePromise.then(value => {
 			console.log("space texture loaded")
-			//mainScene.background = value
+			mainScene.background = value
 		})
 
 		let moonTexture = new THREE.TextureLoader().load('src/assets/moon.jpg')
@@ -262,12 +265,12 @@ class App extends Component {
 
 		//define some Geometry
 		const geometry = new THREE.TorusGeometry(10, 3, 16, 100)
-		const material = new THREE.MeshStandardMaterial({color: 0xFF6347, roughness: 1, wireframe: false});
+		const material = new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: true, roughness: 1, wireframe: false});
 		const torus = new THREE.Mesh(geometry, material);
 		mainScene.add(torus)
 
 		//Add some light
-		const aL = new THREE.AmbientLight(new Color("white"), 0.2)
+		const aL = new THREE.AmbientLight(new Color("white"), 1)
 		mainScene.add(aL)
 		const aL2 = new THREE.AmbientLight(new Color("white"))
 		planetScene.add(aL2)
@@ -281,27 +284,42 @@ class App extends Component {
 		if(orbitControlsMode) controls = new OrbitControls(camera, renderer.domElement);
 
 		//Populate the universe
-		for(let i = 0; i < 500; i++) this.addStar(true) //with stars
+		for(let i = 0; i < 500; i++) this.addStar() //with stars
 
 		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, null, null, 1.0) //with a black hole so massive everything orbits around it
 		mainScene.add(blackHole)
 
 		//Create star that belongs to solar system and provides light to the system
-		let systemStar = new THREE.Group();
-		const pL = new THREE.PointLight(new Color("white"), 1, 0) //light source
-		const lH = new THREE.PointLightHelper(pL) //debugging tool
-		pL.position.set(0,0,0)
-		if(debug) mainScene.add(lH) //Debugging object doesn't need to be part of the group
-		systemStar.add(this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 18, null, null, 0, new Color("gold"))) //Create a star that belongs to this solar system
-		systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
-		mainScene.add(systemStar)
+		// let systemStar = new THREE.Group();
+		// const pL = new THREE.PointLight(new Color("white"), 1, 0) //light source
+		// const lH = new THREE.PointLightHelper(pL) //debugging tool
+		// pL.position.set(0,0,0)
+		// if(debug) mainScene.add(lH) //Debugging object doesn't need to be part of the group
+		// systemStar.add(this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 18, null, null, 0, new Color("gold"))) //Create a star that belongs to this solar system
+		// systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
+		// mainScene.add(systemStar)
+
+		//Create the system's star from an .obj model
+		let systemStarLoader = new OBJLoader().load('src/assets/systemstar.obj', function(object){
+			systemStar = object
+			systemStar.traverse(function(child){
+				if(child instanceof THREE.Mesh){
+					console.log(child)
+					//for(let i = 0; i < child.material.length; 
+					//child.material = new THREE.MeshStandardMaterial({ color: 0x3fbcff, roughness: 0, metalness: 0, flatShading: false})
+				}
+			})
+			systemStar.scale.set(0.01, 0.01, 0.01)
+			console.log(systemStar)
+			mainScene.add(systemStar)
+		})
 
 		//Create the twitter planet from an .obj model
 		let twitterLoader = new OBJLoader().load('src/assets/twitter.obj', function(object){
 			twitter = object
 			twitter.traverse(function(child){
 				if(child instanceof THREE.Mesh){
-					//console.log(child)
+					console.log(child)
 					child.material = new THREE.MeshStandardMaterial({ color: 0x3fbcff, roughness: 0, metalness: 0, flatShading: false})
 					child.rotation.y += 7.5 //For start up sake I like to start it at this rotation so it looks more presentable, not that important
 				}
