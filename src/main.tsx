@@ -3,8 +3,10 @@ import ReactDOM from 'react-dom'
 import './index.css'
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { Color, MathUtils } from 'three';
+import { Color, MathUtils, MeshPhongMaterial, SphereGeometry } from 'three';
+import { MeshBasicMaterial } from 'three';
 
 let mainScene: THREE.Scene;
 let planetScene: THREE.Scene;
@@ -239,10 +241,19 @@ class App extends Component {
 		let giantsDeep = new THREE.TextureLoader().load('src/assets/giantsdeep.png')
 		planetScene.background = giantsDeep
 		let spaceTexturePromise = new THREE.TextureLoader().loadAsync('src/assets/pillarsofcreation.jpg', onTextureLoad)
+		let spaceTexture
 		spaceTexturePromise.then(value => {
 			console.log("space texture loaded")
-			mainScene.background = value
+			spaceTexture = value
+			let skyboxGeom = new SphereGeometry(900, 128, 128)
+			let skyboxMat = new THREE.MeshPhongMaterial({map: spaceTexture});
+			skyboxMat.side = THREE.BackSide
+			let skybox = new THREE.Mesh(skyboxGeom, skyboxMat);
+			skybox.position.set(0,0,0)
+			mainScene.add(skybox)
 		})
+
+
 
 		let moonTexture = new THREE.TextureLoader().load('src/assets/moon.jpg')
 		let moonNormal = new THREE.TextureLoader().load('src/assets/moonbumpmap.jpg')
@@ -265,7 +276,7 @@ class App extends Component {
 
 		//define some Geometry
 		const geometry = new THREE.TorusGeometry(10, 3, 16, 100)
-		const material = new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: true, roughness: 1, wireframe: false});
+		const material = new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: false, roughness: 0, wireframe: false});
 		const torus = new THREE.Mesh(geometry, material);
 		mainScene.add(torus)
 
@@ -286,33 +297,47 @@ class App extends Component {
 		//Populate the universe
 		for(let i = 0; i < 500; i++) this.addStar() //with stars
 
-		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, null, null, 1.0) //with a black hole so massive everything orbits around it
+		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, null, null, 0) //with a black hole so massive everything orbits around it
 		mainScene.add(blackHole)
 
 		//Create star that belongs to solar system and provides light to the system
-		// let systemStar = new THREE.Group();
-		// const pL = new THREE.PointLight(new Color("white"), 1, 0) //light source
-		// const lH = new THREE.PointLightHelper(pL) //debugging tool
-		// pL.position.set(0,0,0)
-		// if(debug) mainScene.add(lH) //Debugging object doesn't need to be part of the group
-		// systemStar.add(this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 18, null, null, 0, new Color("gold"))) //Create a star that belongs to this solar system
-		// systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
-		// mainScene.add(systemStar)
+		let systemStar = new THREE.Group();
+		let systemStarTexture = new THREE.TextureLoader().load('src/assets/8k_sun.jpg')
+		const pL = new THREE.PointLight(new Color("white"), 2, 0) //light source
+		const lH = new THREE.PointLightHelper(pL) //debugging tool
+		if(debug) mainScene.add(lH) //Debugging object doesn't need to be part of the group
+		systemStar.add(this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 18, systemStarTexture, null, 0, new Color("gold"))) //Create a star that belongs to this solar system
+		systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
+		mainScene.add(systemStar)
 
 		//Create the system's star from an .obj model
-		let systemStarLoader = new OBJLoader().load('src/assets/systemstar.obj', function(object){
-			systemStar = object
-			systemStar.traverse(function(child){
-				if(child instanceof THREE.Mesh){
-					console.log(child)
-					//for(let i = 0; i < child.material.length; 
-					//child.material = new THREE.MeshStandardMaterial({ color: 0x3fbcff, roughness: 0, metalness: 0, flatShading: false})
-				}
-			})
-			systemStar.scale.set(0.01, 0.01, 0.01)
-			console.log(systemStar)
-			mainScene.add(systemStar)
-		})
+		// let systemStarMTL = new MTLLoader().load('src/assets/solarsystem.mtl', function(materials){
+		// 	materials.preload()
+
+		// 	let systemStarOBJ = new OBJLoader()
+		// 	systemStarOBJ.setMaterials(materials)
+		// 	systemStarOBJ.load('src/assets/systemstar.obj', function(object){
+		// 		systemStar = object
+		// 		systemStar.traverse(function(child){
+		// 			if(child instanceof THREE.Mesh){
+		// 				for(let i = 0; i < 13; i++){
+		// 					if(child.material[i].name != "sun") console.log(child.material[i]) //child.material[i] == null
+		// 				}
+		// 				// child.material.forEach(e: THREE.MeshPhongMaterial => {
+		// 				// 	if(e.name != "sun") console.log();
+		// 				// });
+		// 				//for(let i = 0; i < child.material.length;
+
+		// 				//child.material = new THREE.MeshStandardMaterial({map: 8ksun, roughness: 0, metalness: 0, flatShading: false})
+		// 			}
+		// 		})
+		// 		systemStar.scale.set(0.01, 0.01, 0.01)
+		// 		console.log(systemStar)
+		// 		systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
+		// 		mainScene.add(systemStar)
+		// 	})
+		// })
+
 
 		//Create the twitter planet from an .obj model
 		let twitterLoader = new OBJLoader().load('src/assets/twitter.obj', function(object){
@@ -328,9 +353,8 @@ class App extends Component {
 			mainScene.add(twitter)
 		})
 
-		let moon = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, moonTexture, moonNormal, 0.0) //with a moon!
-		console.log(moon.material.map) //Neither of these are loaded at this point, yet map works fine.
-		console.log(moon.material.normalMap)
+		let moon = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, moonTexture, moonNormal, 0.0, new Color("white")) //with a moon!
+		mainScene.add(moon)
 
 		let thetaDonut: number = 0 //degrees
 		let thetaMoon: number = 90
@@ -339,6 +363,8 @@ class App extends Component {
 
 		if(scrollMode) window.onscroll = moveCamera
 		scene = mainScene; //Set active scene to main universe at start up
+
+		//if(debug) scene.overrideMaterial = new MeshBasicMaterial({ color: 'green'})
 		
 		//three.js "game" loop
 		const animate = () =>{
@@ -346,10 +372,10 @@ class App extends Component {
 			
 			if(scene === mainScene){
 				//Adjust orbits
-				thetaDonut = this.adjustOrbit(torus, 150, thetaDonut)
-				thetaMoon = this.adjustOrbit(moon, 200, thetaMoon)
-				thetaTwitter = this.adjustOrbit(twitter, 100, thetaTwitter)
-				thetaSystemStar = this.adjustOrbit(systemStar, 50, thetaSystemStar)
+				thetaDonut = this.adjustOrbit(torus, 190, thetaDonut)
+				thetaMoon = this.adjustOrbit(moon, 240, thetaMoon)
+				thetaTwitter = this.adjustOrbit(twitter, 140, thetaTwitter)
+				thetaSystemStar = this.adjustOrbit(systemStar, 80, thetaSystemStar)
 
 				//Adjust rotations
 				torus.rotation.z += 0.001
