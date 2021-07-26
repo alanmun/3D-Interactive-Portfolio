@@ -6,7 +6,6 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Color, MathUtils, MeshPhongMaterial, SphereGeometry } from 'three';
-import { MeshBasicMaterial } from 'three';
 
 let mainScene: THREE.Scene;
 let planetScene: THREE.Scene;
@@ -59,7 +58,7 @@ class App extends Component {
 
 		//Set the closest and farthest stars can be
 		const innerBound = 250
-		const outerBound = 600 //300
+		const outerBound = 700
 
 		x = THREE.MathUtils.randFloat(0, xIsNeg * outerBound)
 		z = THREE.MathUtils.randFloat(0, zIsNeg * outerBound)
@@ -224,9 +223,10 @@ class App extends Component {
 
 	}
 
+	//Using React's componentDidMount as my init function
 	componentDidMount() {
 
-		let debug = true
+		let debug = false
 		let scrollMode = false
 		let orbitControlsMode = true
 
@@ -237,29 +237,40 @@ class App extends Component {
 			backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
 		})
 
-		//Start loading in any textures
+		//Set up the scenes
 		let giantsDeep = new THREE.TextureLoader().load('src/assets/giantsdeep.png')
 		planetScene.background = giantsDeep
-		let spaceTexturePromise = new THREE.TextureLoader().loadAsync('src/assets/pillarsofcreation.jpg', onTextureLoad)
-		let spaceTexture
-		spaceTexturePromise.then(value => {
-			console.log("space texture loaded")
-			spaceTexture = value
-			let skyboxGeom = new SphereGeometry(900, 128, 128)
-			let skyboxMat = new THREE.MeshPhongMaterial({map: spaceTexture});
-			skyboxMat.side = THREE.BackSide
-			let skybox = new THREE.Mesh(skyboxGeom, skyboxMat);
-			skybox.position.set(0,0,0)
+
+		//Skybox
+		let skybox: THREE.Mesh
+		const loadManager = new THREE.LoadingManager();
+		const loader = new THREE.TextureLoader(loadManager);
+		let skyboxGeom = new THREE.BoxGeometry(1600, 1600, 1600)
+		let skyboxMaterials = [
+			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/right.png', onTextureLoad)}),
+			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/left.png', onTextureLoad)}),
+			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/top.png', onTextureLoad)}),
+			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/bottom.png', onTextureLoad)}),
+			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/front.png', onTextureLoad)}),
+			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/back.png', onTextureLoad)})
+		];
+		skyboxMaterials.forEach(x => x.side = THREE.BackSide)
+		loadManager.onLoad = () =>{
+			console.log("Loaded skybox")
+			skybox = new THREE.Mesh(skyboxGeom, skyboxMaterials)
+			skybox.name = "skybox" //Tag it so we can block mouse clicks from acting on it
 			mainScene.add(skybox)
-		})
-
-
+			window.onload = (function () {
+				const loadingScreen = document.querySelector('#loading-screen')!;
+				console.log(loadingScreen)
+			});
+		}
 
 		let moonTexture = new THREE.TextureLoader().load('src/assets/moon.jpg')
 		let moonNormal = new THREE.TextureLoader().load('src/assets/moonbumpmap.jpg')
 
 		//Instantiate and set up camera
-		camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000)
+		camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 5000)
 		camera.position.z = CAM_START.z //Move camera back so its not in center of scene
 		camera.position.y = CAM_START.y //Move camera back so its not in center of scene
 
@@ -274,7 +285,7 @@ class App extends Component {
 		renderer.setSize(window.innerWidth, window.innerHeight) //Fullscreen
 		document.body.appendChild(renderer.domElement); //Add renderer to the dom, which is responsible for drawing camera and scene
 
-		//define some Geometry
+		//define some for sample planet torus
 		const geometry = new THREE.TorusGeometry(10, 3, 16, 100)
 		const material = new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: false, roughness: 0, wireframe: false});
 		const torus = new THREE.Mesh(geometry, material);
@@ -295,7 +306,7 @@ class App extends Component {
 		if(orbitControlsMode) controls = new OrbitControls(camera, renderer.domElement);
 
 		//Populate the universe
-		for(let i = 0; i < 500; i++) this.addStar() //with stars
+		for(let i = 0; i < 600; i++) this.addStar() //with stars
 
 		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, null, null, 0) //with a black hole so massive everything orbits around it
 		mainScene.add(blackHole)
@@ -344,7 +355,7 @@ class App extends Component {
 			twitter = object
 			twitter.traverse(function(child){
 				if(child instanceof THREE.Mesh){
-					console.log(child)
+					//console.log(child)
 					child.material = new THREE.MeshStandardMaterial({ color: 0x3fbcff, roughness: 0, metalness: 0, flatShading: false})
 					child.rotation.y += 7.5 //For start up sake I like to start it at this rotation so it looks more presentable, not that important
 				}
@@ -401,11 +412,14 @@ class App extends Component {
 	render() {
 		return (
 			<>
+				<section id="loading-screen">
+					<div id="loader"></div>
+				</section>
 				<canvas id="bg"></canvas>
 				<main>
 					{/* <span id="fader"></span> */}
 					<div id="text">
-						Here's some fucken text
+						Here's some text
 					</div>
 				</main>
 			</>
@@ -429,10 +443,15 @@ function onMouseClick(event: THREE.Event) {
 		cameraLock.target = twitter;
 		return
 	}
+	if(raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(systemStar))){
+		cameraLock.isLocked = true;
+		cameraLock.target = systemStar;
+		return
+	}
 	//Check for intersections on any mesh
 	var intersects = raycaster.intersectObjects(scene.children);
 	for(var i = 0; i < intersects.length; i++){
-		if(intersects[i].object.name != "star") {
+		if(intersects[i].object.name != "star" && intersects[i].object.name != "skybox") {
 			cameraLock.isLocked = true;
 			cameraLock.target = intersects[i].object;
 			//(obj as any).material.color.set(0xff0000); //Unfortunately TS doesn't like Object3Ds
@@ -485,13 +504,13 @@ function changeWorld(to: string){
 //Fades out screen.
 function fade(out:boolean=true, speed: string="730ms"){
 	var canvas = document.getElementById("bg")!;
-	var computedStyle = getComputedStyle(canvas)
+	//var computedStyle = getComputedStyle(canvas)
 
 	//Set the speed of fade
 	canvas.style.transitionDuration = speed
 
 	//Begin fade
-	var oldOpacity = computedStyle.opacity
+	//var oldOpacity = computedStyle.opacity
 	if(out) canvas.style.opacity = "0"
 	else canvas.style.opacity = "1"
 
