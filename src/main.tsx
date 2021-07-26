@@ -93,11 +93,11 @@ class App extends Component {
 		ρ = r/sin(ϕ)
 		*/
 		//console.log(entity)
-		const alpha = 0.01;
+		const alpha = 0.1;
 		entity.position.x = distance*Math.sin(theta);
 		entity.position.y = distance*Math.cos(theta);
 		//entity.position.z = distance*Math.sin(theta)
-		theta += (0.0025 / (alpha*distance)) //orbiting speed is a function of distance from celestial mass
+		theta += (1 / (alpha*(distance**2))) //orbiting speed is a function of distance from celestial mass
 		if(theta >= 360) theta = 0
 
 		return theta
@@ -261,7 +261,7 @@ class App extends Component {
 			skybox.name = "skybox" //Tag it so we can block mouse clicks from acting on it
 			mainScene.add(skybox)
 			window.onload = (function () {
-				const loadingScreen = document.querySelector('#loading-screen')!;
+				const loadingScreen = document.querySelector('#loading-screen');
 				console.log(loadingScreen)
 			});
 		}
