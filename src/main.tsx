@@ -7,6 +7,12 @@ import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Color, MathUtils, MeshPhongMaterial, SphereGeometry } from 'three';
 
+enum ce { //celestial entities
+	blackHole,
+	twitter,
+	moon
+}
+
 let mainScene: THREE.Scene;
 let planetScene: THREE.Scene;
 let scene: THREE.Scene;
@@ -116,85 +122,81 @@ class App extends Component {
 		// return new Array(theta, phi)
 	}
 
-	adjustCamera(target: THREE.Object3D, fastInc: number = 0.08, slowInc: number = 0.05){
+	adjustCamera(target: THREE.Object3D, fastInc: number = 0.08, slowInc: number = 0.025){
 		const xdiff = camera.position.x - target.position.x
 		const ydiff = camera.position.y - target.position.y
 		const zdiff = camera.position.z - target.position.z
 		var xMatched = false
 		var yMatched = false
 		var zMatched = false
+		const medInc = 0.05;
+		const nearlyThere = 0.05; //was going to call this slowestInc but its a similar value to medium Increment, which is kind of confusing
 		
 		//Because target isn't an Object3D when going to spawn, it won't have a name property. You can use below to check if target is a celestial
 		//entity, or if we're just going back to spawn
 		//console.log(target.hasOwnProperty("name"))
 
-		//Might be able to simplify bottom code to not have a positive and negative version, by comparing with abs(diff), and always += the diff, no abs after +=
+		//console.log(xIsClose, yIsClose, zIsClose)
+		console.log(xdiff, ydiff, zdiff)
 		
 		//Handle x
-		//console.log("xdiff: " + xdiff + " ydiff: " + ydiff + "zdiff: " + zdiff)
-		if(xdiff > 18) camera.position.x -= xdiff * fastInc //Too far away in positive direction
-		if(xdiff > 3 && xdiff <= 18) {
+		let absX = Math.abs(xdiff)
+		if(absX > 18) camera.position.x -= xdiff * fastInc //Too far away in positive direction
+		else if(absX > 5) {
+			camera.position.x -= xdiff * medInc //Too far away in positive direction
+			xIsClose = true
+		}
+		else if(absX > 1){
 			camera.position.x -= xdiff * slowInc //Too far away in positive direction
 			xIsClose = true
 		}
-		if(xdiff >= 0 && xdiff <= 3){
-			camera.position.x = target.position.x
-			xIsClose = true
-			xMatched = true
-		} 
-
-		if(xdiff < -18) camera.position.x += Math.abs(xdiff) * fastInc //Too far away in negative direction
-		if(xdiff < -3 && xdiff >= -18) {
-			camera.position.x += Math.abs(xdiff) * slowInc //Too far away in negative direction
+		else if(absX > 0.1){
+			camera.position.x -=  Math.sign(xdiff) * nearlyThere
 			xIsClose = true
 		}
-		if(xdiff >= -3 && xdiff <= 0) { //Only perform this block once per target, and we don't make this false again until you are back at original spawn
+		else if(absX >= 0){
 			camera.position.x = target.position.x
 			xIsClose = true
 			xMatched = true
 		}
 
 		//Handle y
-		if(ydiff > 18) camera.position.y -= ydiff * fastInc //Too far away in positive direction
-		if(ydiff > 3 && ydiff <= 18) {
+		let absY = Math.abs(ydiff);
+		if(absY > 18) camera.position.y -= ydiff * fastInc //Too far away in positive direction
+		else if(absY > 5) {
+			camera.position.y -= ydiff * medInc //Too far away in positive direction
+			yIsClose = true
+		}
+		else if(absY > 1) {
 			camera.position.y -= ydiff * slowInc //Too far away in positive direction
 			yIsClose = true
 		}
-		if(ydiff >= 0 && ydiff <= 3) {
-			camera.position.y = target.position.y
-			yIsClose = true
-			yMatched = true
-		}
-
-		if(ydiff < -18) camera.position.y += Math.abs(ydiff) * fastInc //Too far away in negative direction
-		if(ydiff < -3 && ydiff >= -18) {
-			camera.position.y += Math.abs(ydiff) * slowInc //Too far away in negative direction
+		else if(absY > 0.1){
+			camera.position.y -=  Math.sign(ydiff) * nearlyThere
 			yIsClose = true
 		}
-		if(ydiff >= -3 && ydiff <= 0) {
+		else if(absY >= 0) {
 			camera.position.y = target.position.y
 			yIsClose = true
 			yMatched = true
 		}
 		
 		//Handle z
-		if(zdiff > 18) camera.position.z -= zdiff * fastInc //Too far away in positive direction
-		if(zdiff > 3 && zdiff <= 18) {
+		let absZ = Math.abs(zdiff);
+		if(absZ > 18) camera.position.z -= zdiff * fastInc //Too far away in positive direction
+		else if(absZ > 5) {
+			camera.position.z -= zdiff * medInc //Too far away in positive direction
+			zIsClose = true
+		}
+		else if(absZ > 1) {
 			camera.position.z -= zdiff * slowInc //Too far away in positive direction
 			zIsClose = true
 		}
-		if(zdiff >= 0 && zdiff <= 3) {
-			camera.position.z = target.position.z
-			zIsClose = true
-			zMatched = true
-		}
-
-		if(zdiff < -18) camera.position.z += Math.abs(zdiff) * fastInc //Too far away in negative direction
-		if(zdiff < -3 && zdiff >= -18) {
-			camera.position.z += Math.abs(zdiff) * slowInc //Too far away in negative direction
+		else if(absZ > 0.1){
+			camera.position.z -= Math.sign(zdiff) * nearlyThere
 			zIsClose = true
 		}
-		if(zdiff >= -3 && zdiff <= 0) {
+		else if(absZ >= 0) {
 			camera.position.z = target.position.z
 			zIsClose = true
 			zMatched = true
@@ -228,7 +230,7 @@ class App extends Component {
 
 		let debug = false
 		let scrollMode = false
-		let orbitControlsMode = true
+		let orbitControlsMode = false
 
 		mainScene = new THREE.Scene(); //Instantiate the scene
 		planetScene = new THREE.Scene();
@@ -315,8 +317,10 @@ class App extends Component {
 		let systemStar = new THREE.Group();
 		let systemStarTexture = new THREE.TextureLoader().load('src/assets/8k_sun.jpg')
 		const pL = new THREE.PointLight(new Color("white"), 2, 0) //light source
-		const lH = new THREE.PointLightHelper(pL) //debugging tool
-		if(debug) mainScene.add(lH) //Debugging object doesn't need to be part of the group
+		if(debug) {
+			const lH = new THREE.PointLightHelper(pL) //debugging tool
+			mainScene.add(lH) //Debugging object doesn't need to be part of the group
+		}
 		systemStar.add(this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 18, systemStarTexture, null, 0, new Color("gold"))) //Create a star that belongs to this solar system
 		systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
 		mainScene.add(systemStar)
@@ -373,8 +377,10 @@ class App extends Component {
 		let thetaSystemStar: number = 0
 
 		if(scrollMode) window.onscroll = moveCamera
+
 		scene = mainScene; //Set active scene to main universe at start up
 
+		//Weird glitches? Can't get stuff to display? Just debug enable and make everything BasicMaterial to guarantee you're doing it right
 		//if(debug) scene.overrideMaterial = new MeshBasicMaterial({ color: 'green'})
 		
 		//three.js "game" loop
@@ -443,11 +449,12 @@ function onMouseClick(event: THREE.Event) {
 		cameraLock.target = twitter;
 		return
 	}
-	if(raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(systemStar))){
-		cameraLock.isLocked = true;
-		cameraLock.target = systemStar;
-		return
-	}
+	//This is busted for some reason, Cannot read property 'updateWorldMatrix' of undefined' did not look into it yet
+	// if(raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(systemStar))){
+	// 	cameraLock.isLocked = true;
+	// 	cameraLock.target = systemStar;
+	// 	return
+	// }
 	//Check for intersections on any mesh
 	var intersects = raycaster.intersectObjects(scene.children);
 	for(var i = 0; i < intersects.length; i++){
