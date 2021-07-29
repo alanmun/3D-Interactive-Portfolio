@@ -8,18 +8,21 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Color, MathUtils, MeshPhongMaterial, SphereGeometry } from 'three';
 
 enum ce { //celestial entities
+	spawn,
 	blackHole,
 	twitter,
+	torus,
 	moon
 }
 
 let mainScene: THREE.Scene;
-let planetScene: THREE.Scene;
+// let planetScene: THREE.Scene;
 let scene: THREE.Scene;
 let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
 
 let twitter: THREE.Group //For twitter.obj model
+let twitterCloseUp: THREE.Mesh
 let systemStar: THREE.Group
 
 var zoomOutAudio = new Audio('src/assets/zoomout.wav');
@@ -38,14 +41,15 @@ var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2(); //2D representation of where a mouse click occurs
 const CAM_START = {
 	x: 0,
-	y: 0,//-27.5, //For some reason the grid and black hole seem to be centered here instead of at 0...
-	z: 240
+	y: 0,//-27.5, //For some reason the grid and black hole seemed to be centered here instead of at 0...
+	z: 290
 }
 type cameraLockType = {
 	isLocked: boolean,
 	target: any
+	name: ce
 }
-let cameraLock:cameraLockType = {isLocked: false, target: null} //Instantiate a cameraLock struct
+let cameraLock:cameraLockType = {isLocked: false, target: null, name: ce.spawn} //Instantiate a cameraLock struct
 
 class App extends Component {
 
@@ -99,7 +103,7 @@ class App extends Component {
 		ρ = r/sin(ϕ)
 		*/
 		//console.log(entity)
-		const alpha = 0.1;
+		const alpha = 0.1; //Decrease to speed up, a good value is 0.1
 		entity.position.x = distance*Math.sin(theta);
 		entity.position.y = distance*Math.cos(theta);
 		//entity.position.z = distance*Math.sin(theta)
@@ -135,9 +139,6 @@ class App extends Component {
 		//Because target isn't an Object3D when going to spawn, it won't have a name property. You can use below to check if target is a celestial
 		//entity, or if we're just going back to spawn
 		//console.log(target.hasOwnProperty("name"))
-
-		//console.log(xIsClose, yIsClose, zIsClose)
-		console.log(xdiff, ydiff, zdiff)
 		
 		//Handle x
 		let absX = Math.abs(xdiff)
@@ -204,18 +205,18 @@ class App extends Component {
 
 		//Special case to see if camera is at the original spawn point, disable target lock
 		if(camera.position.x == CAM_START.x && camera.position.y == CAM_START.y && camera.position.z == CAM_START.z){
-			cameraLock = {isLocked: false, target: null}
-			console.log("Matched: " + camera.position.x + "  " + CAM_START.x)
+			cameraLock = {isLocked: false, target: null, name: ce.spawn}
+			console.log("Matched at spawn: " + camera.position.x + "  " + CAM_START.x)
 			xIsClose = false
 			yIsClose = false
 			zIsClose = false
 			reachedTargetFirstTime = false
 		} 
-		else if(xIsClose && yIsClose && zIsClose) { //We are approaching something that isn't 
+		else if(xIsClose && yIsClose && zIsClose) { //We are approaching something that isn't the original spawn point
 			if(reachedTargetFirstTime == false){
 				fade()
 				setTimeout(function(){
-					changeWorld("planet")
+					changeWorld(cameraLock.name, false)
 					fade(false)
 				}, 1000)
 			}
@@ -233,15 +234,15 @@ class App extends Component {
 		let orbitControlsMode = false
 
 		mainScene = new THREE.Scene(); //Instantiate the scene
-		planetScene = new THREE.Scene();
+		// planetScene = new THREE.Scene();
 
 		document.body.addEventListener("mousemove", function () {
 			backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
 		})
 
 		//Set up the scenes
-		let giantsDeep = new THREE.TextureLoader().load('src/assets/giantsdeep.png')
-		planetScene.background = giantsDeep
+		// let giantsDeep = new THREE.TextureLoader().load('src/assets/giantsdeep.png')
+		// planetScene.background = giantsDeep
 
 		//Skybox
 		let skybox: THREE.Mesh
@@ -272,7 +273,7 @@ class App extends Component {
 		let moonNormal = new THREE.TextureLoader().load('src/assets/moonbumpmap.jpg')
 
 		//Instantiate and set up camera
-		camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 5000)
+		camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 5000)
 		camera.position.z = CAM_START.z //Move camera back so its not in center of scene
 		camera.position.y = CAM_START.y //Move camera back so its not in center of scene
 
@@ -281,7 +282,7 @@ class App extends Component {
 
 		//Instantiate and set up renderer
 		renderer = new THREE.WebGLRenderer({
-				canvas: document.querySelector('#bg') as HTMLCanvasElement,
+			canvas: document.querySelector('#bg') as HTMLCanvasElement,
 		})
 		renderer.setPixelRatio(window.devicePixelRatio) //
 		renderer.setSize(window.innerWidth, window.innerHeight) //Fullscreen
@@ -291,13 +292,14 @@ class App extends Component {
 		const geometry = new THREE.TorusGeometry(10, 3, 16, 100)
 		const material = new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: false, roughness: 0, wireframe: false});
 		const torus = new THREE.Mesh(geometry, material);
+		torus.name = "torus"
 		mainScene.add(torus)
 
 		//Add some light
 		const aL = new THREE.AmbientLight(new Color("white"), 1)
 		mainScene.add(aL)
-		const aL2 = new THREE.AmbientLight(new Color("white"))
-		planetScene.add(aL2)
+		// const aL2 = new THREE.AmbientLight(new Color("white"))
+		// planetScene.add(aL2)
 
 		//GridHelper
 		const gH = new THREE.GridHelper(200, 50)
@@ -311,6 +313,7 @@ class App extends Component {
 		for(let i = 0; i < 600; i++) this.addStar() //with stars
 
 		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, null, null, 0) //with a black hole so massive everything orbits around it
+		blackHole.name = "black hole"
 		mainScene.add(blackHole)
 
 		//Create star that belongs to solar system and provides light to the system
@@ -367,8 +370,10 @@ class App extends Component {
 			//console.log(twitter)
 			mainScene.add(twitter)
 		})
+		twitterCloseUp = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 9, null, null, 0.0, new Color(0x3fbcff))
 
 		let moon = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, moonTexture, moonNormal, 0.0, new Color("white")) //with a moon!
+		moon.name = "moon"
 		mainScene.add(moon)
 
 		let thetaDonut: number = 0 //degrees
@@ -382,34 +387,49 @@ class App extends Component {
 
 		//Weird glitches? Can't get stuff to display? Just debug enable and make everything BasicMaterial to guarantee you're doing it right
 		//if(debug) scene.overrideMaterial = new MeshBasicMaterial({ color: 'green'})
+
+
+		// //Demonstration of planet switching
+		// setTimeout(() => {
+		// 	changeWorld(ce.twitter, false)
+		// 	cameraLock.name = ce.twitter
+		// }, 1000)
+
+		// setTimeout(() => {
+		// 	changeWorld(ce.twitter, true)
+		// 	cameraLock = {
+		// 		isLocked: false,
+		// 		target: { CAM_START },
+		// 		name: ce.spawn
+		// 	}
+		// }, 5000)
 		
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
+
+			//TODO: Look into constantly resizing canvas/adaptible canvas resizing such that you can resize your screen and it won't become white space
+
+			//camera.rotation.y += 0.001
 			
-			if(scene === mainScene){
-				//Adjust orbits
-				thetaDonut = this.adjustOrbit(torus, 190, thetaDonut)
-				thetaMoon = this.adjustOrbit(moon, 240, thetaMoon)
-				thetaTwitter = this.adjustOrbit(twitter, 140, thetaTwitter)
-				thetaSystemStar = this.adjustOrbit(systemStar, 80, thetaSystemStar)
+			//Adjust orbits
+			thetaDonut = this.adjustOrbit(torus, 190, thetaDonut)
+			thetaMoon = this.adjustOrbit(moon, 240, thetaMoon)
+			thetaTwitter = (cameraLock.name != ce.twitter) ? this.adjustOrbit(twitter, 140, thetaTwitter):this.adjustOrbit(twitterCloseUp, 140, thetaTwitter)
+			thetaSystemStar = this.adjustOrbit(systemStar, 80, thetaSystemStar)
 
-				//Adjust rotations
-				torus.rotation.z += 0.001
-				torus.rotation.x += 0.01
-				torus.rotation.y += 0.005
-				//moon.rotation.z += 0.001
-				moon.rotation.x += 0.001
-				moon.rotation.y += 0.001
-				twitter.rotation.z += 0.002
+			//Adjust rotations
+			torus.rotation.z += 0.001
+			torus.rotation.x += 0.01
+			torus.rotation.y += 0.005
+			//moon.rotation.z += 0.001
+			moon.rotation.x += 0.001
+			moon.rotation.y += 0.001
+			twitter.rotation.z += 0.002
 
-				if(orbitControlsMode) controls.update()
+			if(orbitControlsMode) controls.update()
 
-				if(cameraLock.isLocked) this.adjustCamera(cameraLock.target)
-			}
-			else if(scene === planetScene){
-				console.log("in planetScene animate")
-			}
+			if(cameraLock.isLocked) this.adjustCamera(cameraLock.target)
 			renderer.render(scene, camera);
 		}
 		animate()
@@ -445,8 +465,11 @@ function onMouseClick(event: THREE.Event) {
 	raycaster.intersectObjects(scene.children); // calculate objects intersecting the picking ray
 	if(raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(twitter))){
 		//We intersected on our twitter.obj model which is a THREE.Group and so can't be detected the normal way below
-		cameraLock.isLocked = true;
-		cameraLock.target = twitter;
+		cameraLock = {
+			isLocked: true,
+			target: twitter,
+			name: ce.twitter
+		}
 		return
 	}
 	//This is busted for some reason, Cannot read property 'updateWorldMatrix' of undefined' did not look into it yet
@@ -461,6 +484,9 @@ function onMouseClick(event: THREE.Event) {
 		if(intersects[i].object.name != "star" && intersects[i].object.name != "skybox") {
 			cameraLock.isLocked = true;
 			cameraLock.target = intersects[i].object;
+			if(intersects[i].object.name == "moon") cameraLock.name = ce.moon
+			else if(intersects[i].object.name == "black hole") cameraLock.name = ce.blackHole
+			else if(intersects[i].object.name == "torus") cameraLock.name = ce.torus
 			//(obj as any).material.color.set(0xff0000); //Unfortunately TS doesn't like Object3Ds
 			return
 		}
@@ -469,13 +495,16 @@ function onMouseClick(event: THREE.Event) {
 
 //Register listener for and set up callback for space and esc key
 function onBackOutKey(event: any){
+	if(cameraLock.name == ce.spawn) return //Do nothing if cameraLock was last locked onto spawn
 	var keyCode = event.which
-	if(scene === mainScene) return //Do not have any effect when already in mainScene
 	if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
 		fade(false); //Ask fade function to fade us again
-		changeWorld("spawn")
-		cameraLock.isLocked = true
-		cameraLock.target = { position: CAM_START }
+		changeWorld(cameraLock.name, true)
+		cameraLock = {
+			isLocked: true,
+			target: { position: CAM_START },
+			name: ce.spawn
+		}
 		zoomOutAudio.play();
 	}
 }
@@ -499,12 +528,29 @@ function onTextureLoad(){
 	console.log("Texture is loaded now")
 }
 
-function changeWorld(to: string){
-	if(to == "planet"){
-		scene = planetScene;
-	}
-	else if(to == "spawn"){
-		scene = mainScene
+function changeWorld(celestialEntity: ce, leaving: boolean){
+	switch(celestialEntity){
+		case ce.blackHole:
+			//TODO: Idk what to even do if you enter a black hole, should just disable this honestly
+			break;
+		case ce.moon:
+			//TODO: Figure something out for moon maybe
+			break;
+		case ce.twitter:
+			if(leaving) {
+				scene.add(twitter)
+				camera.rotation.y = 0 //radians
+				scene.remove(twitterCloseUp)
+			}
+			else {
+				scene.remove(twitter)
+				cameraLock.target = twitterCloseUp //switch to the new target
+				camera.rotation.y = 1.57 //radians, this is effectively a 90 degree rotation left
+				scene.add(twitterCloseUp)
+			}
+			break;
+		default:
+			console.log("DEFAULT TRIGGERED!?!?!?!?")
 	}
 }
 
