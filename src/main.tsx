@@ -394,7 +394,6 @@ class App extends Component {
 		// 	changeWorld(ce.twitter, false)
 		// 	cameraLock.name = ce.twitter
 		// }, 1000)
-
 		// setTimeout(() => {
 		// 	changeWorld(ce.twitter, true)
 		// 	cameraLock = {
