@@ -36,7 +36,7 @@ var xIsClose = false
 var yIsClose = false
 var zIsClose = false
 var reachedTargetFirstTime = false //Prevents accidental fading when still close to a target
-var testAtAWorld = false
+var shouldPinCamera = false
 
 //Set up mouse clicking functionality
 var raycaster = new THREE.Raycaster(); 
@@ -83,7 +83,7 @@ class App extends Component {
 		mainScene.add(star)
 	}
 
-	testAdj(target: THREE.Object3D){
+	pinCameraToWorld(target: THREE.Object3D){
 		console.log(camera.rotation.x + (THREE.MathUtils.DEG2RAD * 30))
 		//camera.rotation.x = THREE.MathUtils.DEG2RAD * 30
 		camera.position.set(target.position.x, (target.position.y + 2), target.position.z)
@@ -212,7 +212,7 @@ class App extends Component {
 		let skybox: THREE.Mesh
 		const loadManager = new THREE.LoadingManager();
 		const loader = new THREE.TextureLoader(loadManager);
-		let skyboxGeom = new THREE.BoxGeometry(1600, 1600, 1600)
+		let skyboxGeom = new THREE.BoxGeometry(2100, 2100, 2100)
 		let skyboxMaterials = [
 			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/right.png', onTextureLoad)}),
 			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/left.png', onTextureLoad)}),
@@ -253,7 +253,7 @@ class App extends Component {
 		document.body.appendChild(renderer.domElement); //Add renderer to the dom, which is responsible for drawing camera and scene
 
 		//sample planet for practicing
-		const torus = new CelestialEntity("torus", false, 170);
+		const torus = new CelestialEntity("torus", false, 140);
 		torus.addMesh(
 			new THREE.TorusGeometry(10, 3, 16, 100), 
 			new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: false, roughness: 0, wireframe: false}),
@@ -338,7 +338,7 @@ class App extends Component {
 				}
 			})
 			//console.log(twitter)
-			twitter = new CelestialEntity("twitter", true, 120, group)
+			twitter = new CelestialEntity("twitter", true, 90, group)
 			twitter.setCloseUp(twitterCloseUp) //Only when twitter.obj is done loading do we want to set its close up version
 			mainScene.add(twitter.entity)
 			//twitter.swapEntities(scene)
@@ -350,7 +350,7 @@ class App extends Component {
 		)
 		twitterCloseUp.rotation.x -= THREE.MathUtils.DEG2RAD * 90
 
-		let moon = new CelestialEntity("moon", false, 210)
+		let moon = new CelestialEntity("moon", false, 170)
 		moon.addMesh(
 			new THREE.SphereGeometry(6, 64, 64),
 			new THREE.MeshStandardMaterial({color: "white", map: moonTexture, normalMap: moonTexture})
@@ -390,8 +390,7 @@ class App extends Component {
 			torus.adjustOrbit()
 			moon.adjustOrbit()
 			twitter.adjustOrbit()
-			// thetaTwitter = (cameraLock.name != ce.twitter) ? this.adjustOrbit(twitter, 140, thetaTwitter):this.adjustOrbit(twitterCloseUp, 140, thetaTwitter)
-			systemStar.adjustOrbit()
+			//systemStar.adjustOrbit()
 
 			//Adjust rotations
 			torus.rotate(0.01, 0.005, 0.001)
@@ -401,7 +400,7 @@ class App extends Component {
 			if(orbitControlsMode) controls.update()
 
 			if(cameraLock.isLocked) {
-				if(cameraLock.name == ce.twitter && testAtAWorld) this.testAdj(cameraLock.target)
+				if(shouldPinCamera) this.pinCameraToWorld(cameraLock.target)
 				else this.adjustCamera(cameraLock.target)
 			}
 			renderer.render(scene, camera);
@@ -503,6 +502,14 @@ function onTextureLoad(){
 }
 
 function changeWorld(celestialEntityEnum: ce, leaving: boolean){
+	if(leaving){
+		shouldPinCamera = false
+		camera.rotation.y = 0 //radians
+	}
+	else{
+		shouldPinCamera = true
+		camera.rotation.y = 1.57 //radians, this is effectively a 90 degree rotation left
+	}
 	switch(celestialEntityEnum){
 		case ce.blackHole:
 			//TODO: Idk what to even do if you enter a black hole, should just disable this honestly
@@ -513,12 +520,10 @@ function changeWorld(celestialEntityEnum: ce, leaving: boolean){
 		case ce.twitter:
 			if(leaving) {
 				twitter.swapEntities(scene)
-				camera.rotation.y = 0 //radians
 			}
 			else {
 				twitter.swapEntities(scene)
 				cameraLock.target = twitter.entityCloseUp //switch to the new target
-				camera.rotation.y = 1.57 //radians, this is effectively a 90 degree rotation left
 			}
 			break;
 		default:

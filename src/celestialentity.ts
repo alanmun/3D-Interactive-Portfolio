@@ -1,10 +1,12 @@
 import * as THREE from 'three'
+import { Scene } from 'three'
 
 export class CelestialEntity {
     isGroup: boolean = false
     distance: number = 0
+	tilt: number = THREE.MathUtils.randInt(-70, 10)
     theta: number = THREE.MathUtils.randFloat(0.0, 6.28318530718) //When a CE is made, give it a theta at random between 0 and 2pi
-    phi: number = 0
+    //phi: number = THREE.MathUtils.randFloat(0.0, 6.28318530718) //Unused rn
 	cameraIsAt: boolean = false //True if camera is currently at CE, false otherwise
     entity: any = null //THREE.Mesh representation of our CE. If CE is a group, this is the THREE.Group representation instead
 	entityCloseUp: any = null //THREE.Mesh representation of our CE when we visit it close up
@@ -59,37 +61,37 @@ export class CelestialEntity {
 
     //Adjust the orbit of an entity, distance specifies how far away and theta is what degree it is with respect to what it orbits
 	adjustOrbit() {
-		/*
-		(0,r) ends up at x = rsin(Theta), y = rcos(Theta) for a circle
-
-		For a sphere:
-		x = ρsin(ϕ)cos(θ)
-		y = ρsin(ϕ)sin(θ)
-		z = ρcos(ϕ)
-		ρ = r/sin(ϕ)
-		*/
 		let entityToMove
 		if(this.cameraIsAt) entityToMove = this.entityCloseUp
 		else entityToMove = this.entity
 
-		const alpha = 0.03; //Decrease to speed up, a good value is 0.1
+		const alpha = 0.07; //Decrease to speed up, a good value is 0.1
 
-		entityToMove.position.x = this.distance*Math.sin(this.theta);
-		entityToMove.position.y = this.distance*Math.cos(this.theta);
-		entityToMove.position.z = this.distance*Math.cos(this.theta)
-		this.theta += (1 / (alpha*(this.distance**2))) //orbiting speed is a function of distance from celestial mass
+		//Circle calculation
+		// entityToMove.position.x = this.distance*Math.cos(this.theta);
+		// entityToMove.position.y = this.distance*Math.sin(this.theta);
+		// entityToMove.position.z = this.distance*Math.cos(this.theta)
+		// this.theta += (1 / (alpha*(this.distance**2))) //orbiting speed is a function of distance from celestial mass
 		//console.log(this.theta)
 
-		// const alpha = 0.01
-		// const p = distance/Math.sin(phi)
-		// entity.position.x = p * Math.sin(phi) * Math.cos(theta)
-		// entity.position.y = p * Math.sin(phi) * Math.sin(theta)
-		// entity.position.z = p * Math.cos(phi)
+		//Sphere calculation
+		entityToMove.position.x = this.distance * Math.cos(this.theta);
+		entityToMove.position.y = this.distance * Math.sin(this.theta);
+		entityToMove.position.z = this.tilt * Math.sin(this.theta);
 
-		// phi += (0.0025 / (alpha*distance)) //orbiting speed is a function of distance from celestial mass
-		// theta += (1 / (alpha*(distance**2)))
+		//Orbit Debugging Code (generates a path of spheres so you can visually see orbits)
+		// let test = new THREE.Mesh(
+		// 	new THREE.SphereGeometry(1.5, 32, 32),
+		// 	new THREE.MeshBasicMaterial({color: "purple"})
+		// )
+		// test.position.copy(entityToMove.position)
+		// scene.add(test)
+		// setTimeout(() => {
+		// 	scene.remove(test)
+		// }, 10000)
 
-		// return [theta, phi]
+		//this.phi += (1 / (alpha*(this.distance**2))) 
+		this.theta += (1 / (alpha*(this.distance**2))) //orbiting speed is a function of distance from celestial mass
 	}
 
 	//Setters
