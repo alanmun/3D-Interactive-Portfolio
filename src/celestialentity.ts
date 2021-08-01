@@ -8,7 +8,6 @@ export class CelestialEntity {
 	cameraIsAt: boolean = false //True if camera is currently at CE, false otherwise
     entity: any = null //THREE.Mesh representation of our CE. If CE is a group, this is the THREE.Group representation instead
 	entityCloseUp: any = null //THREE.Mesh representation of our CE when we visit it close up
-	//Idea: make a entityUpClose version for every entity that manages the version when you're on that planet
 
     constructor(name: string, isAGroup: boolean, distanceFromWhatItOrbits: number, alreadyMadeEntity: any=null){
         if(alreadyMadeEntity != null) this.entity = alreadyMadeEntity

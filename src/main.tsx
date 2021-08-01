@@ -85,7 +85,7 @@ class App extends Component {
 
 	testAdj(target: THREE.Object3D){
 		console.log(camera.rotation.x + (THREE.MathUtils.DEG2RAD * 30))
-		camera.rotation.x = THREE.MathUtils.DEG2RAD * 30
+		//camera.rotation.x = THREE.MathUtils.DEG2RAD * 30
 		camera.position.set(target.position.x, (target.position.y + 2), target.position.z)
 	}
 
@@ -193,7 +193,7 @@ class App extends Component {
 	//Using React's componentDidMount as my init function
 	componentDidMount() {
 
-		let debug = true
+		let debug = false
 		let scrollMode = false
 		let orbitControlsMode = false
 
@@ -341,15 +341,15 @@ class App extends Component {
 			twitter = new CelestialEntity("twitter", true, 120, group)
 			twitter.setCloseUp(twitterCloseUp) //Only when twitter.obj is done loading do we want to set its close up version
 			mainScene.add(twitter.entity)
+			//twitter.swapEntities(scene)
 		})
 		
 		twitterCloseUp = new THREE.Mesh(
-			new THREE.PlaneGeometry(128, 128, 32, 32),
+			new THREE.PlaneGeometry(16, 32, 16, 16),
 			new THREE.MeshStandardMaterial({color: 0x3fbcff, map: moonTexture, metalness: 0.0, normalMap: moonNormal})
 		)
-		twitterCloseUp.rotation.x += THREE.MathUtils.DEG2RAD * 90
+		twitterCloseUp.rotation.x -= THREE.MathUtils.DEG2RAD * 90
 
-		//let moon = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, moonTexture, moonNormal, 0.0, new Color("white")) //with a moon!
 		let moon = new CelestialEntity("moon", false, 210)
 		moon.addMesh(
 			new THREE.SphereGeometry(6, 64, 64),
