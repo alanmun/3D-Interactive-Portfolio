@@ -12,6 +12,7 @@ enum ce { //celestial entities
 	spawn,
 	blackHole,
 	twitter,
+	autosage,
 	torus,
 	moon
 }
@@ -181,7 +182,6 @@ class App extends Component {
 				setTimeout(function(){
 					changeWorld(cameraLock.name, false)
 					fade(false)
-					testAtAWorld = true
 				}, 1000)
 			}
 			reachedTargetFirstTime = true
@@ -524,6 +524,14 @@ function changeWorld(celestialEntityEnum: ce, leaving: boolean){
 			else {
 				twitter.swapEntities(scene)
 				cameraLock.target = twitter.entityCloseUp //switch to the new target
+			}
+			break;
+		case ce.autosage:
+			if(leaving){
+
+			}
+			else{
+
 			}
 			break;
 		default:
