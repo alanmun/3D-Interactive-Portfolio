@@ -87,7 +87,7 @@ class App extends Component {
 	pinCameraToWorld(target: THREE.Object3D){
 		console.log(camera.rotation.x + (THREE.MathUtils.DEG2RAD * 30))
 		//camera.rotation.x = THREE.MathUtils.DEG2RAD * 30
-		camera.position.set(target.position.x, (target.position.y + 2), target.position.z)
+		camera.position.set(target.position.x, (target.position.y + 10), target.position.z)
 	}
 
 	adjustCamera(target: THREE.Object3D, fastInc: number = 0.08, slowInc: number = 0.025){
@@ -327,6 +327,9 @@ class App extends Component {
 		// 	})
 		// })
 
+		//Create the beat saber block
+		
+
 
 		//Create the twitter planet from an .obj model
 		new OBJLoader().load('src/assets/twitter.obj', function(group){
@@ -341,14 +344,18 @@ class App extends Component {
 			twitter = new CelestialEntity("twitter", true, 90, group)
 			twitter.setCloseUp(twitterCloseUp) //Only when twitter.obj is done loading do we want to set its close up version
 			mainScene.add(twitter.entity)
-			//twitter.swapEntities(scene)
 		})
 		
+			
+		let twitterCloseUpGeo = new THREE.PlaneGeometry(64, 96, 32, 32)
+		let twitterCloseUpMat = new THREE.MeshStandardMaterial({color: 0x3fbcff, map: moonTexture, metalness: 0.0, normalMap: moonNormal})
+		twitterCloseUpMat.side = THREE.BackSide 
+		planeCurve(twitterCloseUpGeo, 5)
 		twitterCloseUp = new THREE.Mesh(
-			new THREE.PlaneGeometry(16, 32, 16, 16),
-			new THREE.MeshStandardMaterial({color: 0x3fbcff, map: moonTexture, metalness: 0.0, normalMap: moonNormal})
+			twitterCloseUpGeo,
+			twitterCloseUpMat
 		)
-		twitterCloseUp.rotation.x -= THREE.MathUtils.DEG2RAD * 90
+		twitterCloseUp.rotation.x += THREE.MathUtils.DEG2RAD * 90
 
 		let moon = new CelestialEntity("moon", false, 170)
 		moon.addMesh(
@@ -555,6 +562,39 @@ function fade(out:boolean=true, speed: string="730ms"){
 	return false
 }
 
+//Creates curved planes to simulate being on a world. Function authored by prisoner849
+function planeCurve(g: THREE.PlaneGeometry, z: number){
+	
+	let p = g.parameters;
+	let hw = p.width * 0.5;
+	
+	let a = new THREE.Vector2(-hw, 0);
+	let b = new THREE.Vector2(0, z);
+	let c = new THREE.Vector2(hw, 0);
+	
+	let ab = new THREE.Vector2().subVectors(a, b);
+	let bc = new THREE.Vector2().subVectors(b, c);
+	let ac = new THREE.Vector2().subVectors(a, c);
+	
+	let r = (ab.length() * bc.length() * ac.length()) / (2 * Math.abs(ab.cross(ac)));
+	
+	let center = new THREE.Vector2(0, z - r);
+	let baseV = new THREE.Vector2().subVectors(a, center);
+	let baseAngle = baseV.angle() - (Math.PI * 0.5);
+	let arc = baseAngle * 2;
+	
+	let uv = g.attributes.uv;
+	let pos = g.attributes.position;
+	let mainV = new THREE.Vector2();
+	for (let i = 0; i < uv.count; i++){
+		let uvRatio = 1 - uv.getX(i);
+	  let y = pos.getY(i);
+	  mainV.copy(c).rotateAround(center, (arc * uvRatio));
+	  pos.setXYZ(i, mainV.x, y, -mainV.y);
+	}
+	
+	pos.needsUpdate = true;
+}
 
 // function fade(){
 // 	var element = document.getElementById("fader")
