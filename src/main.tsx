@@ -1,6 +1,7 @@
 import React, {Component} from 'react'
 import ReactDOM from 'react-dom'
 import './index.css'
+import { CelestialEntity } from './celestialentity'
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
@@ -21,9 +22,9 @@ let scene: THREE.Scene;
 let camera: THREE.Camera;
 let renderer: THREE.WebGLRenderer;
 
-let twitter: THREE.Group //For twitter.obj model
+let twitter: CelestialEntity //For twitter.obj model
 let twitterCloseUp: THREE.Mesh
-let systemStar: THREE.Group
+let systemStar: CelestialEntity
 
 var zoomOutAudio = new Audio('src/assets/zoomout.wav');
 zoomOutAudio.volume = 0.9
@@ -35,6 +36,7 @@ var xIsClose = false
 var yIsClose = false
 var zIsClose = false
 var reachedTargetFirstTime = false //Prevents accidental fading when still close to a target
+var testAtAWorld = false
 
 //Set up mouse clicking functionality
 var raycaster = new THREE.Raycaster(); 
@@ -81,49 +83,10 @@ class App extends Component {
 		mainScene.add(star)
 	}
 
-	addCelestialEntity(pos: THREE.Vector3, size: number, texture: any, norMap: any, metalness: number, color=new Color("black")){
-
-		const celestialEntity = new THREE.Mesh(
-			new THREE.SphereGeometry(size, 128, 128),
-			new THREE.MeshStandardMaterial({color: color, map: texture, metalness: metalness, normalMap: norMap})
-		)
-		celestialEntity.position.set(pos.x, pos.y, pos.z)
-		return celestialEntity
-	}
-
-	//Adjust the orbit of an entity, distance specifies how far away and theta is what degree it is with respect to what it orbits
-	adjustOrbit(entity: any, distance: number, theta: number, phi: number=0) {
-		/*
-		(0,r) ends up at x = rsin(Theta), y = rcos(Theta) for a circle
-
-		For a sphere:
-		x = ρsin(ϕ)cos(θ)
-		y = ρsin(ϕ)sin(θ)
-		z = ρcos(ϕ)
-		ρ = r/sin(ϕ)
-		*/
-		//console.log(entity)
-		const alpha = 0.1; //Decrease to speed up, a good value is 0.1
-		entity.position.x = distance*Math.sin(theta);
-		entity.position.y = distance*Math.cos(theta);
-		//entity.position.z = distance*Math.sin(theta)
-		theta += (1 / (alpha*(distance**2))) //orbiting speed is a function of distance from celestial mass
-		if(theta >= 360) theta = 0
-
-		return theta
-
-		// const alpha = 0.005
-		// const p = distance/Math.sin(phi)
-		// entity.position.x = p * Math.sin(phi) * Math.cos(theta)
-		// entity.position.y = p * Math.sin(phi) * Math.sin(theta)
-		// entity.position.z = p * Math.cos(phi)
-
-		// phi += (0.0025 / (alpha*distance)) //orbiting speed is a function of distance from celestial mass
-		// theta += (0.0025 / (alpha*distance)) //orbiting speed is a function of distance from celestial mass
-		// if(phi >= 360) phi = 0
-		// if(theta >= 360) theta = 0
-
-		// return new Array(theta, phi)
+	testAdj(target: THREE.Object3D){
+		console.log(camera.rotation.x + (THREE.MathUtils.DEG2RAD * 30))
+		camera.rotation.x = THREE.MathUtils.DEG2RAD * 30
+		camera.position.set(target.position.x, (target.position.y + 2), target.position.z)
 	}
 
 	adjustCamera(target: THREE.Object3D, fastInc: number = 0.08, slowInc: number = 0.025){
@@ -218,6 +181,7 @@ class App extends Component {
 				setTimeout(function(){
 					changeWorld(cameraLock.name, false)
 					fade(false)
+					testAtAWorld = true
 				}, 1000)
 			}
 			reachedTargetFirstTime = true
@@ -229,7 +193,7 @@ class App extends Component {
 	//Using React's componentDidMount as my init function
 	componentDidMount() {
 
-		let debug = false
+		let debug = true
 		let scrollMode = false
 		let orbitControlsMode = false
 
@@ -288,12 +252,13 @@ class App extends Component {
 		renderer.setSize(window.innerWidth, window.innerHeight) //Fullscreen
 		document.body.appendChild(renderer.domElement); //Add renderer to the dom, which is responsible for drawing camera and scene
 
-		//define some for sample planet torus
-		const geometry = new THREE.TorusGeometry(10, 3, 16, 100)
-		const material = new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: false, roughness: 0, wireframe: false});
-		const torus = new THREE.Mesh(geometry, material);
-		torus.name = "torus"
-		mainScene.add(torus)
+		//sample planet for practicing
+		const torus = new CelestialEntity("torus", false, 170);
+		torus.addMesh(
+			new THREE.TorusGeometry(10, 3, 16, 100), 
+			new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: false, roughness: 0, wireframe: false}),
+		)
+		mainScene.add(torus.entity)
 
 		//Add some light
 		const aL = new THREE.AmbientLight(new Color("white"), 1)
@@ -312,21 +277,27 @@ class App extends Component {
 		//Populate the universe
 		for(let i = 0; i < 600; i++) this.addStar() //with stars
 
-		let blackHole = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, null, null, 0) //with a black hole so massive everything orbits around it
-		blackHole.name = "black hole"
-		mainScene.add(blackHole)
+		let blackHole = new CelestialEntity("black hole", false, 0)
+		blackHole.addMesh(
+			new THREE.SphereGeometry(6, 128, 128),
+			new THREE.MeshStandardMaterial({ color: "black", roughness: 0, metalness: 1, flatShading: false})
+		)
+		mainScene.add(blackHole.entity)
 
-		//Create star that belongs to solar system and provides light to the system
-		let systemStar = new THREE.Group();
+		// //Create star that belongs to solar system and provides light to the system
+		let systemStar = new CelestialEntity("sun", true, 90)
 		let systemStarTexture = new THREE.TextureLoader().load('src/assets/8k_sun.jpg')
 		const pL = new THREE.PointLight(new Color("white"), 2, 0) //light source
 		if(debug) {
 			const lH = new THREE.PointLightHelper(pL) //debugging tool
 			mainScene.add(lH) //Debugging object doesn't need to be part of the group
 		}
-		systemStar.add(this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 18, systemStarTexture, null, 0, new Color("gold"))) //Create a star that belongs to this solar system
-		systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
-		mainScene.add(systemStar)
+		systemStar.addMesh(
+			new THREE.SphereGeometry(),
+			new THREE.MeshStandardMaterial({ color: "gold", map: systemStarTexture})
+		) //Create a star that belongs to this solar system
+		// systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
+		// mainScene.add(systemStar)
 
 		//Create the system's star from an .obj model
 		// let systemStarMTL = new MTLLoader().load('src/assets/solarsystem.mtl', function(materials){
@@ -358,9 +329,8 @@ class App extends Component {
 
 
 		//Create the twitter planet from an .obj model
-		let twitterLoader = new OBJLoader().load('src/assets/twitter.obj', function(object){
-			twitter = object
-			twitter.traverse(function(child){
+		new OBJLoader().load('src/assets/twitter.obj', function(group){
+			group.traverse(function(child){
 				if(child instanceof THREE.Mesh){
 					//console.log(child)
 					child.material = new THREE.MeshStandardMaterial({ color: 0x3fbcff, roughness: 0, metalness: 0, flatShading: false})
@@ -368,18 +338,24 @@ class App extends Component {
 				}
 			})
 			//console.log(twitter)
-			mainScene.add(twitter)
+			twitter = new CelestialEntity("twitter", true, 120, group)
+			twitter.setCloseUp(twitterCloseUp) //Only when twitter.obj is done loading do we want to set its close up version
+			mainScene.add(twitter.entity)
 		})
-		twitterCloseUp = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 9, null, null, 0.0, new Color(0x3fbcff))
+		
+		twitterCloseUp = new THREE.Mesh(
+			new THREE.PlaneGeometry(128, 128, 32, 32),
+			new THREE.MeshStandardMaterial({color: 0x3fbcff, map: moonTexture, metalness: 0.0, normalMap: moonNormal})
+		)
+		twitterCloseUp.rotation.x += THREE.MathUtils.DEG2RAD * 90
 
-		let moon = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, moonTexture, moonNormal, 0.0, new Color("white")) //with a moon!
-		moon.name = "moon"
-		mainScene.add(moon)
-
-		let thetaDonut: number = 0 //degrees
-		let thetaMoon: number = 90
-		let thetaTwitter: number = 0
-		let thetaSystemStar: number = 0
+		//let moon = this.addCelestialEntity(new THREE.Vector3(0, 0, 0), 6, moonTexture, moonNormal, 0.0, new Color("white")) //with a moon!
+		let moon = new CelestialEntity("moon", false, 210)
+		moon.addMesh(
+			new THREE.SphereGeometry(6, 64, 64),
+			new THREE.MeshStandardMaterial({color: "white", map: moonTexture, normalMap: moonTexture})
+		)
+		mainScene.add(moon.entity)
 
 		if(scrollMode) window.onscroll = moveCamera
 
@@ -388,12 +364,11 @@ class App extends Component {
 		//Weird glitches? Can't get stuff to display? Just debug enable and make everything BasicMaterial to guarantee you're doing it right
 		//if(debug) scene.overrideMaterial = new MeshBasicMaterial({ color: 'green'})
 
-
-		// //Demonstration of planet switching
+		//Demonstration of planet switching
 		// setTimeout(() => {
 		// 	changeWorld(ce.twitter, false)
 		// 	cameraLock.name = ce.twitter
-		// }, 1000)
+		// }, 2000)
 		// setTimeout(() => {
 		// 	changeWorld(ce.twitter, true)
 		// 	cameraLock = {
@@ -412,23 +387,23 @@ class App extends Component {
 			//camera.rotation.y += 0.001
 			
 			//Adjust orbits
-			thetaDonut = this.adjustOrbit(torus, 190, thetaDonut)
-			thetaMoon = this.adjustOrbit(moon, 240, thetaMoon)
-			thetaTwitter = (cameraLock.name != ce.twitter) ? this.adjustOrbit(twitter, 140, thetaTwitter):this.adjustOrbit(twitterCloseUp, 140, thetaTwitter)
-			thetaSystemStar = this.adjustOrbit(systemStar, 80, thetaSystemStar)
+			torus.adjustOrbit()
+			moon.adjustOrbit()
+			twitter.adjustOrbit()
+			// thetaTwitter = (cameraLock.name != ce.twitter) ? this.adjustOrbit(twitter, 140, thetaTwitter):this.adjustOrbit(twitterCloseUp, 140, thetaTwitter)
+			systemStar.adjustOrbit()
 
 			//Adjust rotations
-			torus.rotation.z += 0.001
-			torus.rotation.x += 0.01
-			torus.rotation.y += 0.005
-			//moon.rotation.z += 0.001
-			moon.rotation.x += 0.001
-			moon.rotation.y += 0.001
-			twitter.rotation.z += 0.002
+			torus.rotate(0.01, 0.005, 0.001)
+			moon.rotate(0.001, 0.001, 0)
+			twitter.rotate(0, 0, 0.002)
 
 			if(orbitControlsMode) controls.update()
 
-			if(cameraLock.isLocked) this.adjustCamera(cameraLock.target)
+			if(cameraLock.isLocked) {
+				if(cameraLock.name == ce.twitter && testAtAWorld) this.testAdj(cameraLock.target)
+				else this.adjustCamera(cameraLock.target)
+			}
 			renderer.render(scene, camera);
 		}
 		animate()
@@ -462,19 +437,19 @@ function onMouseClick(event: THREE.Event) {
 
 	raycaster.setFromCamera(mouse, camera); // update the picking ray with the camera and mouse position
 	raycaster.intersectObjects(scene.children); // calculate objects intersecting the picking ray
-	if(raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(twitter))){
+	if(raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(twitter.entity))){
 		//We intersected on our twitter.obj model which is a THREE.Group and so can't be detected the normal way below
 		cameraLock = {
 			isLocked: true,
-			target: twitter,
+			target: twitter.entity,
 			name: ce.twitter
 		}
 		return
 	}
 	//This is busted for some reason, Cannot read property 'updateWorldMatrix' of undefined' did not look into it yet
-	// if(raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(systemStar))){
+	// if(raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(systemStar.entity))){
 	// 	cameraLock.isLocked = true;
-	// 	cameraLock.target = systemStar;
+	// 	cameraLock.target = systemStar.entity;
 	// 	return
 	// }
 	//Check for intersections on any mesh
@@ -527,8 +502,8 @@ function onTextureLoad(){
 	console.log("Texture is loaded now")
 }
 
-function changeWorld(celestialEntity: ce, leaving: boolean){
-	switch(celestialEntity){
+function changeWorld(celestialEntityEnum: ce, leaving: boolean){
+	switch(celestialEntityEnum){
 		case ce.blackHole:
 			//TODO: Idk what to even do if you enter a black hole, should just disable this honestly
 			break;
@@ -537,15 +512,13 @@ function changeWorld(celestialEntity: ce, leaving: boolean){
 			break;
 		case ce.twitter:
 			if(leaving) {
-				scene.add(twitter)
+				twitter.swapEntities(scene)
 				camera.rotation.y = 0 //radians
-				scene.remove(twitterCloseUp)
 			}
 			else {
-				scene.remove(twitter)
-				cameraLock.target = twitterCloseUp //switch to the new target
+				twitter.swapEntities(scene)
+				cameraLock.target = twitter.entityCloseUp //switch to the new target
 				camera.rotation.y = 1.57 //radians, this is effectively a 90 degree rotation left
-				scene.add(twitterCloseUp)
 			}
 			break;
 		default:
