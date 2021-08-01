@@ -1,6 +1,9 @@
 {
-  "version": "0.0.0",
+  "homepage": "https://alanmun.github.io/3D-Interactive-Portfolio/",
+  "version": "0.1.0",
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
     "dev": "vite",
     "build": "tsc && vite build",
     "serve": "vite preview"
@@ -15,6 +18,7 @@
     "@types/react-dom": "^17.0.0",
     "@types/three": "^0.129.1",
     "@vitejs/plugin-react-refresh": "^1.3.1",
+    "gh-pages": "^3.2.3",
     "typescript": "^4.3.2",
     "vite": "^2.3.8"
   }
