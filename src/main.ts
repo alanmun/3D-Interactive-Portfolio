@@ -1,12 +1,23 @@
-import React, {Component} from 'react'
-import ReactDOM from 'react-dom'
 import './index.css'
 import { CelestialEntity } from './celestialentity'
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
-import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
+//import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { Color, MathUtils, MeshPhongMaterial, SphereGeometry } from 'three';
+import { Color } from 'three';
+
+//Asset paths need to be imported to be linked at compile time. Force everything to be a url using ?url to be safe because I know it works from preview
+import zoomOutPath from './assets/zoomout.wav?url'
+import backgroundPath from './assets/background.mp3?url'
+import skyboxRight from './assets/skyboxwithsun/right.png?url'
+import skyboxLeft from './assets/skyboxwithsun/left.png?url'
+import skyboxTop from './assets/skyboxwithsun/top.png?url'
+import skyboxBottom from './assets/skyboxwithsun/bottom.png?url'
+import skyboxFront from './assets/skyboxwithsun/front.png?url'
+import skyboxBack from './assets/skyboxwithsun/back.png?url'
+import moonTexturePath from './assets/moon.jpg?url'
+import moonNormalPath from './assets/moonbumpmap.jpg?url'
+import twitterObjPath from './assets/twitter.obj?url'
 
 enum ce { //celestial entities
 	spawn,
@@ -25,11 +36,11 @@ let renderer: THREE.WebGLRenderer;
 
 let twitter: CelestialEntity //For twitter.obj model
 let twitterCloseUp: THREE.Mesh
-let systemStar: CelestialEntity
+//let systemStar: CelestialEntity
 
-var zoomOutAudio = new Audio('src/assets/zoomout.wav');
+var zoomOutAudio = new Audio(zoomOutPath);
 zoomOutAudio.volume = 0.9
-var backgroundAudio = new Audio('src/assets/background.mp3')
+var backgroundAudio = new Audio(backgroundPath)
 backgroundAudio.volume = 0.65
 
 //Used by adjustCamera, persisting across calls to know if we are close in the z, x, or y coord, and the second three tell if we were already close
@@ -54,7 +65,7 @@ type cameraLockType = {
 }
 let cameraLock:cameraLockType = {isLocked: false, target: null, name: ce.spawn} //Instantiate a cameraLock struct
 
-class App extends Component {
+class App {
 
 	//Adds a star in a random spot, if negZOnly is passed in as true, it won't put any stars in pos z, helping to "background" the stars better
 	addStar(negZOnly=false){
@@ -94,9 +105,9 @@ class App extends Component {
 		const xdiff = camera.position.x - target.position.x
 		const ydiff = camera.position.y - target.position.y
 		const zdiff = camera.position.z - target.position.z
-		var xMatched = false
-		var yMatched = false
-		var zMatched = false
+		// var xMatched = false
+		// var yMatched = false
+		// var zMatched = false
 		const medInc = 0.05;
 		const nearlyThere = 0.05; //was going to call this slowestInc but its a similar value to medium Increment, which is kind of confusing
 		
@@ -122,7 +133,7 @@ class App extends Component {
 		else if(absX >= 0){
 			camera.position.x = target.position.x
 			xIsClose = true
-			xMatched = true
+			//xMatched = true
 		}
 
 		//Handle y
@@ -143,7 +154,7 @@ class App extends Component {
 		else if(absY >= 0) {
 			camera.position.y = target.position.y
 			yIsClose = true
-			yMatched = true
+			//yMatched = true
 		}
 		
 		//Handle z
@@ -164,7 +175,7 @@ class App extends Component {
 		else if(absZ >= 0) {
 			camera.position.z = target.position.z
 			zIsClose = true
-			zMatched = true
+			//zMatched = true
 		}
 
 		//Special case to see if camera is at the original spawn point, disable target lock
@@ -190,8 +201,7 @@ class App extends Component {
 
 	}
 
-	//Using React's componentDidMount as my init function
-	componentDidMount() {
+	init() {
 
 		let debug = false
 		let scrollMode = false
@@ -204,22 +214,18 @@ class App extends Component {
 			backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
 		})
 
-		//Set up the scenes
-		// let giantsDeep = new THREE.TextureLoader().load('src/assets/giantsdeep.png')
-		// planetScene.background = giantsDeep
-
 		//Skybox
 		let skybox: THREE.Mesh
 		const loadManager = new THREE.LoadingManager();
 		const loader = new THREE.TextureLoader(loadManager);
 		let skyboxGeom = new THREE.BoxGeometry(2100, 2100, 2100)
 		let skyboxMaterials = [
-			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/right.png', onTextureLoad)}),
-			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/left.png', onTextureLoad)}),
-			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/top.png', onTextureLoad)}),
-			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/bottom.png', onTextureLoad)}),
-			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/front.png', onTextureLoad)}),
-			new THREE.MeshBasicMaterial({map: loader.load('src/assets/skyboxwithsun/back.png', onTextureLoad)})
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxRight, onTextureLoad)}),
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxLeft, onTextureLoad)}),
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxTop, onTextureLoad)}),
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxBottom, onTextureLoad)}),
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxFront, onTextureLoad)}),
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxBack, onTextureLoad)})
 		];
 		skyboxMaterials.forEach(x => x.side = THREE.BackSide)
 		loadManager.onLoad = () =>{
@@ -233,8 +239,8 @@ class App extends Component {
 			});
 		}
 
-		let moonTexture = new THREE.TextureLoader().load('src/assets/moon.jpg')
-		let moonNormal = new THREE.TextureLoader().load('src/assets/moonbumpmap.jpg')
+		let moonTexture = new THREE.TextureLoader().load(moonTexturePath)
+		let moonNormal = new THREE.TextureLoader().load(moonNormalPath)  
 
 		//Instantiate and set up camera
 		camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 5000)
@@ -284,28 +290,28 @@ class App extends Component {
 		)
 		mainScene.add(blackHole.entity)
 
-		// //Create star that belongs to solar system and provides light to the system
-		let systemStar = new CelestialEntity("sun", true, 90)
-		let systemStarTexture = new THREE.TextureLoader().load('src/assets/8k_sun.jpg')
-		const pL = new THREE.PointLight(new Color("white"), 2, 0) //light source
-		if(debug) {
-			const lH = new THREE.PointLightHelper(pL) //debugging tool
-			mainScene.add(lH) //Debugging object doesn't need to be part of the group
-		}
-		systemStar.addMesh(
-			new THREE.SphereGeometry(),
-			new THREE.MeshStandardMaterial({ color: "gold", map: systemStarTexture})
-		) //Create a star that belongs to this solar system
+		// ! (Deprecated) Create star that belongs to solar system and provides light to the system
+		// let systemStar = new CelestialEntity("sun", true, 90)
+		// let systemStarTexture = new THREE.TextureLoader().load('./assets/8k_sun.jpg')
+		// const pL = new THREE.PointLight(new Color("white"), 2, 0) //light source
+		// if(debug) {
+		// 	const lH = new THREE.PointLightHelper(pL) //debugging tool
+		// 	mainScene.add(lH) //Debugging object doesn't need to be part of the group
+		// }
+		// systemStar.addMesh(
+		// 	new THREE.SphereGeometry(),
+		// 	new THREE.MeshStandardMaterial({ color: "gold", map: systemStarTexture})
+		// )
+		//Create a star that belongs to this solar system
 		// systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
 		// mainScene.add(systemStar)
 
 		//Create the system's star from an .obj model
-		// let systemStarMTL = new MTLLoader().load('src/assets/solarsystem.mtl', function(materials){
+		// let systemStarMTL = new MTLLoader().load('./assets/solarsystem.mtl', function(materials){
 		// 	materials.preload()
-
 		// 	let systemStarOBJ = new OBJLoader()
 		// 	systemStarOBJ.setMaterials(materials)
-		// 	systemStarOBJ.load('src/assets/systemstar.obj', function(object){
+		// 	systemStarOBJ.load('./assets/systemstar.obj', function(object){
 		// 		systemStar = object
 		// 		systemStar.traverse(function(child){
 		// 			if(child instanceof THREE.Mesh){
@@ -326,13 +332,15 @@ class App extends Component {
 		// 		mainScene.add(systemStar)
 		// 	})
 		// })
+		// ! End Deprecated 
 
 		//Create the beat saber block
 		
 
 
 		//Create the twitter planet from an .obj model
-		new OBJLoader().load('src/assets/twitter.obj', function(group){
+		console.log(twitterObjPath)
+		new OBJLoader().load(twitterObjPath, function(group){
 			group.traverse(function(child){
 				if(child instanceof THREE.Mesh){
 					//console.log(child)
@@ -413,23 +421,6 @@ class App extends Component {
 			renderer.render(scene, camera);
 		}
 		animate()
-	}
-
-	render() {
-		return (
-			<>
-				<section id="loading-screen">
-					<div id="loader"></div>
-				</section>
-				<canvas id="bg"></canvas>
-				<main>
-					{/* <span id="fader"></span> */}
-					<div id="text">
-						Here's some text
-					</div>
-				</main>
-			</>
-		)
 	}
 }
 
@@ -615,9 +606,5 @@ function planeCurve(g: THREE.PlaneGeometry, z: number){
 // 	return false //false if not done
 // }
 
-ReactDOM.render(
-	<React.StrictMode>
-		<App />
-	</React.StrictMode>,
-	document.getElementById('root') //Inject the above App Component into our root div in index.html
-)
+let app = new App()
+app.init()

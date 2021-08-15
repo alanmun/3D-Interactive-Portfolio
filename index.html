@@ -2,12 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="/src/assets/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="./src/assets/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My 3D Portfolio</title>
   </head>
   <body class="container">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="root">
+      <section id="loading-screen">
+        <div id="loader"></div>
+      </section>
+      <canvas id="bg"></canvas>
+      <main>
+        <!-- <span id="fader"></span> -->
+        <div id="text">
+          Here's some text
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
