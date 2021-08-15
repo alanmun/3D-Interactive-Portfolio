@@ -1,6 +1,6 @@
 {
   "homepage": "https://alanmun.github.io/3D-Interactive-Portfolio/",
-  "name": "3dportfolioreactless",
+  "name": "3d-interactive-portfolio",
   "version": "0.0.0",
   "scripts": {
     "deploy": "gh-pages -d dist",
