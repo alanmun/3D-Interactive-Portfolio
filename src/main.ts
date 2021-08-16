@@ -31,7 +31,7 @@ enum ce { //celestial entities
 let mainScene: THREE.Scene;
 // let planetScene: THREE.Scene;
 let scene: THREE.Scene;
-let camera: THREE.Camera;
+let camera: THREE.PerspectiveCamera;
 let renderer: THREE.WebGLRenderer;
 
 let twitter: CelestialEntity //For twitter.obj model
@@ -215,6 +215,7 @@ class App {
 		})
 
 		//Skybox
+		//TODO: Get a proper loading screen working, and figure out how to get live resizing of screen when user's browser tab window is resized
 		let skybox: THREE.Mesh
 		const loadManager = new THREE.LoadingManager();
 		const loader = new THREE.TextureLoader(loadManager);
@@ -236,6 +237,8 @@ class App {
 			window.onload = (function () {
 				const loadingScreen = document.querySelector('#loading-screen');
 				console.log(loadingScreen)
+				loadingScreen?.classList.add('fade-out')
+				loadingScreen?.addEventListener('transitionend', onTransitionEnd)
 			});
 		}
 
@@ -247,8 +250,10 @@ class App {
 		camera.position.z = CAM_START.z //Move camera back so its not in center of scene
 		camera.position.y = CAM_START.y //Move camera back so its not in center of scene
 
+		//Window event listeners
 		window.addEventListener("mousedown", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
 		window.addEventListener("keydown", onBackOutKey, false)
+		window.addEventListener("resize", onWindowResize, false)
 
 		//Instantiate and set up renderer
 		renderer = new THREE.WebGLRenderer({
@@ -587,6 +592,18 @@ function planeCurve(g: THREE.PlaneGeometry, z: number){
 	pos.needsUpdate = true;
 }
 
+function onTransitionEnd( event: any ) {
+	event.target.remove();	
+}
+
+function onWindowResize() {
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+
+	renderer.setSize( window.innerWidth, window.innerHeight );
+}
+
+// ! Deprecated fade
 // function fade(){
 // 	var element = document.getElementById("fader")
 // 	if(element == null) return true
