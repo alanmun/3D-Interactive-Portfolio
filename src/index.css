@@ -4,9 +4,24 @@ canvas {
   left: 0;
 }
 
+#text {
+  z-index: 0;
+}
+
 #bg {
-  opacity: 1;
-  transition: opacity 730ms;
+  z-index: 1;
+}
+
+#spacebarpic {
+  margin-top: 8%;
+  margin-left: 4%;
+}
+
+#mousepic {
+  max-width:25%;
+  height:auto;
+  margin-top: 8%;
+  margin-left: 25%;
 }
 
 #loading-screen {
@@ -109,14 +124,11 @@ div {
   visibility: visible;
   color: white;
   z-index: 99;
-  position: absolute;
   width: 100%;
   margin: 0px;
 
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-
-  overflow-x: hidden;
 }
 
 /*

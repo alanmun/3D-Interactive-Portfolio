@@ -28,6 +28,8 @@ enum ce { //celestial entities
 	moon
 }
 
+let loadedTotal = 0
+
 let mainScene: THREE.Scene;
 // let planetScene: THREE.Scene;
 let scene: THREE.Scene;
@@ -81,7 +83,7 @@ class App {
 		else zIsNeg = -1
 
 		//Set the closest and farthest stars can be
-		const innerBound = 250
+		const innerBound = 260 //I believe with an inner bound of 250, I got a star to spawn only units in front of my camera's default spawn point
 		const outerBound = 700
 
 		x = THREE.MathUtils.randFloat(0, xIsNeg * outerBound)
@@ -214,10 +216,21 @@ class App {
 			backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
 		})
 
-		//Skybox
-		//TODO: Get a proper loading screen working, and figure out how to get live resizing of screen when user's browser tab window is resized
+		//Skybox, Loading Manager (which enforces loading screen)
 		let skybox: THREE.Mesh
-		const loadManager = new THREE.LoadingManager();
+		const loadManager = new THREE.LoadingManager(() => {
+			console.log("Loaded: " + loadedTotal)
+			if(loadedTotal >= 0){
+				console.log("Loaded skybox")
+				skybox = new THREE.Mesh(skyboxGeom, skyboxMaterials)
+				skybox.name = "skybox" //Tag it so we can block mouse clicks from acting on it
+				mainScene.add(skybox)
+
+				const loadingScreen = document.querySelector('#loading-screen');
+				loadingScreen?.classList.add('fade-out')
+				loadingScreen?.addEventListener('transitionend', onTransitionEnd)
+			}
+		});
 		const loader = new THREE.TextureLoader(loadManager);
 		let skyboxGeom = new THREE.BoxGeometry(2100, 2100, 2100)
 		let skyboxMaterials = [
@@ -229,21 +242,10 @@ class App {
 			new THREE.MeshBasicMaterial({map: loader.load(skyboxBack, onTextureLoad)})
 		];
 		skyboxMaterials.forEach(x => x.side = THREE.BackSide)
-		loadManager.onLoad = () =>{
-			console.log("Loaded skybox")
-			skybox = new THREE.Mesh(skyboxGeom, skyboxMaterials)
-			skybox.name = "skybox" //Tag it so we can block mouse clicks from acting on it
-			mainScene.add(skybox)
-			window.onload = (function () {
-				const loadingScreen = document.querySelector('#loading-screen');
-				console.log(loadingScreen)
-				loadingScreen?.classList.add('fade-out')
-				loadingScreen?.addEventListener('transitionend', onTransitionEnd)
-			});
-		}
 
-		let moonTexture = new THREE.TextureLoader().load(moonTexturePath)
-		let moonNormal = new THREE.TextureLoader().load(moonNormalPath)  
+		//Moon texture loading
+		let moonTexture = new THREE.TextureLoader(loadManager).load(moonTexturePath, onTextureLoad)
+		let moonNormal = new THREE.TextureLoader(loadManager).load(moonNormalPath, onTextureLoad)  
 
 		//Instantiate and set up camera
 		camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 5000)
@@ -345,7 +347,7 @@ class App {
 
 		//Create the twitter planet from an .obj model
 		console.log(twitterObjPath)
-		new OBJLoader().load(twitterObjPath, function(group){
+		new OBJLoader(loadManager).load(twitterObjPath, function(group){
 			group.traverse(function(child){
 				if(child instanceof THREE.Mesh){
 					//console.log(child)
@@ -357,6 +359,7 @@ class App {
 			twitter = new CelestialEntity("twitter", true, 90, group)
 			twitter.setCloseUp(twitterCloseUp) //Only when twitter.obj is done loading do we want to set its close up version
 			mainScene.add(twitter.entity)
+			onTextureLoad()
 		})
 		
 			
@@ -501,7 +504,7 @@ function moveCamera() {
 }
 
 function onTextureLoad(){
-	console.log("Texture is loaded now")
+	loadedTotal += 1
 }
 
 function changeWorld(celestialEntityEnum: ce, leaving: boolean){
@@ -592,6 +595,7 @@ function planeCurve(g: THREE.PlaneGeometry, z: number){
 	pos.needsUpdate = true;
 }
 
+//For use with loading screen
 function onTransitionEnd( event: any ) {
 	event.target.remove();	
 }
