@@ -268,7 +268,7 @@ class App {
 		document.body.appendChild(renderer.domElement); //Add renderer to the dom, which is responsible for drawing camera and scene
 
 		//sample planet for practicing
-		const torus = new CelestialEntity("torus", false, 140);
+		const torus = new CelestialEntity("torus", false, 115);
 		torus.addMesh(
 			new THREE.TorusGeometry(10, 3, 16, 100), 
 			new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: false, roughness: 0, wireframe: false}),
@@ -375,7 +375,7 @@ class App {
 		)
 		twitterCloseUp.rotation.x += THREE.MathUtils.DEG2RAD * 90
 
-		let moon = new CelestialEntity("moon", false, 170)
+		let moon = new CelestialEntity("moon", false, 140)
 		moon.addMesh(
 			new THREE.SphereGeometry(6, 64, 64),
 			new THREE.MeshStandardMaterial({color: "white", map: moonTexture, normalMap: moonTexture})
@@ -406,10 +406,6 @@ class App {
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
-
-			//TODO: Look into constantly resizing canvas/adaptible canvas resizing such that you can resize your screen and it won't become white space
-
-			//camera.rotation.y += 0.001
 			
 			//Adjust orbits
 			torus.adjustOrbit()
