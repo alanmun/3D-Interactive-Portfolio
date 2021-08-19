@@ -40,6 +40,7 @@ let twitter: CelestialEntity //For twitter.obj model
 let twitterCloseUp: THREE.Mesh
 //let systemStar: CelestialEntity
 
+let canPlayMusic: boolean = false
 var zoomOutAudio = new Audio(zoomOutPath);
 zoomOutAudio.volume = 0.9
 var backgroundAudio = new Audio(backgroundPath)
@@ -213,7 +214,7 @@ class App {
 		// planetScene = new THREE.Scene();
 
 		document.body.addEventListener("mousemove", function () {
-			backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
+			if(canPlayMusic) backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
 		})
 
 		//Skybox, Loading Manager (which enforces loading screen)
@@ -229,6 +230,7 @@ class App {
 				const loadingScreen = document.querySelector('#loading-screen');
 				loadingScreen?.classList.add('fade-out')
 				loadingScreen?.addEventListener('transitionend', onTransitionEnd)
+				canPlayMusic = true
 			}
 		});
 		const loader = new THREE.TextureLoader(loadManager);
