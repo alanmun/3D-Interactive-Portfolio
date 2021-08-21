@@ -49,6 +49,7 @@ export class CelestialEntity {
 	setCloseUp(anEntity: any){
 		//Not sure how close up versions of planets should work yet, so this function simply just sets to entityCloseUp for now
 		this.entityCloseUp = anEntity
+		this.entityCloseUp.name = this.entity.name + " close" //ex "twitter close"
 	}
 
 	//Rotates the celestial entity by +=ing specified x, y, and z

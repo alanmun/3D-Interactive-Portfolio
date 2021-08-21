@@ -10,9 +10,27 @@
     <div id="root">
       <section id="loading-screen">
         <div id="loader"></div>
-        <img id="spacebarpic" src="/src/assets/spacebarpress.png">
-        <img id="mousepic" src="/src/assets/mouseclick.png">
+        <div class="piccontainer">
+          <img id="spacebarpic" src="/src/assets/spacebarpress.png">
+          <img id="mousepic" src="/src/assets/mouseclick.png">
+        </div>
       </section>
+      <div class="portfolio" id="twitter">
+        <h1 class="portfolio-title">What Song Is That? Twitter Bot (2020)</h1>
+        <div class="break"></div>
+        <p class="portfolio-body">I decided to write and host a twitter bot for fun on my own server, using a Raspberry Pi, for a friend's twitter
+                                  account. That bot has over a hundred thousand followers now. The success of that bot led me to make my own more
+                                  sophisticated bot called What Song Is That? It takes requests from users who wish to know what song is playing in
+                                  a tweet, queries Shazam's API on their behalf and displays its findings cleanly on a website I made for it. Check
+                                  out <a href="https://whatsong.page">whatsong.page</a> for more information. </p>
+      </div>
+      <div class="portfolio" id="autosage">
+        <h1 class="portfolio-title">AutoSage (2021)</h1>
+        <div class="break"></div>
+        <p class="portfolio-body">AutoSage is a Python written tool for users of BeatSage, an AI driven service made for the popular VR rhythm game
+                                  Beat Saber. AutoSage simplifies and automates the process of using BeatSage for all of the songs the user wishes
+                                  to play in Beat Saber.</p>
+      </div>
       <canvas id="bg"></canvas>
       <!-- <div id="text">
         Here's some text

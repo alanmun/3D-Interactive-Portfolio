@@ -4,24 +4,58 @@ canvas {
   left: 0;
 }
 
-#text {
-  z-index: 0;
+.portfolio {
+  visibility: hidden;
+  width: 90vmax;
+  display: flex;
+  flex-wrap: wrap;
+  z-index: 2; /* For some reason you need a z-index of 2 or greater to print over the canvas */
+}
+
+.break {
+  flex-basis: 100%;
+  height: 0;
+}
+
+.portfolio-title {
+  padding-left: 22%;
+  font-size: 42px;
+  
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.portfolio-body {
+  text-align: left;
+  padding-left: 10%;
+  font-size: 28px;
+  font-family: 'Segoe UI Light', Verdana, sans-serif;
 }
 
 #bg {
   z-index: 1;
 }
 
+.piccontainer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
 #spacebarpic {
-  margin-top: 8%;
+  min-width: 0;
+  max-width: 35%;
+  height: auto;
+  margin-top: 0%;
   margin-left: 4%;
 }
 
 #mousepic {
-  max-width:25%;
-  height:auto;
-  margin-top: 8%;
-  margin-left: 25%;
+  min-width: 25%;
+  max-width: 25%;
+  height: auto;
+  margin-top: 3%;
+  margin-left: 27%;
 }
 
 #loading-screen {
@@ -32,6 +66,7 @@ canvas {
 	width: 100%;
 	height: 100%;
 	background-color: #000000;
+  overflow-y: hidden; /* This prevents the loading screen from being scrollable. Its really not a big deal unless first time loading and they use scroll wheel */
 	opacity: 1;
  	transition: 1s opacity;
 }
@@ -123,55 +158,11 @@ body {
 div {
   visibility: visible;
   color: white;
-  z-index: 99;
-  width: 100%;
-  margin: 0px;
+  z-index: 3;
 
   display: grid;
   grid-template-columns: repeat(12, 1fr);
 }
-
-/*
- h1, h2, h3, blockquote {
-  font-family: elevon, sans-serif;
-  font-weight: 700;
-  font-style: normal;
-}
-
-header {
-  background: var(--dark-bg);
-  grid-column: 2 / span 5;
-  font-size: 2.5rem;
-  padding: 2rem;
-  margin-bottom: var(--spacing);
-}
-
-section {
-  grid-column: 2 / 8;
-  padding: 1rem;
-  background: var(--dark-bg);
-  font-size: 1.25rem;
-  line-height: 1.5;
-  margin-bottom: var(--spacing);
-}
-
-blockquote {
-  margin: 0;
-  padding: 0;
-  grid-column: 2 / span 9;
-  margin-bottom: var(--spacing);
-}
-
-blockquote p {
-  /* background: var(--dark-bg);
-  color: white;
-  font-size: 4rem;
-  display: inline;
-  line-height: 1;
-  padding: 20px 10px;
-} 
-
-*/
 
 .container {
   -ms-overflow-style: none;  /* Hide scroll bar on Internet Explorer 10+ */

@@ -24,7 +24,6 @@ enum ce { //celestial entities
 	blackHole,
 	twitter,
 	autosage,
-	torus,
 	moon
 }
 
@@ -38,7 +37,9 @@ let renderer: THREE.WebGLRenderer;
 
 let twitter: CelestialEntity //For twitter.obj model
 let twitterCloseUp: THREE.Mesh
-//let systemStar: CelestialEntity
+
+let autosage: CelestialEntity
+let autosageCloseUp: THREE.Mesh
 
 let canPlayMusic: boolean = false
 var zoomOutAudio = new Audio(zoomOutPath);
@@ -67,6 +68,7 @@ type cameraLockType = {
 	name: ce
 }
 let cameraLock:cameraLockType = {isLocked: false, target: null, name: ce.spawn} //Instantiate a cameraLock struct
+const goToSpawn = {isLocked: true, target: { position: CAM_START }, name: ce.spawn}
 
 class App {
 
@@ -206,6 +208,11 @@ class App {
 
 	init() {
 
+		// TODO: To fix like 95% of breaking glitches, I need to ignore clicks/space bar presses when adjustCamera is active basically.
+		// TODO (this is for things like the close up world staying when you return back to original spawn, etc)
+
+		// * The original twitter world is what is causing that weird glitch where it jumps a few units forward and the close up world vanishes
+
 		let debug = false
 		let scrollMode = false
 		let orbitControlsMode = false
@@ -221,17 +228,17 @@ class App {
 		let skybox: THREE.Mesh
 		const loadManager = new THREE.LoadingManager(() => {
 			console.log("Loaded: " + loadedTotal)
-			if(loadedTotal >= 0){
-				console.log("Loaded skybox")
-				skybox = new THREE.Mesh(skyboxGeom, skyboxMaterials)
-				skybox.name = "skybox" //Tag it so we can block mouse clicks from acting on it
-				mainScene.add(skybox)
+			//if(loadedTotal >= 0){
+			console.log("Loaded skybox")
+			skybox = new THREE.Mesh(skyboxGeom, skyboxMaterials)
+			skybox.name = "skybox" //Tag it so we can block mouse clicks from acting on it
+			mainScene.add(skybox)
 
-				const loadingScreen = document.querySelector('#loading-screen');
-				loadingScreen?.classList.add('fade-out')
-				loadingScreen?.addEventListener('transitionend', onTransitionEnd)
-				canPlayMusic = true
-			}
+			const loadingScreen = document.querySelector('#loading-screen');
+			loadingScreen?.classList.add('fade-out')
+			loadingScreen?.addEventListener('transitionend', onTransitionEnd)
+			canPlayMusic = true
+			//}
 		});
 		const loader = new THREE.TextureLoader(loadManager);
 		let skyboxGeom = new THREE.BoxGeometry(2100, 2100, 2100)
@@ -267,13 +274,23 @@ class App {
 		renderer.setSize(window.innerWidth, window.innerHeight) //Fullscreen
 		document.body.appendChild(renderer.domElement); //Add renderer to the dom, which is responsible for drawing camera and scene
 
-		//sample planet for practicing
-		const torus = new CelestialEntity("torus", false, 115);
-		torus.addMesh(
+		//autosage planet, which is currently represented by a torus until I can add a beat saber block
+		autosage = new CelestialEntity("autosage", false, 115);
+		autosage.addMesh(
 			new THREE.TorusGeometry(10, 3, 16, 100), 
 			new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: false, roughness: 0, wireframe: false}),
 		)
-		mainScene.add(torus.entity)
+		mainScene.add(autosage.entity)
+		let autosageCloseUpGeo = new THREE.PlaneGeometry(64, 96, 32, 32)
+		let autosageCloseUpMat = new THREE.MeshStandardMaterial({color: "black", map: moonTexture, metalness: 0.0, normalMap: moonNormal})
+		autosageCloseUpMat.side = THREE.BackSide 
+		planeCurve(autosageCloseUpGeo, 5)
+		autosageCloseUp = new THREE.Mesh(
+			autosageCloseUpGeo,
+			autosageCloseUpMat
+		)
+		autosageCloseUp.rotation.x += THREE.MathUtils.DEG2RAD * 90
+		autosage.setCloseUp(autosageCloseUp)
 
 		//Add some light
 		const aL = new THREE.AmbientLight(new Color("white"), 1)
@@ -348,7 +365,6 @@ class App {
 
 
 		//Create the twitter planet from an .obj model
-		console.log(twitterObjPath)
 		new OBJLoader(loadManager).load(twitterObjPath, function(group){
 			group.traverse(function(child){
 				if(child instanceof THREE.Mesh){
@@ -358,7 +374,7 @@ class App {
 				}
 			})
 			//console.log(twitter)
-			twitter = new CelestialEntity("twitter", true, 90, group)
+			twitter = new CelestialEntity("twitter", true, 70, group)
 			twitter.setCloseUp(twitterCloseUp) //Only when twitter.obj is done loading do we want to set its close up version
 			mainScene.add(twitter.entity)
 			onTextureLoad()
@@ -408,13 +424,13 @@ class App {
 			requestAnimationFrame(animate)
 			
 			//Adjust orbits
-			torus.adjustOrbit()
+			autosage.adjustOrbit()
 			moon.adjustOrbit()
 			twitter.adjustOrbit()
 			//systemStar.adjustOrbit()
 
 			//Adjust rotations
-			torus.rotate(0.01, 0.005, 0.001)
+			autosage.rotate(0.01, 0.005, 0.001)
 			moon.rotate(0.001, 0.001, 0)
 			twitter.rotate(0, 0, 0.002)
 
@@ -431,17 +447,17 @@ class App {
 }
 
 function onMouseClick(event: THREE.Event) { 
-	// calculate mouse position in normalized device coordinates 
-	// (-1 to +1) for both components
-	//Potential Issue: window resizes seem to confuse three.js and it doesn't know where things are anymore. If you open up console when it wasn't 
-	//opened, that resizes the window and shifts the black hole over, but where it was originally located is where three js reports an object intersection
+	//calculate mouse position in normalized device coordinates  (-1 to +1) for both components
+	if(cameraLock.isLocked && !shouldPinCamera) return //Mouse clicking should have no effect when camera is targeting something
+	
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1; //I believe these convert to centered normalized coordinates x,y at 0,0 is exact center of screen
 	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; // height 100, click at 5, -5/100 = -0.05*2 is -slowInc + 1 means click was registered at y = 0.9
 
 	raycaster.setFromCamera(mouse, camera); // update the picking ray with the camera and mouse position
-	raycaster.intersectObjects(scene.children); // calculate objects intersecting the picking ray
-	if(raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(twitter.entity))){
-		//We intersected on our twitter.obj model which is a THREE.Group and so can't be detected the normal way below
+	if(!shouldPinCamera && raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(twitter.entity))){
+		console.log("Hit detected on twitter world (not close up)")
+		// * We intersected on our twitter.obj model which is a THREE.Group and so can't be detected the normal way below
+		// * Actually, I think you can intersect on THREE.Group, there is some other weird reason it can't be detected the normal way
 		cameraLock = {
 			isLocked: true,
 			target: twitter.entity,
@@ -455,35 +471,47 @@ function onMouseClick(event: THREE.Event) {
 	// 	cameraLock.target = systemStar.entity;
 	// 	return
 	// }
-	//Check for intersections on any mesh
+
+	// * Check for intersections on any mesh
 	var intersects = raycaster.intersectObjects(scene.children);
-	for(var i = 0; i < intersects.length; i++){
-		if(intersects[i].object.name != "star" && intersects[i].object.name != "skybox") {
-			cameraLock.isLocked = true;
-			cameraLock.target = intersects[i].object;
-			if(intersects[i].object.name == "moon") cameraLock.name = ce.moon
-			else if(intersects[i].object.name == "black hole") cameraLock.name = ce.blackHole
-			else if(intersects[i].object.name == "torus") cameraLock.name = ce.torus
-			//(obj as any).material.color.set(0xff0000); //Unfortunately TS doesn't like Object3Ds
-			return
-		}
+	console.log(intersects[0].object.name)
+	if(intersects[0].object.name == "star" || intersects[0].object.name == "skybox") return; //These clickable things shouldn't be clickable
+	if(shouldPinCamera && intersects[0].object.name.includes("close") == false) return; //Do nothing if a click happens on something that isn't a close up version
+	if(intersects[0].object.name.includes("close")) {
+		backOut()
+		return
 	}
+	cameraLock.isLocked = true;
+	cameraLock.target = intersects[0].object;
+	if(intersects[0].object.name == "moon") cameraLock.name = ce.moon
+	else if(intersects[0].object.name == "black hole") cameraLock.name = ce.blackHole
+	else if(intersects[0].object.name == "autosage") cameraLock.name = ce.autosage
+
+	// ! Because intersectObjects() sorts the result by distance, closest first, we don't need to iterate through. We only want the closest hit
+	// for(var i = 0; i < intersects.length; i++){
+	// 	if(intersects[i].object.name != "star" && intersects[i].object.name != "skybox") {
+	// 		console.log(intersects[i].object.name)
+	// 		if(intersects[i].object.name.includes("close")){
+	// 			backOut();
+	// 			return
+	// 		}
+	// 		cameraLock.isLocked = true;
+	// 		cameraLock.target = intersects[i].object;
+	// 		if(intersects[i].object.name == "moon") cameraLock.name = ce.moon
+	// 		else if(intersects[i].object.name == "black hole") cameraLock.name = ce.blackHole
+	// 		else if(intersects[i].object.name == "autosage") cameraLock.name = ce.autosage
+	// 		//(obj as any).material.color.set(0xff0000); //Unfortunately TS doesn't like Object3Ds
+	// 		return
+	// 	}
+	// }
 }
 
-//Register listener for and set up callback for space and esc key
-function onBackOutKey(event: any){
-	if(cameraLock.name == ce.spawn) return //Do nothing if cameraLock was last locked onto spawn
-	var keyCode = event.which
-	if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
-		fade(false); //Ask fade function to fade us again
-		changeWorld(cameraLock.name, true)
-		cameraLock = {
-			isLocked: true,
-			target: { position: CAM_START },
-			name: ce.spawn
-		}
-		zoomOutAudio.play();
-	}
+//Common actions to take when backing out of a world
+function backOut(){
+	fade(false); //Ask fade function to fade us again
+	changeWorld(cameraLock.name, true)
+	cameraLock = goToSpawn
+	zoomOutAudio.play();
 }
 
 //Tell the DOM to move our camera whenever the user scrolls
@@ -501,8 +529,38 @@ function moveCamera() {
 	console.log("Camera z: " + camera.position.z)
 }
 
-function onTextureLoad(){
-	loadedTotal += 1
+function addText(celestialEntityEnum: ce){
+	let div;
+	switch(celestialEntityEnum){
+		case ce.twitter:
+			div = document.getElementById("twitter")!
+			div.style.visibility = "visible"
+			break
+		case ce.autosage:
+			div = document.getElementById("autosage")!
+			div.style.visibility = "visible"
+			break
+		default:
+			console.log("Unknown case in addText")
+			break
+	}
+}
+
+function removeText(celestialEntityEnum: ce){
+	let div;
+	switch(celestialEntityEnum){
+		case ce.twitter:
+			div = document.getElementById("twitter")!
+			div.style.visibility = "hidden"
+			break
+		case ce.autosage:
+			div = document.getElementById("autosage")!
+			div.style.visibility = "hidden"
+			break
+		default:
+			console.log("Unknown case in removeText")
+			break
+	}
 }
 
 function changeWorld(celestialEntityEnum: ce, leaving: boolean){
@@ -524,18 +582,23 @@ function changeWorld(celestialEntityEnum: ce, leaving: boolean){
 		case ce.twitter:
 			if(leaving) {
 				twitter.swapEntities(scene)
+				removeText(celestialEntityEnum)
 			}
 			else {
 				twitter.swapEntities(scene)
+				addText(celestialEntityEnum)
 				cameraLock.target = twitter.entityCloseUp //switch to the new target
 			}
 			break;
 		case ce.autosage:
 			if(leaving){
-
+				autosage.swapEntities(scene)
+				removeText(celestialEntityEnum)
 			}
-			else{
-
+			else {
+				autosage.swapEntities(scene)
+				addText(celestialEntityEnum)
+				cameraLock.target = autosage.entityCloseUp //switch to the new target
 			}
 			break;
 		default:
@@ -593,9 +656,23 @@ function planeCurve(g: THREE.PlaneGeometry, z: number){
 	pos.needsUpdate = true;
 }
 
+//Register listener for and set up callback for space and esc key
+function onBackOutKey(event: any){
+	var keyCode = event.which
+	if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
+		if(cameraLock.name == ce.spawn) return //Do nothing if cameraLock was last locked onto spawn (prevents zoomout audio file spam etc)
+		if(cameraLock.isLocked && !shouldPinCamera) return //space/esc keys should have no effect when camera is targeting something
+		backOut();
+	}
+}
+
 //For use with loading screen
 function onTransitionEnd( event: any ) {
 	event.target.remove();	
+}
+
+function onTextureLoad(){
+	loadedTotal += 1
 }
 
 function onWindowResize() {
@@ -604,26 +681,6 @@ function onWindowResize() {
 
 	renderer.setSize( window.innerWidth, window.innerHeight );
 }
-
-// ! Deprecated fade
-// function fade(){
-// 	var element = document.getElementById("fader")
-// 	if(element == null) return true
-
-// 	//Find what alpha was, increment
-// 	const style = getComputedStyle(element)
-// 	var rgb = style.backgroundColor
-// 	var vals = rgb.split(',')
-// 	var oldAlpha = vals[vals.length-1].replace(')', '')
-// 	const newAlpha = (0.03 + parseFloat(oldAlpha)).toString()
-
-// 	//Set new alpha
-// 	var newRGB = rgb.replace(/[^,]+(?=\))/, newAlpha)
-// 	//console.log(newRGB)
-// 	element.style.backgroundColor = newRGB
-// 	if(parseFloat(newAlpha) >= 1) return true
-// 	return false //false if not done
-// }
 
 let app = new App()
 app.init()
