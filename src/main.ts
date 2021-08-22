@@ -17,6 +17,9 @@ import skyboxFront from './assets/skyboxwithsun/front.png?url'
 import skyboxBack from './assets/skyboxwithsun/back.png?url'
 import moonTexturePath from './assets/moon.jpg?url'
 import moonNormalPath from './assets/moonbumpmap.jpg?url'
+import twitterTexturePath from './assets/rockmoss.jpg?url'
+import twitterNormalPath from './assets/rockmossnormal.jpg?url'
+import twitterRoughnessPath from './assets/rockmossroughness.jpg?url'
 import twitterObjPath from './assets/twitter.obj?url'
 
 enum ce { //celestial entities
@@ -28,6 +31,9 @@ enum ce { //celestial entities
 }
 
 let loadedTotal = 0
+let debug = false
+let scrollMode = false
+let orbitControlsMode = false
 
 let mainScene: THREE.Scene;
 // let planetScene: THREE.Scene;
@@ -60,7 +66,7 @@ var mouse = new THREE.Vector2(); //2D representation of where a mouse click occu
 const CAM_START = {
 	x: 0,
 	y: 0,//-27.5, //For some reason the grid and black hole seemed to be centered here instead of at 0...
-	z: 290
+	z: 350
 }
 type cameraLockType = {
 	isLocked: boolean,
@@ -74,8 +80,20 @@ class App {
 
 	//Adds a star in a random spot, if negZOnly is passed in as true, it won't put any stars in pos z, helping to "background" the stars better
 	addStar(negZOnly=false){
-		const starGeo = new THREE.SphereGeometry(THREE.MathUtils.randFloat(0.25, 0.75), 24, 24)
-		const starMat = new THREE.MeshBasicMaterial({color: new Color("white")}) //MeshBasicMaterials do not cast shadows, good for tiny star balls
+		let color: THREE.Color
+		switch(THREE.MathUtils.randInt(1, 10)){
+			case 1:
+				color = new Color("#8575ff")
+				break
+			case 2:
+				color = new Color("#ffbf1f")
+				break
+			default: //10% chance for blueish, orangish, 80% chance for white
+				color = new Color("white")
+				break 
+		}
+		const starGeo = new THREE.SphereGeometry(THREE.MathUtils.randFloat(0.25, 0.75), 24, 24) 
+		const starMat = new THREE.MeshBasicMaterial({color: color}) //MeshBasicMaterials do not cast shadows, good for tiny star balls
 		const star = new THREE.Mesh(starGeo, starMat)
 
 		let x,y,z;
@@ -86,7 +104,7 @@ class App {
 		else zIsNeg = -1
 
 		//Set the closest and farthest stars can be
-		const innerBound = 260 //I believe with an inner bound of 250, I got a star to spawn only units in front of my camera's default spawn point
+		const innerBound = 280 //I believe with an inner bound of 250, I got a star to spawn only units in front of my camera's default spawn point
 		const outerBound = 700
 
 		x = THREE.MathUtils.randFloat(0, xIsNeg * outerBound)
@@ -101,9 +119,9 @@ class App {
 	}
 
 	pinCameraToWorld(target: THREE.Object3D){
-		console.log(camera.rotation.x + (THREE.MathUtils.DEG2RAD * 30))
-		//camera.rotation.x = THREE.MathUtils.DEG2RAD * 30
-		camera.position.set(target.position.x, (target.position.y + 10), target.position.z)
+		console.log(camera.rotation.x)
+		console.log(camera.rotation.y)
+		camera.position.set(target.position.x, (target.position.y + 10), target.position.z) //Was same, same+10, same
 	}
 
 	adjustCamera(target: THREE.Object3D, fastInc: number = 0.08, slowInc: number = 0.025){
@@ -207,15 +225,7 @@ class App {
 	}
 
 	init() {
-
-		// TODO: To fix like 95% of breaking glitches, I need to ignore clicks/space bar presses when adjustCamera is active basically.
-		// TODO (this is for things like the close up world staying when you return back to original spawn, etc)
-
 		// * The original twitter world is what is causing that weird glitch where it jumps a few units forward and the close up world vanishes
-
-		let debug = false
-		let scrollMode = false
-		let orbitControlsMode = false
 
 		mainScene = new THREE.Scene(); //Instantiate the scene
 		// planetScene = new THREE.Scene();
@@ -235,6 +245,7 @@ class App {
 			mainScene.add(skybox)
 
 			const loadingScreen = document.querySelector('#loading-screen');
+			console.log(loadingScreen?.innerHTML)
 			loadingScreen?.classList.add('fade-out')
 			loadingScreen?.addEventListener('transitionend', onTransitionEnd)
 			canPlayMusic = true
@@ -252,18 +263,22 @@ class App {
 		];
 		skyboxMaterials.forEach(x => x.side = THREE.BackSide)
 
-		//Moon texture loading
+		//Texture loading for various worlds
 		let moonTexture = new THREE.TextureLoader(loadManager).load(moonTexturePath, onTextureLoad)
-		let moonNormal = new THREE.TextureLoader(loadManager).load(moonNormalPath, onTextureLoad)  
+		let moonNormal = new THREE.TextureLoader(loadManager).load(moonNormalPath, onTextureLoad)
+		let twitterTexture = new THREE.TextureLoader(loadManager).load(twitterTexturePath, onTextureLoad)
+		let twitterNormal = new THREE.TextureLoader(loadManager).load(twitterNormalPath, onTextureLoad)
+		let twitterRoughness = new THREE.TextureLoader(loadManager).load(twitterRoughnessPath, onTextureLoad) 
 
 		//Instantiate and set up camera
-		camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 5000)
+		camera = new THREE.PerspectiveCamera(40, window.innerWidth/window.innerHeight, 0.1, 5000)
 		camera.position.z = CAM_START.z //Move camera back so its not in center of scene
 		camera.position.y = CAM_START.y //Move camera back so its not in center of scene
+		camera.position.x = CAM_START.x
 
 		//Window event listeners
 		window.addEventListener("mousedown", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
-		window.addEventListener("keydown", onBackOutKey, false)
+		window.addEventListener("keydown", onKey, false)
 		window.addEventListener("resize", onWindowResize, false)
 
 		//Instantiate and set up renderer
@@ -274,7 +289,7 @@ class App {
 		renderer.setSize(window.innerWidth, window.innerHeight) //Fullscreen
 		document.body.appendChild(renderer.domElement); //Add renderer to the dom, which is responsible for drawing camera and scene
 
-		//autosage planet, which is currently represented by a torus until I can add a beat saber block
+		// * Create the autosage planet, which is currently represented by a torus until I can add a beat saber block
 		autosage = new CelestialEntity("autosage", false, 115);
 		autosage.addMesh(
 			new THREE.TorusGeometry(10, 3, 16, 100), 
@@ -309,6 +324,7 @@ class App {
 		//Populate the universe
 		for(let i = 0; i < 600; i++) this.addStar() //with stars
 
+		// * Create the black hole
 		let blackHole = new CelestialEntity("black hole", false, 0)
 		blackHole.addMesh(
 			new THREE.SphereGeometry(6, 128, 128),
@@ -360,11 +376,10 @@ class App {
 		// })
 		// ! End Deprecated 
 
-		//Create the beat saber block
-		
+		//* Create the beat saber block
 
 
-		//Create the twitter planet from an .obj model
+		// * Create the twitter planet from an .obj model
 		new OBJLoader(loadManager).load(twitterObjPath, function(group){
 			group.traverse(function(child){
 				if(child instanceof THREE.Mesh){
@@ -375,22 +390,50 @@ class App {
 			})
 			//console.log(twitter)
 			twitter = new CelestialEntity("twitter", true, 70, group)
-			twitter.setCloseUp(twitterCloseUp) //Only when twitter.obj is done loading do we want to set its close up version
+
+			// * Design the close up world for twitter
+			// const trunkHeight = 1
+			// const trunkRadius = 0.2
+			// const trunkGeometry = new THREE.CylinderGeometry(
+			// 	trunkRadius, trunkRadius, trunkHeight, 12);
+			// const trunkMaterial = new THREE.MeshPhongMaterial({color: 'brown'});
+
+			// const topGeometry = new THREE.ConeGeometry(
+			// 		4*trunkRadius, 2*trunkHeight, 12);
+			// const topMaterial = new THREE.MeshPhongMaterial({color: 'green'});
+			// const root = new THREE.Object3D()
+			// root.add(new THREE.Mesh(
+			// 	trunkGeometry,
+			// 	trunkMaterial
+			// ))
+			// const top = new THREE.Mesh(
+			// 	topGeometry,
+			// 	topMaterial
+			// )
+			// top.position.y = (3*trunkHeight)/2
+			// root.add(top)
+			// root.position.x = 0
+			// root.position.y = 0
+			// root.position.z = 340
+			let twitterCloseUpGeo = new THREE.PlaneGeometry(64, 64, 128, 128)
+			let twitterCloseUpMat = new THREE.MeshStandardMaterial({map: twitterTexture, roughnessMap: twitterRoughness, bumpMap: twitterNormal})
+			twitterCloseUpMat.side = THREE.BackSide 
+			//planeCurve(twitterCloseUpGeo, 9)
+			twitterCloseUp = new THREE.Mesh(
+				twitterCloseUpGeo,
+				twitterCloseUpMat
+			)
+			// twitterCloseUp.add(root)
+			twitterCloseUp.rotation.x += THREE.MathUtils.DEG2RAD * 90
+
+			twitter.setCloseUp(twitterCloseUp)
 			mainScene.add(twitter.entity)
 			onTextureLoad()
 		})
-		
-			
-		let twitterCloseUpGeo = new THREE.PlaneGeometry(64, 96, 32, 32)
-		let twitterCloseUpMat = new THREE.MeshStandardMaterial({color: 0x3fbcff, map: moonTexture, metalness: 0.0, normalMap: moonNormal})
-		twitterCloseUpMat.side = THREE.BackSide 
-		planeCurve(twitterCloseUpGeo, 5)
-		twitterCloseUp = new THREE.Mesh(
-			twitterCloseUpGeo,
-			twitterCloseUpMat
-		)
-		twitterCloseUp.rotation.x += THREE.MathUtils.DEG2RAD * 90
 
+		
+
+		// * Create the moon
 		let moon = new CelestialEntity("moon", false, 140)
 		moon.addMesh(
 			new THREE.SphereGeometry(6, 64, 64),
@@ -404,20 +447,6 @@ class App {
 
 		//Weird glitches? Can't get stuff to display? Just debug enable and make everything BasicMaterial to guarantee you're doing it right
 		//if(debug) scene.overrideMaterial = new MeshBasicMaterial({ color: 'green'})
-
-		//Demonstration of planet switching
-		// setTimeout(() => {
-		// 	changeWorld(ce.twitter, false)
-		// 	cameraLock.name = ce.twitter
-		// }, 2000)
-		// setTimeout(() => {
-		// 	changeWorld(ce.twitter, true)
-		// 	cameraLock = {
-		// 		isLocked: false,
-		// 		target: { CAM_START },
-		// 		name: ce.spawn
-		// 	}
-		// }, 5000)
 		
 		//three.js "game" loop
 		const animate = () =>{
@@ -427,14 +456,13 @@ class App {
 			autosage.adjustOrbit()
 			moon.adjustOrbit()
 			twitter.adjustOrbit()
-			//systemStar.adjustOrbit()
 
 			//Adjust rotations
 			autosage.rotate(0.01, 0.005, 0.001)
 			moon.rotate(0.001, 0.001, 0)
 			twitter.rotate(0, 0, 0.002)
 
-			if(orbitControlsMode) controls.update()
+			if(orbitControlsMode) controls.update() //Adding an else after if(cameraLock.isLocked) and putting this there doesn't work, I should revisit this
 
 			if(cameraLock.isLocked) {
 				if(shouldPinCamera) this.pinCameraToWorld(cameraLock.target)
@@ -586,7 +614,7 @@ function changeWorld(celestialEntityEnum: ce, leaving: boolean){
 			}
 			else {
 				twitter.swapEntities(scene)
-				addText(celestialEntityEnum)
+				//addText(celestialEntityEnum)
 				cameraLock.target = twitter.entityCloseUp //switch to the new target
 			}
 			break;
@@ -657,12 +685,19 @@ function planeCurve(g: THREE.PlaneGeometry, z: number){
 }
 
 //Register listener for and set up callback for space and esc key
-function onBackOutKey(event: any){
+function onKey(event: any){
 	var keyCode = event.which
 	if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
 		if(cameraLock.name == ce.spawn) return //Do nothing if cameraLock was last locked onto spawn (prevents zoomout audio file spam etc)
 		if(cameraLock.isLocked && !shouldPinCamera) return //space/esc keys should have no effect when camera is targeting something
 		backOut();
+	}
+
+	if(debug){
+		if(keyCode == 37) camera.rotation.y += 0.1 //Left arrow
+		if(keyCode == 38) camera.rotation.x += 0.1 //Up arrow
+		if(keyCode == 39) camera.rotation.y -= 0.1 //Right arrow
+		if(keyCode == 40) camera.rotation.x -= 0.1 //Down arrow
 	}
 }
 
@@ -679,7 +714,7 @@ function onWindowResize() {
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 
-	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 let app = new App()
