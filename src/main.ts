@@ -31,8 +31,7 @@ enum ce { //celestial entities
 }
 
 let loadedTotal = 0
-let debug = false
-let scrollMode = false
+let debug = false //dev mode
 let orbitControlsMode = false
 let controls: OrbitControls
 
@@ -89,11 +88,11 @@ class App {
 			case 2:
 				color = new Color("#ffce5c")
 				break
-			default: //10% chance for blueish, orangish, 80% chance for white
+			default: //12.5% chance for blueish, 12.5% orangish, 75% chance for white
 				color = new Color("white")
 				break 
 		}
-		const starGeo = new THREE.SphereGeometry(THREE.MathUtils.randFloat(0.25, 0.75), 24, 24) 
+		const starGeo = new THREE.SphereGeometry(THREE.MathUtils.randFloat(0.5, 0.75), 24, 24) 
 		const starMat = new THREE.MeshBasicMaterial({color: color}) //MeshBasicMaterials do not cast shadows, good for tiny star balls
 		const star = new THREE.Mesh(starGeo, starMat)
 
@@ -116,6 +115,10 @@ class App {
 			y = THREE.MathUtils.randFloat(yIsNeg * innerBound, yIsNeg * outerBound) 
 		star.position.set(x, y, z);
 		star.name = "star"
+
+		// star.matrixAutoUpdate = false       //I should be doing this to avoid checking for matrix changes in these objects every frame, but for
+		// star.matrixWorldNeedsUpdate = true //some reason matrixAutoUpdate is not letting stars spawn even though its what I set for the black
+											 //hole and black hole still works fine
 		mainScene.add(star)
 	}
 
@@ -429,8 +432,6 @@ class App {
 		)
 		mainScene.add(moon.entity)
 
-		if(scrollMode) window.onscroll = moveCamera
-
 		scene = mainScene; //Set active scene to main universe at start up
 
 		//Weird glitches? Can't get stuff to display? Just debug enable and make everything BasicMaterial to guarantee you're doing it right
@@ -531,21 +532,6 @@ function backOut(){
 	changeWorld(cameraLock.name, true)
 	cameraLock = goToSpawn
 	zoomOutAudio.play();
-}
-
-//Tell the DOM to move our camera whenever the user scrolls
-function moveCamera() {
-	cameraLock.isLocked = false //turn off camera lock on
-	console.log(cameraLock.isLocked)
-
-	const top = document.body.getBoundingClientRect().top //Find out the top of the user's viewport (screen basically)
-	camera.position.z = (top * 0.05) + CAM_START.z
-	//camera.position.x = top * -0.002
-	camera.position.y = (top * -0.05) + CAM_START.y
-	console.log("Top is now equal to " + top)
-	console.log("Camera x: " + camera.position.x)
-	console.log("Camera y: " + camera.position.y)
-	console.log("Camera z: " + camera.position.z)
 }
 
 function addText(celestialEntityEnum: ce){
