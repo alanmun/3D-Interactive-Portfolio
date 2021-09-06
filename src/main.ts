@@ -34,6 +34,7 @@ let loadedTotal = 0
 let debug = false
 let scrollMode = false
 let orbitControlsMode = false
+let controls: OrbitControls
 
 let mainScene: THREE.Scene;
 // let planetScene: THREE.Scene;
@@ -42,10 +43,10 @@ let camera: THREE.PerspectiveCamera;
 let renderer: THREE.WebGLRenderer;
 
 let twitter: CelestialEntity //For twitter.obj model
-let twitterCloseUp: THREE.Mesh
+let twitterCloseUp: THREE.Group
 
 let autosage: CelestialEntity
-let autosageCloseUp: THREE.Mesh
+let autosageCloseUp: THREE.Group
 
 let canPlayMusic: boolean = false
 var zoomOutAudio = new Audio(zoomOutPath);
@@ -81,12 +82,12 @@ class App {
 	//Adds a star in a random spot, if negZOnly is passed in as true, it won't put any stars in pos z, helping to "background" the stars better
 	addStar(negZOnly=false){
 		let color: THREE.Color
-		switch(THREE.MathUtils.randInt(1, 10)){
+		switch(THREE.MathUtils.randInt(1, 8)){
 			case 1:
 				color = new Color("#8575ff")
 				break
 			case 2:
-				color = new Color("#ffbf1f")
+				color = new Color("#ffce5c")
 				break
 			default: //10% chance for blueish, orangish, 80% chance for white
 				color = new Color("white")
@@ -104,7 +105,7 @@ class App {
 		else zIsNeg = -1
 
 		//Set the closest and farthest stars can be
-		const innerBound = 280 //I believe with an inner bound of 250, I got a star to spawn only units in front of my camera's default spawn point
+		const innerBound = 350 //I believe with an inner bound of 250, I got a star to spawn only units in front of my camera's default spawn point
 		const outerBound = 700
 
 		x = THREE.MathUtils.randFloat(0, xIsNeg * outerBound)
@@ -121,7 +122,7 @@ class App {
 	pinCameraToWorld(target: THREE.Object3D){
 		console.log(camera.rotation.x)
 		console.log(camera.rotation.y)
-		camera.position.set(target.position.x, (target.position.y + 10), target.position.z) //Was same, same+10, same
+		camera.position.set(target.position.x, (target.position.y + 8), target.position.z) //Was same, same+10, same
 	}
 
 	adjustCamera(target: THREE.Object3D, fastInc: number = 0.08, slowInc: number = 0.025){
@@ -245,7 +246,6 @@ class App {
 			mainScene.add(skybox)
 
 			const loadingScreen = document.querySelector('#loading-screen');
-			console.log(loadingScreen?.innerHTML)
 			loadingScreen?.classList.add('fade-out')
 			loadingScreen?.addEventListener('transitionend', onTransitionEnd)
 			canPlayMusic = true
@@ -295,17 +295,21 @@ class App {
 			new THREE.TorusGeometry(10, 3, 16, 100), 
 			new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: false, roughness: 0, wireframe: false}),
 		)
-		mainScene.add(autosage.entity)
+		autosageCloseUp = new THREE.Group();
 		let autosageCloseUpGeo = new THREE.PlaneGeometry(64, 96, 32, 32)
 		let autosageCloseUpMat = new THREE.MeshStandardMaterial({color: "black", map: moonTexture, metalness: 0.0, normalMap: moonNormal})
 		autosageCloseUpMat.side = THREE.BackSide 
 		planeCurve(autosageCloseUpGeo, 5)
-		autosageCloseUp = new THREE.Mesh(
+		let autosageCloseUpMesh = new THREE.Mesh(
 			autosageCloseUpGeo,
 			autosageCloseUpMat
 		)
-		autosageCloseUp.rotation.x += THREE.MathUtils.DEG2RAD * 90
+		autosageCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90
+		autosageCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
+		autosageCloseUp.add(autosageCloseUpMesh)
 		autosage.setCloseUp(autosageCloseUp)
+		for(let i = 0; i < 4; i++) autosage.addTree()
+		mainScene.add(autosage.entity)
 
 		//Add some light
 		const aL = new THREE.AmbientLight(new Color("white"), 1)
@@ -314,22 +318,26 @@ class App {
 		// planetScene.add(aL2)
 
 		//GridHelper
-		const gH = new THREE.GridHelper(200, 50)
-		if(debug) mainScene.add(gH)
+		if(debug){
+			const gH = new THREE.GridHelper(200, 50)
+			gH.name = "gridhelper"
+			mainScene.add(gH)
+		} 
 
 		//Move around in the scene with your mouse!
-		let controls: OrbitControls
-		if(orbitControlsMode) controls = new OrbitControls(camera, renderer.domElement);
+		controls = new OrbitControls(camera, renderer.domElement);
+		if(!orbitControlsMode) controls.enabled = false 
 
 		//Populate the universe
 		for(let i = 0; i < 600; i++) this.addStar() //with stars
 
 		// * Create the black hole
-		let blackHole = new CelestialEntity("black hole", false, 0)
+		let blackHole = new CelestialEntity("blackhole", false, 0)
 		blackHole.addMesh(
 			new THREE.SphereGeometry(6, 128, 128),
 			new THREE.MeshStandardMaterial({ color: "black", roughness: 0, metalness: 1, flatShading: false})
 		)
+		blackHole.entity.matrixAutoUpdate = false;
 		mainScene.add(blackHole.entity)
 
 		// ! (Deprecated) Create star that belongs to solar system and provides light to the system
@@ -376,8 +384,6 @@ class App {
 		// })
 		// ! End Deprecated 
 
-		//* Create the beat saber block
-
 
 		// * Create the twitter planet from an .obj model
 		new OBJLoader(loadManager).load(twitterObjPath, function(group){
@@ -392,42 +398,24 @@ class App {
 			twitter = new CelestialEntity("twitter", true, 70, group)
 
 			// * Design the close up world for twitter
-			// const trunkHeight = 1
-			// const trunkRadius = 0.2
-			// const trunkGeometry = new THREE.CylinderGeometry(
-			// 	trunkRadius, trunkRadius, trunkHeight, 12);
-			// const trunkMaterial = new THREE.MeshPhongMaterial({color: 'brown'});
-
-			// const topGeometry = new THREE.ConeGeometry(
-			// 		4*trunkRadius, 2*trunkHeight, 12);
-			// const topMaterial = new THREE.MeshPhongMaterial({color: 'green'});
-			// const root = new THREE.Object3D()
-			// root.add(new THREE.Mesh(
-			// 	trunkGeometry,
-			// 	trunkMaterial
-			// ))
-			// const top = new THREE.Mesh(
-			// 	topGeometry,
-			// 	topMaterial
-			// )
-			// top.position.y = (3*trunkHeight)/2
-			// root.add(top)
-			// root.position.x = 0
-			// root.position.y = 0
-			// root.position.z = 340
+			twitterCloseUp = new THREE.Group();
 			let twitterCloseUpGeo = new THREE.PlaneGeometry(64, 64, 128, 128)
 			let twitterCloseUpMat = new THREE.MeshStandardMaterial({map: twitterTexture, roughnessMap: twitterRoughness, bumpMap: twitterNormal})
 			twitterCloseUpMat.side = THREE.BackSide 
-			//planeCurve(twitterCloseUpGeo, 9)
-			twitterCloseUp = new THREE.Mesh(
+			planeCurve(twitterCloseUpGeo, 4)
+			let twitterCloseUpMesh = new THREE.Mesh(
 				twitterCloseUpGeo,
 				twitterCloseUpMat
 			)
-			// twitterCloseUp.add(root)
-			twitterCloseUp.rotation.x += THREE.MathUtils.DEG2RAD * 90
+			twitterCloseUp.add(twitterCloseUpMesh)
 
 			twitter.setCloseUp(twitterCloseUp)
+			twitterCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90
+			twitterCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
+			for(let i = 0; i < 10; i++) twitter.addTree();
+
 			mainScene.add(twitter.entity)
+			//twitter.cameraIsAt = true
 			onTextureLoad()
 		})
 
@@ -503,7 +491,10 @@ function onMouseClick(event: THREE.Event) {
 	// * Check for intersections on any mesh
 	var intersects = raycaster.intersectObjects(scene.children);
 	console.log(intersects[0].object.name)
-	if(intersects[0].object.name == "star" || intersects[0].object.name == "skybox") return; //These clickable things shouldn't be clickable
+	if(intersects[0].object.name == "star" ||
+	 intersects[0].object.name == "skybox" ||
+	 intersects[0].object.name == "blackhole" ||
+	 intersects[0].object.name == "gridhelper" ) return; //These clickable things shouldn't be clickable
 	if(shouldPinCamera && intersects[0].object.name.includes("close") == false) return; //Do nothing if a click happens on something that isn't a close up version
 	if(intersects[0].object.name.includes("close")) {
 		backOut()
@@ -512,7 +503,7 @@ function onMouseClick(event: THREE.Event) {
 	cameraLock.isLocked = true;
 	cameraLock.target = intersects[0].object;
 	if(intersects[0].object.name == "moon") cameraLock.name = ce.moon
-	else if(intersects[0].object.name == "black hole") cameraLock.name = ce.blackHole
+	//else if(intersects[0].object.name == "black hole") cameraLock.name = ce.blackHole
 	else if(intersects[0].object.name == "autosage") cameraLock.name = ce.autosage
 
 	// ! Because intersectObjects() sorts the result by distance, closest first, we don't need to iterate through. We only want the closest hit
@@ -558,15 +549,19 @@ function moveCamera() {
 }
 
 function addText(celestialEntityEnum: ce){
-	let div;
+	let div = document.getElementById("portfolioDiv")!
+	div.style.visibility = "visible"
+	let title = document.getElementById("title")!
+	let body = document.getElementById("spanBody")!
+
 	switch(celestialEntityEnum){
 		case ce.twitter:
-			div = document.getElementById("twitter")!
-			div.style.visibility = "visible"
+			title.innerHTML = "What Song Is That? Twitter Bot (2020)"
+			body.innerHTML = "I decided to write and host a twitter bot for fun on my own server, using a Raspberry Pi, for a friend's twitter account. That bot has over a hundred thousand followers now. The success of that bot led me to make my own more sophisticated bot called What Song Is That? It takes requests from users who wish to know what song is playing in a tweet, queries Shazam's API on their behalf and displays its findings cleanly on a website I made for it. Visit <a href=\"https://whatsong.page\">whatsong.page</a> for more information."
 			break
 		case ce.autosage:
-			div = document.getElementById("autosage")!
-			div.style.visibility = "visible"
+			title.innerHTML = "AutoSage (2021)"
+			body.innerHTML = "AutoSage is a Python written tool for users of BeatSage, an AI driven service made for the popular VR rhythm game Beat Saber. AutoSage simplifies and automates the process of using BeatSage for all of the songs the user wishes to play in Beat Saber. See the tool's repo here: <a href=\"https://github.com/alanmun/autosage\">github.com/alanmun/autosage</a>"
 			break
 		default:
 			console.log("Unknown case in addText")
@@ -574,21 +569,9 @@ function addText(celestialEntityEnum: ce){
 	}
 }
 
-function removeText(celestialEntityEnum: ce){
-	let div;
-	switch(celestialEntityEnum){
-		case ce.twitter:
-			div = document.getElementById("twitter")!
-			div.style.visibility = "hidden"
-			break
-		case ce.autosage:
-			div = document.getElementById("autosage")!
-			div.style.visibility = "hidden"
-			break
-		default:
-			console.log("Unknown case in removeText")
-			break
-	}
+function removeText(){
+	let div = document.getElementById("portfolioDiv")!
+	div.style.visibility = "hidden"
 }
 
 function changeWorld(celestialEntityEnum: ce, leaving: boolean){
@@ -610,18 +593,18 @@ function changeWorld(celestialEntityEnum: ce, leaving: boolean){
 		case ce.twitter:
 			if(leaving) {
 				twitter.swapEntities(scene)
-				removeText(celestialEntityEnum)
+				removeText()
 			}
 			else {
 				twitter.swapEntities(scene)
-				//addText(celestialEntityEnum)
+				addText(celestialEntityEnum)
 				cameraLock.target = twitter.entityCloseUp //switch to the new target
 			}
 			break;
 		case ce.autosage:
 			if(leaving){
 				autosage.swapEntities(scene)
-				removeText(celestialEntityEnum)
+				removeText()
 			}
 			else {
 				autosage.swapEntities(scene)
@@ -698,6 +681,10 @@ function onKey(event: any){
 		if(keyCode == 38) camera.rotation.x += 0.1 //Up arrow
 		if(keyCode == 39) camera.rotation.y -= 0.1 //Right arrow
 		if(keyCode == 40) camera.rotation.x -= 0.1 //Down arrow
+		if(keyCode == 79) {
+			orbitControlsMode = !orbitControlsMode
+			controls.enabled = !controls.enabled
+		}
 	}
 }
 

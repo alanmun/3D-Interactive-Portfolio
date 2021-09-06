@@ -4,34 +4,53 @@ canvas {
   left: 0;
 }
 
+/* Portfolio text stuff */
+/* span { I'd like to avoid a bg coloring if possible, but if I absolutely must, this will let me have a semi-transparent background on text
+  background: rgba(0, 0, 0, 0.3)
+} */
+
 .portfolio {
   visibility: hidden;
-  width: 500px;
   display: grid;
+  padding-left: 30px;
+  padding-right: 30px;
+  grid-gap: 10px;
+  grid-template-columns: 100%;
+  grid-template-rows: 20% 80%;
   z-index: 2; /* For some reason you need a z-index of 2 or greater to print over the canvas */
 }
 
-/* .break {
-  flex-basis: 100%;
-  height: 0;
-} */
-
 .portfolio-title {
+  grid-column-start: 1;
+  grid-column-end: 1;
+  grid-row-start: 1;
+  grid-row-end: 1;
+
   font-size: 42px;
-  
   font-family: 'Segoe UI', sans-serif;
 }
 
 .portfolio-body {
-  text-align: left;
-  font-size: 28px;
+  grid-column-start: 1;
+  grid-column-end: 1;
+  grid-row-start: 2;
+  grid-row-end: 2;
+
+  text-align: justify;
+  font-size: 25px;
   font-family: 'Segoe UI Light', Verdana, sans-serif;
+}
+
+div {
+  color: ghostwhite;
+  display: grid;
 }
 
 #bg {
   z-index: 1;
 }
 
+/* Loading screen stuff */
 .piccontainer {
   display: flex;
   flex-direction: row;
@@ -140,23 +159,12 @@ canvas {
 #root {
   --dark-bg: rgba(15, 15, 15, 0.6);
   --spacing: 300px;
-
-  font-family: brandon-grotesque, sans-serif;
-  font-weight: 400;
-  font-style: normal;
 }
 
 body {
   background: rgb(0, 0, 0, 0);
   overflow-x: hidden;
   overflow-y: hidden; /* This used to be visible, but the loading screen was being stupid and wouldn't stop being scrollable so I made it hidden */
-}
-
-div {
-  color: white;
-
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
 }
 
 .container {

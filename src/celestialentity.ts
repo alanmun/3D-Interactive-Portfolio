@@ -65,7 +65,7 @@ export class CelestialEntity {
 		if(this.cameraIsAt) entityToMove = this.entityCloseUp
 		else entityToMove = this.entity
 
-		const alpha = 0.07; //Decrease to speed up, a good "realistic" value is 0.07
+		const alpha = 0.09; //Decrease to speed up, a good "realistic" value is 0.07 or higher
 
 		//Circle calculation
 		// entityToMove.position.x = this.distance*Math.cos(this.theta);
@@ -92,6 +92,44 @@ export class CelestialEntity {
 
 		//this.phi += (1 / (alpha*(this.distance**2))) 
 		this.theta += (1 / (alpha*(this.distance**2))) //orbiting speed is a function of distance from celestial mass
+	}
+
+	//Randomly generates trees for a given CE's close up world.
+	// TODO: Add collision checking and prevent trees from being, say, within a cone diameter of each other?
+	// TODO: Add a biasing that makes trees prefer the edges of the close up world
+	addTree(){
+		const trunkHeight = THREE.MathUtils.randFloat(0.5, 1);
+		const trunkRadius = 0.1
+		const trunkGeometry = new THREE.CylinderGeometry(trunkRadius, trunkRadius, trunkHeight, 12);
+		const trunkMaterial = new THREE.MeshPhongMaterial({color: 'brown'});
+
+		const topGeometry = new THREE.ConeGeometry(
+				4*trunkRadius, 2*trunkHeight, 12);
+		const topMaterial = new THREE.MeshPhongMaterial({color: 'green'});
+		const root = new THREE.Object3D()
+		root.add(new THREE.Mesh(
+			trunkGeometry,
+			trunkMaterial
+		))
+		const top = new THREE.Mesh(
+			topGeometry,
+			topMaterial
+		)
+		top.position.y = (3*trunkHeight)/2
+		root.add(top)
+
+		//Perform final rotation and position adjustments to make sure tree spawns sensibly
+
+		root.position.x -= THREE.MathUtils.randFloat(7, 15)
+		root.position.y += 6
+		root.position.z -= THREE.MathUtils.randFloat(-6, 6.75)
+		// root.rotation.x -= THREE.MathUtils.DEG2RAD * 90 //This flips the tree so that it faces upwards and any future rotations affect it properly
+		// root.position.y -= THREE.MathUtils.randInt(-12, 12) //Due to position being messed up when a child of a group, this is actually what z does
+		// root.position.z -= 5 //And this is moving up and down, inversed. So lowering z is increasing its position in the y direction in world space
+		// console.log(root.position)
+		// console.log(new THREE.Vector3().setFromMatrixPosition(root.matrixWorld))
+		
+		this.entityCloseUp.add(root)
 	}
 
 	//Setters
