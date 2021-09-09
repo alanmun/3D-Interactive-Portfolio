@@ -5,7 +5,6 @@ export class CelestialEntity {
     distance: number = 0
 	tilt: number = THREE.MathUtils.randInt(-70, 10)
     theta: number = THREE.MathUtils.randFloat(0.0, 6.28318530718) //When a CE is made, give it a theta at random between 0 and 2pi
-    //phi: number = THREE.MathUtils.randFloat(0.0, 6.28318530718) //Unused rn
 	cameraIsAt: boolean = false //True if camera is currently at CE, false otherwise
     entity: any = null //THREE.Mesh representation of our CE. If CE is a group, this is the THREE.Group representation instead
 	entityCloseUp: any = null //THREE.Mesh representation of our CE when we visit it close up
@@ -130,6 +129,25 @@ export class CelestialEntity {
 		// console.log(new THREE.Vector3().setFromMatrixPosition(root.matrixWorld))
 		
 		this.entityCloseUp.add(root)
+	}
+
+	reverberate(tick: number){
+		if(this.entity.name == "blackhole"){
+			// let scaleVary = Math.sin(tick) * 0.02 + 1 //This scales the size of the black hole from 98% to 102%
+			// this.entity.scale.set(scaleVary, scaleVary, scaleVary)
+
+			let vary = Math.sin(tick) * 0.5 + 0.5 //Convert -1.0-1.0 to 0.0-1.0
+			const c1 = new THREE.Color("#BAD1FF")
+			const c2 = new THREE.Color("#FFFFFF")
+			this.entity.material.uniforms.glowColor.value = c1.lerp(c2, vary)
+
+			let inc: number
+			let randIncPick = THREE.MathUtils.randInt(1, 10)
+			if(randIncPick > 8) inc = 0.4 //THREE.MathUtils.randFloat(0.1, 0.3)
+			else inc = 0
+			return tick + inc
+		}
+		return 0
 	}
 
 	//Setters

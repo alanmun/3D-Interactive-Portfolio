@@ -1,8 +1,9 @@
 import './index.css'
 import { CelestialEntity } from './celestialentity'
+import { vShader, fShader } from "./atmosphericGlowShader";
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
-//import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Color } from 'three';
 
@@ -21,6 +22,7 @@ import twitterTexturePath from './assets/rockmoss.jpg?url'
 import twitterNormalPath from './assets/rockmossnormal.jpg?url'
 import twitterRoughnessPath from './assets/rockmossroughness.jpg?url'
 import twitterObjPath from './assets/twitter.obj?url'
+import beatSaberGlbPath from './assets/block.glb?url'
 
 enum ce { //celestial entities
 	spawn,
@@ -35,8 +37,6 @@ let debug = false //dev mode
 let orbitControlsMode = false
 let controls: OrbitControls
 
-let mainScene: THREE.Scene;
-// let planetScene: THREE.Scene;
 let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
 let renderer: THREE.WebGLRenderer;
@@ -66,7 +66,7 @@ var mouse = new THREE.Vector2(); //2D representation of where a mouse click occu
 const CAM_START = {
 	x: 0,
 	y: 0,//-27.5, //For some reason the grid and black hole seemed to be centered here instead of at 0...
-	z: 350
+	z: 360
 }
 type cameraLockType = {
 	isLocked: boolean,
@@ -80,21 +80,47 @@ class App {
 
 	//Adds a star in a random spot, if negZOnly is passed in as true, it won't put any stars in pos z, helping to "background" the stars better
 	addStar(negZOnly=false){
+		let sizeGlow = THREE.MathUtils.randFloat(0.75, 0.95);
+		//let sizeCore = sizeGlow / 2
 		let color: THREE.Color
-		switch(THREE.MathUtils.randInt(1, 8)){
+		switch(THREE.MathUtils.randInt(1, 3)){
 			case 1:
-				color = new Color("#8575ff")
+				color = new Color("#2407FF")
 				break
 			case 2:
-				color = new Color("#ffce5c")
+				color = new Color("#FFB200")
 				break
 			default: //12.5% chance for blueish, 12.5% orangish, 75% chance for white
 				color = new Color("white")
 				break 
 		}
-		const starGeo = new THREE.SphereGeometry(THREE.MathUtils.randFloat(0.5, 0.75), 24, 24) 
-		const starMat = new THREE.MeshBasicMaterial({color: color}) //MeshBasicMaterials do not cast shadows, good for tiny star balls
-		const star = new THREE.Mesh(starGeo, starMat)
+		// const core = new THREE.Mesh(
+		// 	new THREE.SphereGeometry(sizeCore, 16, 16),
+		// 	new THREE.MeshBasicMaterial({ color: color})
+		// )
+		const glowGeo = new THREE.SphereGeometry(sizeGlow, 16, 16)
+		const glowMat = new THREE.ShaderMaterial({
+			uniforms: {
+				glowColor: {
+					value: color
+				},
+				"p": {
+					value: 3
+				},
+				"c": {
+					value: 0.5
+				},
+				viewVector: { value: camera.position}
+			},
+			vertexShader: vShader,
+			fragmentShader: fShader,
+			side: THREE.BackSide,
+			blending: THREE.AdditiveBlending,
+			transparent: true
+		}) //MeshBasicMaterials do not cast shadows, good for tiny star balls
+		const star = new THREE.Mesh(glowGeo, glowMat) //new THREE.Group() 
+		//star.add(new THREE.Mesh(glowGeo, glowMat))
+		//star.add(core)
 
 		let x,y,z;
 		let xIsNeg, yIsNeg, zIsNeg
@@ -119,23 +145,22 @@ class App {
 		// star.matrixAutoUpdate = false       //I should be doing this to avoid checking for matrix changes in these objects every frame, but for
 		// star.matrixWorldNeedsUpdate = true //some reason matrixAutoUpdate is not letting stars spawn even though its what I set for the black
 											 //hole and black hole still works fine
-		mainScene.add(star)
+		scene.add(star)
 	}
 
 	pinCameraToWorld(target: THREE.Object3D){
-		console.log(camera.rotation.x)
-		console.log(camera.rotation.y)
+		//console.log(camera.rotation.x)
+		//console.log(camera.rotation.y)
 		camera.position.set(target.position.x, (target.position.y + 8), target.position.z) //Was same, same+10, same
 	}
 
-	adjustCamera(target: THREE.Object3D, fastInc: number = 0.08, slowInc: number = 0.025){
+	adjustCamera(target: THREE.Object3D){
 		const xdiff = camera.position.x - target.position.x
 		const ydiff = camera.position.y - target.position.y
 		const zdiff = camera.position.z - target.position.z
-		// var xMatched = false
-		// var yMatched = false
-		// var zMatched = false
+		const fastInc = 0.08;
 		const medInc = 0.05;
+		const slowInc = 0.025;
 		const nearlyThere = 0.05; //was going to call this slowestInc but its a similar value to medium Increment, which is kind of confusing
 		
 		//Because target isn't an Object3D when going to spawn, it won't have a name property. You can use below to check if target is a celestial
@@ -160,7 +185,6 @@ class App {
 		else if(absX >= 0){
 			camera.position.x = target.position.x
 			xIsClose = true
-			//xMatched = true
 		}
 
 		//Handle y
@@ -181,7 +205,6 @@ class App {
 		else if(absY >= 0) {
 			camera.position.y = target.position.y
 			yIsClose = true
-			//yMatched = true
 		}
 		
 		//Handle z
@@ -202,7 +225,6 @@ class App {
 		else if(absZ >= 0) {
 			camera.position.z = target.position.z
 			zIsClose = true
-			//zMatched = true
 		}
 
 		//Special case to see if camera is at the original spawn point, disable target lock
@@ -224,15 +246,12 @@ class App {
 			}
 			reachedTargetFirstTime = true
 		}
-		//else if(xMatched && yMatched && zMatched) cameraLock = {isLocked: false, target: null} //This may not be necessary...
-
 	}
 
 	init() {
 		// * The original twitter world is what is causing that weird glitch where it jumps a few units forward and the close up world vanishes
 
-		mainScene = new THREE.Scene(); //Instantiate the scene
-		// planetScene = new THREE.Scene();
+		scene = new THREE.Scene(); //Instantiate the scene
 
 		document.body.addEventListener("mousemove", function () {
 			if(canPlayMusic) backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
@@ -246,7 +265,7 @@ class App {
 			console.log("Loaded skybox")
 			skybox = new THREE.Mesh(skyboxGeom, skyboxMaterials)
 			skybox.name = "skybox" //Tag it so we can block mouse clicks from acting on it
-			mainScene.add(skybox)
+			scene.add(skybox)
 
 			const loadingScreen = document.querySelector('#loading-screen');
 			loadingScreen?.classList.add('fade-out')
@@ -274,7 +293,7 @@ class App {
 		let twitterRoughness = new THREE.TextureLoader(loadManager).load(twitterRoughnessPath, onTextureLoad) 
 
 		//Instantiate and set up camera
-		camera = new THREE.PerspectiveCamera(40, window.innerWidth/window.innerHeight, 0.1, 5000)
+		camera = new THREE.PerspectiveCamera(35, window.innerWidth/window.innerHeight, 0.1, 5000)
 		camera.position.z = CAM_START.z //Move camera back so its not in center of scene
 		camera.position.y = CAM_START.y //Move camera back so its not in center of scene
 		camera.position.x = CAM_START.x
@@ -287,36 +306,62 @@ class App {
 		//Instantiate and set up renderer
 		renderer = new THREE.WebGLRenderer({
 			canvas: document.querySelector('#bg') as HTMLCanvasElement,
+			logarithmicDepthBuffer: true,
+			antialias: true
 		})
 		renderer.setPixelRatio(window.devicePixelRatio) //
 		renderer.setSize(window.innerWidth, window.innerHeight) //Fullscreen
 		document.body.appendChild(renderer.domElement); //Add renderer to the dom, which is responsible for drawing camera and scene
 
 		// * Create the autosage planet, which is currently represented by a torus until I can add a beat saber block
-		autosage = new CelestialEntity("autosage", false, 115);
-		autosage.addMesh(
-			new THREE.TorusGeometry(10, 3, 16, 100), 
-			new THREE.MeshStandardMaterial({color: 0xFF6347, flatShading: false, roughness: 0, wireframe: false}),
-		)
-		autosageCloseUp = new THREE.Group();
-		let autosageCloseUpGeo = new THREE.PlaneGeometry(64, 96, 32, 32)
-		let autosageCloseUpMat = new THREE.MeshStandardMaterial({color: "black", map: moonTexture, metalness: 0.0, normalMap: moonNormal})
-		autosageCloseUpMat.side = THREE.BackSide 
-		planeCurve(autosageCloseUpGeo, 5)
-		let autosageCloseUpMesh = new THREE.Mesh(
-			autosageCloseUpGeo,
-			autosageCloseUpMat
-		)
-		autosageCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90
-		autosageCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
-		autosageCloseUp.add(autosageCloseUpMesh)
-		autosage.setCloseUp(autosageCloseUp)
-		for(let i = 0; i < 4; i++) autosage.addTree()
-		mainScene.add(autosage.entity)
+		new GLTFLoader(loadManager).load(beatSaberGlbPath, function(obj){
+
+			//Create celestial entity object for autosage and add to scene
+			autosage = new CelestialEntity("autosage", true, 95, obj.scene);
+			let block: THREE.Group = autosage.entity;
+			block.scale.set(5, 5, 5)
+			// let bbox = new THREE.Box3().setFromObject(block);
+			// let bboxCenter: THREE.Vector3 = new THREE.Vector3();
+			// bbox.getCenter(bboxCenter).clone();
+			//bboxCenter.multiplyScalar(-1)
+
+			let foundCube = true
+			block.traverse(function(child){
+				if(child instanceof THREE.Mesh){
+					console.log(child)
+					//child.geometry.translate(bboxCenter.x, bboxCenter.y, bboxCenter.z)
+					//child.geometry.translate(-0.5, -0.5, -0.5)
+					if(foundCube) {
+						foundCube = false
+						child.material = new THREE.MeshPhongMaterial({ color: "#cc0000", shininess: 1, flatShading: true})
+					}
+				}
+			})
+			scene.add(autosage.entity)
+
+			//Initialize close up world for autosage
+			autosageCloseUp = new THREE.Group();
+			let autosageCloseUpGeo = new THREE.PlaneGeometry(64, 96, 32, 32)
+			let autosageCloseUpMat = new THREE.MeshStandardMaterial({color: "black", map: moonTexture, metalness: 0.0, normalMap: moonNormal})
+			autosageCloseUpMat.side = THREE.BackSide 
+			planeCurve(autosageCloseUpGeo, 5)
+			let autosageCloseUpMesh = new THREE.Mesh(
+				autosageCloseUpGeo,
+				autosageCloseUpMat
+			)
+			autosageCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90
+			autosageCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
+			autosageCloseUp.add(autosageCloseUpMesh)
+			autosage.setCloseUp(autosageCloseUp)
+			for(let i = 0; i < 4; i++) autosage.addTree()
+		}, undefined, function ( error ) {
+			console.error( error );
+		});
+		
 
 		//Add some light
 		const aL = new THREE.AmbientLight(new Color("white"), 1)
-		mainScene.add(aL)
+		scene.add(aL)
 		// const aL2 = new THREE.AmbientLight(new Color("white"))
 		// planetScene.add(aL2)
 
@@ -324,7 +369,7 @@ class App {
 		if(debug){
 			const gH = new THREE.GridHelper(200, 50)
 			gH.name = "gridhelper"
-			mainScene.add(gH)
+			scene.add(gH)
 		} 
 
 		//Move around in the scene with your mouse!
@@ -335,13 +380,41 @@ class App {
 		for(let i = 0; i < 600; i++) this.addStar() //with stars
 
 		// * Create the black hole
+		let bh: number = 0
 		let blackHole = new CelestialEntity("blackhole", false, 0)
 		blackHole.addMesh(
 			new THREE.SphereGeometry(6, 128, 128),
-			new THREE.MeshStandardMaterial({ color: "black", roughness: 0, metalness: 1, flatShading: false})
+			//new THREE.MeshStandardMaterial({ color: "black", roughness: 0, metalness: 1, flatShading: false})
+			new THREE.ShaderMaterial({
+				uniforms: {
+					glowColor: {
+						value: new THREE.Vector3(0.1, 0.1, 0.1) //Color is overwritten by reverberate function
+					},
+					"p": {
+						value: 6
+					},
+					"c": {
+						value: 0.25
+					},
+					viewVector: { value: camera.position}
+				},
+				vertexShader: vShader,
+				fragmentShader: fShader,
+				side: THREE.BackSide,
+				blending: THREE.AdditiveBlending,
+				transparent: true
+			})
 		)
-		blackHole.entity.matrixAutoUpdate = false;
-		mainScene.add(blackHole.entity)
+		/* TODO: Maybe I should merge this into one black hole THREE.Group, right now I'm lazy and don't care to figure out how to traverse and select
+		   the mesh with shader material on it so I can modify that one in reverberate()
+		*/
+		let blackHoleCore = new THREE.Mesh(
+			new THREE.SphereGeometry(4.75, 256, 256),
+			new THREE.MeshPhysicalMaterial({ color: "black", clearcoat: 1, side: THREE.DoubleSide}),
+		)
+		blackHoleCore.name = "blackholecore"
+		scene.add(blackHoleCore)
+		scene.add(blackHole.entity)
 
 		// ! (Deprecated) Create star that belongs to solar system and provides light to the system
 		// let systemStar = new CelestialEntity("sun", true, 90)
@@ -349,7 +422,7 @@ class App {
 		// const pL = new THREE.PointLight(new Color("white"), 2, 0) //light source
 		// if(debug) {
 		// 	const lH = new THREE.PointLightHelper(pL) //debugging tool
-		// 	mainScene.add(lH) //Debugging object doesn't need to be part of the group
+		// 	scene.add(lH) //Debugging object doesn't need to be part of the group
 		// }
 		// systemStar.addMesh(
 		// 	new THREE.SphereGeometry(),
@@ -357,34 +430,7 @@ class App {
 		// )
 		//Create a star that belongs to this solar system
 		// systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
-		// mainScene.add(systemStar)
-
-		//Create the system's star from an .obj model
-		// let systemStarMTL = new MTLLoader().load('./assets/solarsystem.mtl', function(materials){
-		// 	materials.preload()
-		// 	let systemStarOBJ = new OBJLoader()
-		// 	systemStarOBJ.setMaterials(materials)
-		// 	systemStarOBJ.load('./assets/systemstar.obj', function(object){
-		// 		systemStar = object
-		// 		systemStar.traverse(function(child){
-		// 			if(child instanceof THREE.Mesh){
-		// 				for(let i = 0; i < 13; i++){
-		// 					if(child.material[i].name != "sun") console.log(child.material[i]) //child.material[i] == null
-		// 				}
-		// 				// child.material.forEach(e: THREE.MeshPhongMaterial => {
-		// 				// 	if(e.name != "sun") console.log();
-		// 				// });
-		// 				//for(let i = 0; i < child.material.length;
-
-		// 				//child.material = new THREE.MeshStandardMaterial({map: 8ksun, roughness: 0, metalness: 0, flatShading: false})
-		// 			}
-		// 		})
-		// 		systemStar.scale.set(0.01, 0.01, 0.01)
-		// 		console.log(systemStar)
-		// 		systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
-		// 		mainScene.add(systemStar)
-		// 	})
-		// })
+		// scene.add(systemStar)
 		// ! End Deprecated 
 
 
@@ -398,7 +444,7 @@ class App {
 				}
 			})
 			//console.log(twitter)
-			twitter = new CelestialEntity("twitter", true, 70, group)
+			twitter = new CelestialEntity("twitter", true, 60, group)
 
 			// * Design the close up world for twitter
 			twitterCloseUp = new THREE.Group();
@@ -417,22 +463,18 @@ class App {
 			twitterCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
 			for(let i = 0; i < 10; i++) twitter.addTree();
 
-			mainScene.add(twitter.entity)
+			scene.add(twitter.entity)
 			//twitter.cameraIsAt = true
 			onTextureLoad()
 		})
 
-		
-
 		// * Create the moon
-		let moon = new CelestialEntity("moon", false, 140)
+		let moon = new CelestialEntity("moon", false, 120)
 		moon.addMesh(
 			new THREE.SphereGeometry(6, 64, 64),
 			new THREE.MeshStandardMaterial({color: "white", map: moonTexture, normalMap: moonTexture})
 		)
-		mainScene.add(moon.entity)
-
-		scene = mainScene; //Set active scene to main universe at start up
+		scene.add(moon.entity)
 
 		//Weird glitches? Can't get stuff to display? Just debug enable and make everything BasicMaterial to guarantee you're doing it right
 		//if(debug) scene.overrideMaterial = new MeshBasicMaterial({ color: 'green'})
@@ -440,6 +482,9 @@ class App {
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
+
+			//Black Hole shader manipulation
+			bh = blackHole.reverberate(bh)
 			
 			//Adjust orbits
 			autosage.adjustOrbit()
@@ -466,7 +511,11 @@ class App {
 function onMouseClick(event: THREE.Event) { 
 	//calculate mouse position in normalized device coordinates  (-1 to +1) for both components
 	if(cameraLock.isLocked && !shouldPinCamera) return //Mouse clicking should have no effect when camera is targeting something
-	
+	else if(shouldPinCamera){
+		backOut() //If cam wasn't locked, and shouldPinCamera is true, we are at a close up world.
+		return
+	}
+
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1; //I believe these convert to centered normalized coordinates x,y at 0,0 is exact center of screen
 	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; // height 100, click at 5, -5/100 = -0.05*2 is -slowInc + 1 means click was registered at y = 0.9
 
@@ -489,41 +538,23 @@ function onMouseClick(event: THREE.Event) {
 	// 	return
 	// }
 
-	// * Check for intersections on any mesh
+	// * Check for intersections on any mesh. Because intersectObjects() sorts the result by distance, closest first, we don't need to iterate 
+	// * through. We only want the closest hit
 	var intersects = raycaster.intersectObjects(scene.children);
+
 	console.log(intersects[0].object.name)
+
+	//These clickable things shouldn't be clickable
 	if(intersects[0].object.name == "star" ||
 	 intersects[0].object.name == "skybox" ||
 	 intersects[0].object.name == "blackhole" ||
-	 intersects[0].object.name == "gridhelper" ) return; //These clickable things shouldn't be clickable
-	if(shouldPinCamera && intersects[0].object.name.includes("close") == false) return; //Do nothing if a click happens on something that isn't a close up version
-	if(intersects[0].object.name.includes("close")) {
-		backOut()
-		return
-	}
+	 intersects[0].object.name == "blackholecore" ||
+	 intersects[0].object.name == "gridhelper" ) return; 
+	
 	cameraLock.isLocked = true;
 	cameraLock.target = intersects[0].object;
 	if(intersects[0].object.name == "moon") cameraLock.name = ce.moon
-	//else if(intersects[0].object.name == "black hole") cameraLock.name = ce.blackHole
 	else if(intersects[0].object.name == "autosage") cameraLock.name = ce.autosage
-
-	// ! Because intersectObjects() sorts the result by distance, closest first, we don't need to iterate through. We only want the closest hit
-	// for(var i = 0; i < intersects.length; i++){
-	// 	if(intersects[i].object.name != "star" && intersects[i].object.name != "skybox") {
-	// 		console.log(intersects[i].object.name)
-	// 		if(intersects[i].object.name.includes("close")){
-	// 			backOut();
-	// 			return
-	// 		}
-	// 		cameraLock.isLocked = true;
-	// 		cameraLock.target = intersects[i].object;
-	// 		if(intersects[i].object.name == "moon") cameraLock.name = ce.moon
-	// 		else if(intersects[i].object.name == "black hole") cameraLock.name = ce.blackHole
-	// 		else if(intersects[i].object.name == "autosage") cameraLock.name = ce.autosage
-	// 		//(obj as any).material.color.set(0xff0000); //Unfortunately TS doesn't like Object3Ds
-	// 		return
-	// 	}
-	// }
 }
 
 //Common actions to take when backing out of a world
@@ -543,11 +574,11 @@ function addText(celestialEntityEnum: ce){
 	switch(celestialEntityEnum){
 		case ce.twitter:
 			title.innerHTML = "What Song Is That? Twitter Bot (2020)"
-			body.innerHTML = "I decided to write and host a twitter bot for fun on my own server, using a Raspberry Pi, for a friend's twitter account. That bot has over a hundred thousand followers now. The success of that bot led me to make my own more sophisticated bot called What Song Is That? It takes requests from users who wish to know what song is playing in a tweet, queries Shazam's API on their behalf and displays its findings cleanly on a website I made for it. Visit <a href=\"https://whatsong.page\">whatsong.page</a> for more information."
+			body.innerHTML = "I decided to write and host a twitter bot for fun on my own server, using a Raspberry Pi, for a friend's twitter account. That bot has over a hundred thousand followers now. The success of that bot led me to make my own more sophisticated bot called What Song Is That? It takes requests from users who wish to know what song is playing in a tweet, queries Shazam's API on their behalf and displays its findings cleanly on a website I made for it. Visit <a href=\"https://whatsong.page\" target=\"_blank\">whatsong.page</a> for more information."
 			break
 		case ce.autosage:
 			title.innerHTML = "AutoSage (2021)"
-			body.innerHTML = "AutoSage is a Python written tool for users of BeatSage, an AI driven service made for the popular VR rhythm game Beat Saber. AutoSage simplifies and automates the process of using BeatSage for all of the songs the user wishes to play in Beat Saber. See the tool's repo here: <a href=\"https://github.com/alanmun/autosage\">github.com/alanmun/autosage</a>"
+			body.innerHTML = "AutoSage is a Python written tool for users of BeatSage, an AI driven service made for the popular VR rhythm game Beat Saber. AutoSage simplifies and automates the process of using BeatSage for all of the songs the user wishes to play in Beat Saber. See the tool's repo here: <a href=\"https://github.com/alanmun/autosage\" target=\"_blank\">github.com/alanmun/autosage</a>"
 			break
 		default:
 			console.log("Unknown case in addText")
