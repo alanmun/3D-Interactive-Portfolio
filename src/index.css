@@ -51,6 +51,12 @@ div {
 }
 
 /* Loading screen stuff */
+#loading-screen-title {
+  font-family: 'Segoe UI Light', Verdana, sans-serif;
+  font-size: 28pt;
+  text-align: center;
+}
+
 .piccontainer {
   display: flex;
   flex-direction: row;
@@ -62,7 +68,7 @@ div {
   min-width: 0;
   max-width: 35%;
   height: auto;
-  margin-top: 0%;
+  margin-top: -3%;
   margin-left: 4%;
 }
 
@@ -70,7 +76,7 @@ div {
   min-width: 25%;
   max-width: 25%;
   height: auto;
-  margin-top: 3%;
+  margin-top: 0%;
   margin-left: 27%;
 }
 
@@ -93,12 +99,12 @@ div {
 
 #loader {
   display: block;
-  position: relative;
+  position: absolute;
   left: 50%;
   top: 50%;
   width: 150px;
   height: 150px;
-  margin: -75px 0 0 -75px;
+  margin: -75px 0px 0px -75px;
   border-radius: 50%;
   border: 3px solid transparent;
   border-top-color: #9370DB;

@@ -306,7 +306,7 @@ class App {
 		//Instantiate and set up renderer
 		renderer = new THREE.WebGLRenderer({
 			canvas: document.querySelector('#bg') as HTMLCanvasElement,
-			logarithmicDepthBuffer: true,
+			logarithmicDepthBuffer: false, //This is causing issues with atmospheric glow. Stars use it so they are entirely invisible because of this.
 			antialias: true
 		})
 		renderer.setPixelRatio(window.devicePixelRatio) //
@@ -319,21 +319,20 @@ class App {
 			//Create celestial entity object for autosage and add to scene
 			autosage = new CelestialEntity("autosage", true, 95, obj.scene);
 			let block: THREE.Group = autosage.entity;
-			block.scale.set(5, 5, 5)
-			// let bbox = new THREE.Box3().setFromObject(block);
-			// let bboxCenter: THREE.Vector3 = new THREE.Vector3();
-			// bbox.getCenter(bboxCenter).clone();
-			//bboxCenter.multiplyScalar(-1)
+			block.scale.set(5,5,5) //5,5,5 is a good value
 
 			let foundCube = true
 			block.traverse(function(child){
 				if(child instanceof THREE.Mesh){
-					console.log(child)
-					//child.geometry.translate(bboxCenter.x, bboxCenter.y, bboxCenter.z)
-					//child.geometry.translate(-0.5, -0.5, -0.5)
+					//console.log(child)
 					if(foundCube) {
-						foundCube = false
+						foundCube = false //First child it finds is the cube itself instead of the arrow
 						child.material = new THREE.MeshPhongMaterial({ color: "#cc0000", shininess: 1, flatShading: true})
+					}
+					else{
+						child.material = new THREE.MeshPhongMaterial({ color: "#ffffff", flatShading: true, side: THREE.DoubleSide}) 
+						//Flat shading might fix z fighting without having to resort to logarithmicDepthBuffer 
+						//which breaks any entities that use shaders
 					}
 				}
 			})
@@ -409,7 +408,7 @@ class App {
 		   the mesh with shader material on it so I can modify that one in reverberate()
 		*/
 		let blackHoleCore = new THREE.Mesh(
-			new THREE.SphereGeometry(4.75, 256, 256),
+			new THREE.SphereGeometry(4.75, 128, 128), //Was 4.75 in radius
 			new THREE.MeshPhysicalMaterial({ color: "black", clearcoat: 1, side: THREE.DoubleSide}),
 		)
 		blackHoleCore.name = "blackholecore"
@@ -492,7 +491,7 @@ class App {
 			twitter.adjustOrbit()
 
 			//Adjust rotations
-			autosage.rotate(0.01, 0.005, 0.001)
+			autosage.rotate(0, 0, 0.01) //autosage.rotate(0.01, 0.005, 0.001)
 			moon.rotate(0.001, 0.001, 0)
 			twitter.rotate(0, 0, 0.002)
 
@@ -520,6 +519,15 @@ function onMouseClick(event: THREE.Event) {
 	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; // height 100, click at 5, -5/100 = -0.05*2 is -slowInc + 1 means click was registered at y = 0.9
 
 	raycaster.setFromCamera(mouse, camera); // update the picking ray with the camera and mouse position
+	if(!shouldPinCamera && raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(autosage.entity))){
+		console.log("Hit detected on autosage world (not close up)")
+		cameraLock = {
+			isLocked: true,
+			target: autosage.entity,
+			name: ce.autosage
+		}
+		return
+	}
 	if(!shouldPinCamera && raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(twitter.entity))){
 		console.log("Hit detected on twitter world (not close up)")
 		// * We intersected on our twitter.obj model which is a THREE.Group and so can't be detected the normal way below
