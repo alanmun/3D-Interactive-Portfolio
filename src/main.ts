@@ -33,7 +33,7 @@ enum ce { //celestial entities
 }
 
 let loadedTotal = 0
-let debug = true //dev mode
+let debug = false //dev mode
 let orbitControlsMode = false
 let controls: OrbitControls
 
@@ -319,7 +319,7 @@ class App {
 		// * Create the autosage planet, which is currently represented by a torus until I can add a beat saber block
 		new GLTFLoader(loadManager).load(beatSaberGlbPath, function(obj){
 			//Create celestial entity object for autosage and add to scene
-			autosage = new CelestialEntity("autosage", true, 95, obj.scene);
+			autosage = new CelestialEntity("autosage", true, 90, obj.scene);
 			let block: THREE.Group = autosage.entity;
 			block.scale.set(7,7,7) //5,5,5 is a good value
 
@@ -505,7 +505,7 @@ class App {
 		})
 
 		// * Create the moon
-		moon = new CelestialEntity("moon", false, 120)
+		moon = new CelestialEntity("moon", false, 110)
 		moon.addMesh(
 			new THREE.SphereGeometry(6, 64, 64),
 			new THREE.MeshStandardMaterial({color: "white", map: moonTexture, bumpMap: moonNormal})

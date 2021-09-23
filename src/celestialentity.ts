@@ -64,7 +64,7 @@ export class CelestialEntity {
 		if(this.cameraIsAt) entityToMove = this.entityCloseUp
 		else entityToMove = this.entity
 
-		const alpha = 0.09; //Decrease to speed up, a good "realistic" value is 0.07 or higher
+		const alpha = 0.15; //Decrease to speed up, a good "realistic" value is above 0.1
 
 		//Circle calculation
 		// entityToMove.position.x = this.distance*Math.cos(this.theta);
