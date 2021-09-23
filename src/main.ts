@@ -33,7 +33,7 @@ enum ce { //celestial entities
 }
 
 let loadedTotal = 0
-let debug = false //dev mode
+let debug = true //dev mode
 let orbitControlsMode = false
 let controls: OrbitControls
 
@@ -302,7 +302,7 @@ class App {
 		let twitterRoughness = new THREE.TextureLoader(loadManager).load(twitterRoughnessPath, onTextureLoad) 
 
 		//Window event listeners
-		window.addEventListener("mousedown", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
+		window.addEventListener("click", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
 		window.addEventListener("keydown", onKey, false)
 		window.addEventListener("resize", onWindowResize, false)
 
@@ -318,7 +318,6 @@ class App {
 
 		// * Create the autosage planet, which is currently represented by a torus until I can add a beat saber block
 		new GLTFLoader(loadManager).load(beatSaberGlbPath, function(obj){
-
 			//Create celestial entity object for autosage and add to scene
 			autosage = new CelestialEntity("autosage", true, 95, obj.scene);
 			let block: THREE.Group = autosage.entity;
@@ -339,14 +338,27 @@ class App {
 					}
 				}
 			})
+
 			scene.add(autosage.entity)
 
 			//Initialize close up world for autosage
 			autosageCloseUp = new THREE.Group();
-			let autosageCloseUpGeo = new THREE.PlaneGeometry(64, 96, 32, 32)
-			let autosageCloseUpMat = new THREE.MeshStandardMaterial({color: "black", map: moonTexture, metalness: 0.0, normalMap: moonNormal})
+			const roundedRectShape = new THREE.Shape();
+			( function roundedRect( ctx, x, y, width, height, radius ) {
+				ctx.moveTo( x, y + radius );
+				ctx.lineTo( x, y + height - radius );
+				ctx.quadraticCurveTo( x, y + height, x + radius, y + height );
+				ctx.lineTo( x + width - radius, y + height );
+				ctx.quadraticCurveTo( x + width, y + height, x + width, y + height - radius );
+				ctx.lineTo( x + width, y + radius );
+				ctx.quadraticCurveTo( x + width, y, x + width - radius, y );
+				ctx.lineTo( x + radius, y );
+				ctx.quadraticCurveTo( x, y, x, y + radius );
+			} )( roundedRectShape, 0, 0, 50, 100, 10 );
+			let autosageCloseUpGeo = new THREE.ShapeGeometry(roundedRectShape) //new THREE.PlaneGeometry(64, 96, 32, 32)
+			autosageCloseUpGeo.center()
+			let autosageCloseUpMat = new THREE.MeshStandardMaterial({color: "red", metalness: 0.1})
 			autosageCloseUpMat.side = THREE.BackSide 
-			planeCurve(autosageCloseUpGeo, 5)
 			let autosageCloseUpMesh = new THREE.Mesh(
 				autosageCloseUpGeo,
 				autosageCloseUpMat
@@ -355,7 +367,29 @@ class App {
 			autosageCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
 			autosageCloseUp.add(autosageCloseUpMesh)
 			autosage.setCloseUp(autosageCloseUp)
-			for(let i = 0; i < 4; i++) autosage.addTree()
+			
+			//Create copies of the original block and use them as decorations
+			let miniblock1 = new THREE.Group()
+			miniblock1 = block.clone(true)
+			miniblock1.position.set(-40,1,-15)
+			miniblock1.scale.set(1,1,1)
+			miniblock1.name = "miniblock1"
+			miniblock1.rotation.y += THREE.MathUtils.DEG2RAD * 60;
+			(miniblock1.children[0] as THREE.Mesh).material = new THREE.MeshPhongMaterial({ color: "#0007cc", shininess: 1, flatShading: true});
+			autosageCloseUp.add(miniblock1)
+			let miniblock2 = miniblock1.clone(true)
+			miniblock2.position.set(-40,1,-12.5)
+			miniblock2.rotation.y += THREE.MathUtils.DEG2RAD * 30;
+			(miniblock1.children[0] as THREE.Mesh).material = new THREE.MeshPhongMaterial({ color: "#cc00c9", shininess: 1, flatShading: true});
+			autosageCloseUp.add(miniblock2)
+			let miniblock3 = miniblock1.clone(true)
+			miniblock3.position.set(-35,1,15);
+			miniblock3.rotation.x -= THREE.MathUtils.DEG2RAD * 90;
+			miniblock3.rotation.y += THREE.MathUtils.DEG2RAD * 30;
+			(miniblock3.children[0] as THREE.Mesh).material = new THREE.MeshPhongMaterial({ color: "#11a10a", shininess: 1, flatShading: true});
+			autosageCloseUp.add(miniblock3)
+			console.log(autosageCloseUp)
+			//scene.add(autosageCloseUp)
 		}, undefined, function ( error ) {
 			console.error( error );
 		});
@@ -585,11 +619,11 @@ function addText(celestialEntityEnum: ce){
 	switch(celestialEntityEnum){
 		case ce.twitter:
 			title.innerHTML = "What Song Is That? Twitter Bot (2020)"
-			body.innerHTML = "I decided to write and host a twitter bot for fun on my own server, using a Raspberry Pi, for a friend's twitter account. That bot has over a hundred thousand followers now. The success of that bot led me to make my own more sophisticated bot called What Song Is That? It takes requests from users who wish to know what song is playing in a tweet, queries Shazam's API on their behalf and displays its findings cleanly on a website I made for it. Visit <a href=\"https://whatsong.page\" target=\"_blank\">whatsong.page</a> for more information."
+			body.innerHTML = "I decided to write and host a twitter bot for fun on my own server, using a Raspberry Pi, for a friend's twitter account. That bot has over a hundred thousand followers now. The success of that bot led me to make my own more sophisticated bot called What Song Is That? It takes requests from users who wish to know what song is playing in a tweet, queries Shazam's API on their behalf and displays its findings cleanly on a website I made for it. Visit <a style=\"text-decoration:none; color:salmon;\" href=\"https://whatsong.page\" target=\"_blank\">whatsong.page</a> for more information."
 			break
 		case ce.autosage:
 			title.innerHTML = "AutoSage (2021)"
-			body.innerHTML = "AutoSage is a Python written tool for users of BeatSage, an AI driven service made for the popular VR rhythm game Beat Saber. AutoSage simplifies and automates the process of using BeatSage for all of the songs the user wishes to play in Beat Saber. See the tool's repo here: <a href=\"https://github.com/alanmun/autosage\" target=\"_blank\">github.com/alanmun/autosage</a>"
+			body.innerHTML = "AutoSage is a Python written tool for users of BeatSage, an AI driven service made for the popular VR rhythm game Beat Saber. AutoSage simplifies and automates the process of using BeatSage for all of the songs the user wishes to play in Beat Saber. See the tool's repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/autosage\" target=\"_blank\">github.com/alanmun/autosage</a>"
 			break
 		default:
 			console.log("Unknown case in addText")
