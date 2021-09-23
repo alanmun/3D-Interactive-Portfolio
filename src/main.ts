@@ -51,7 +51,7 @@ let moon: CelestialEntity
 
 let canPlayMusic: boolean = false
 var zoomOutAudio = new Audio(zoomOutPath);
-zoomOutAudio.volume = 0.9
+zoomOutAudio.volume = 0.8
 var backgroundAudio = new Audio(backgroundPath)
 backgroundAudio.volume = 0.65
 
@@ -319,7 +319,7 @@ class App {
 		// * Create the autosage planet, which is currently represented by a torus until I can add a beat saber block
 		new GLTFLoader(loadManager).load(beatSaberGlbPath, function(obj){
 			//Create celestial entity object for autosage and add to scene
-			autosage = new CelestialEntity("autosage", true, 90, obj.scene);
+			autosage = new CelestialEntity("autosage", true, 85, obj.scene);
 			let block: THREE.Group = autosage.entity;
 			block.scale.set(7,7,7) //5,5,5 is a good value
 
@@ -480,7 +480,7 @@ class App {
 				}
 			})
 			//console.log(twitter)
-			twitter = new CelestialEntity("twitter", true, 60, group)
+			twitter = new CelestialEntity("twitter", true, 45, group)
 
 			// * Design the close up world for twitter
 			twitterCloseUp = new THREE.Group();
