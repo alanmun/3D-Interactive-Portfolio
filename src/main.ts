@@ -34,7 +34,6 @@ enum ce { //celestial entities
 
 let loadedTotal = 0
 let debug = false //dev mode
-let orbitControlsMode = false
 let controls: OrbitControls
 
 let scene: THREE.Scene;
@@ -237,6 +236,7 @@ class App {
 		//Special case to see if camera is at the original spawn point, disable target lock
 		if(camera.position.x == CAM_START.x && camera.position.y == CAM_START.y && camera.position.z == CAM_START.z){
 			cameraLock = {isLocked: false, target: null, name: ce.spawn}
+			controls.enabled = true;
 			console.log("Matched at spawn: " + camera.position.x + "  " + CAM_START.x)
 			xIsClose = false
 			yIsClose = false
@@ -258,6 +258,20 @@ class App {
 
 		scene = new THREE.Scene(); //Instantiate the scene
 		camera = new THREE.PerspectiveCamera(35, window.innerWidth/window.innerHeight, 0.1, 5000) //Instantiate and set up camera
+		
+		renderer = new THREE.WebGLRenderer({ //Instantiate and set up renderer
+			canvas: document.querySelector('#bg') as HTMLCanvasElement,
+			logarithmicDepthBuffer: false, //This is causing issues with atmospheric glow. Stars use it so they are entirely invisible because of this.
+			antialias: true
+		})
+		renderer.setPixelRatio(window.devicePixelRatio) //
+		renderer.setSize(window.innerWidth, window.innerHeight) //Fullscreen
+		document.body.appendChild(renderer.domElement); //Add renderer to the dom, which is responsible for drawing camera and scene
+		
+		controls = new OrbitControls(camera, renderer.domElement); //Move around in the scene with your mouse!
+		controls.rotateSpeed = 0.45
+		console.log(controls.rotateSpeed)
+		controls.enableZoom = false
 
 		document.body.addEventListener("mousemove", function () {
 			if(canPlayMusic) backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
@@ -278,6 +292,7 @@ class App {
 			loadingScreen?.addEventListener('transitionend', onTransitionEnd)
 			canPlayMusic = true
 			camera.position.set(0, 400, 1200)
+			controls.enabled = false;
 			cameraLock = goToSpawn
 			reachedTargetFirstTime = true
 			//}
@@ -305,16 +320,6 @@ class App {
 		window.addEventListener("click", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
 		window.addEventListener("keydown", onKey, false)
 		window.addEventListener("resize", onWindowResize, false)
-
-		//Instantiate and set up renderer
-		renderer = new THREE.WebGLRenderer({
-			canvas: document.querySelector('#bg') as HTMLCanvasElement,
-			logarithmicDepthBuffer: false, //This is causing issues with atmospheric glow. Stars use it so they are entirely invisible because of this.
-			antialias: true
-		})
-		renderer.setPixelRatio(window.devicePixelRatio) //
-		renderer.setSize(window.innerWidth, window.innerHeight) //Fullscreen
-		document.body.appendChild(renderer.domElement); //Add renderer to the dom, which is responsible for drawing camera and scene
 
 		// * Create the autosage planet, which is currently represented by a torus until I can add a beat saber block
 		new GLTFLoader(loadManager).load(beatSaberGlbPath, function(obj){
@@ -407,10 +412,6 @@ class App {
 			gH.name = "gridhelper"
 			scene.add(gH)
 		} 
-
-		//Move around in the scene with your mouse!
-		controls = new OrbitControls(camera, renderer.domElement);
-		if(!orbitControlsMode) controls.enabled = false 
 
 		//Populate the universe
 		for(let i = 0; i < 600; i++) this.addStar() //with stars
@@ -532,7 +533,8 @@ class App {
 			moon.rotate(0.001, 0.001, 0)
 			twitter.rotate(0, 0, 0.002)
 
-			if(orbitControlsMode) controls.update() //Adding an else after if(cameraLock.isLocked) and putting this there doesn't work, I should revisit this
+			//This below thing is annoying. If camera moves and you have update in game loop, it keeps trying to control the camera for you
+			//if(orbitControlsMode) controls.update() //Adding an else after if(cameraLock.isLocked) and putting this there doesn't work, I should revisit this
 
 			if(cameraLock.isLocked) {
 				if(shouldPinCamera) this.pinCameraToWorld(cameraLock.target)
@@ -558,6 +560,7 @@ function onMouseClick(event: THREE.Event) {
 	raycaster.setFromCamera(mouse, camera); // update the picking ray with the camera and mouse position
 	if(!shouldPinCamera && raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(autosage.entity))){
 		console.log("Hit detected on autosage world (not close up)")
+		controls.enabled = false;
 		cameraLock = {
 			isLocked: true,
 			target: autosage.entity,
@@ -569,6 +572,7 @@ function onMouseClick(event: THREE.Event) {
 		console.log("Hit detected on twitter world (not close up)")
 		// * We intersected on our twitter.obj model which is a THREE.Group and so can't be detected the normal way below
 		// * Actually, I think you can intersect on THREE.Group, there is some other weird reason it can't be detected the normal way
+		controls.enabled = false;
 		cameraLock = {
 			isLocked: true,
 			target: twitter.entity,
@@ -596,6 +600,7 @@ function onMouseClick(event: THREE.Event) {
 	 intersects[0].object.name == "blackholecore" ||
 	 intersects[0].object.name == "gridhelper" ) return; 
 	
+	controls.enabled = false;
 	cameraLock.isLocked = true;
 	cameraLock.target = intersects[0].object;
 	if(intersects[0].object.name == "moon") cameraLock.name = ce.moon
@@ -639,14 +644,14 @@ function removeText(){
 function changeWorld(celestialEntityEnum: ce, leaving: boolean){
 	if(leaving){
 		shouldPinCamera = false
-		camera.rotation.y = 0 //radians
+		camera.rotation.set(0, 0, 0) //radians, this is effectively a 90 degree rotation left
 		twitter.distance /= 1
 		autosage.distance /= 1.5
 		moon.distance /= 2
 	}
 	else{
 		shouldPinCamera = true
-		camera.rotation.y = 1.57 //radians, this is effectively a 90 degree rotation left
+		camera.rotation.set(0, 1.57, 0) //radians, this is effectively a 90 degree rotation left
 		twitter.distance *= 1
 		autosage.distance *= 1.5
 		moon.distance *= 2
@@ -750,7 +755,6 @@ function onKey(event: any){
 		if(keyCode == 39) camera.rotation.y -= 0.1 //Right arrow
 		if(keyCode == 40) camera.rotation.x -= 0.1 //Down arrow
 		if(keyCode == 79) {
-			orbitControlsMode = !orbitControlsMode
 			controls.enabled = !controls.enabled
 		}
 	}
