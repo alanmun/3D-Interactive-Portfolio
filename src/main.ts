@@ -47,6 +47,8 @@ let twitterCloseUp: THREE.Group
 let autosage: CelestialEntity
 let autosageCloseUp: THREE.Group
 
+let moon: CelestialEntity
+
 let canPlayMusic: boolean = false
 var zoomOutAudio = new Audio(zoomOutPath);
 zoomOutAudio.volume = 0.9
@@ -83,7 +85,7 @@ class App {
 		let sizeGlow = THREE.MathUtils.randFloat(0.75, 0.95);
 		//let sizeCore = sizeGlow / 2
 		let color: THREE.Color
-		switch(THREE.MathUtils.randInt(1, 3)){
+		switch(THREE.MathUtils.randInt(1, 6)){
 			case 1:
 				color = new Color("#2407FF")
 				break
@@ -166,6 +168,11 @@ class App {
 		//Because target isn't an Object3D when going to spawn, it won't have a name property. You can use below to check if target is a celestial
 		//entity, or if we're just going back to spawn
 		//console.log(target.hasOwnProperty("name"))
+
+		// * The next step for smoother camera adjustments probably is going to be adding a case between 1 and 0.03, that uses _diff to affect the
+		// * rate at which it travels to its target. The 0.03 case not using the distance to go in calculating how much to -= by creates a little
+		// * bit of lag I think where that snapping effect occurs and maybe y has to catch up with z and x and the camera appears to drop down at
+		// * the end. 
 		
 		//Handle x
 		let absX = Math.abs(xdiff)
@@ -178,7 +185,7 @@ class App {
 			camera.position.x -= xdiff * slowInc //Too far away in positive direction
 			xIsClose = true
 		}
-		else if(absX > 0.1){
+		else if(absX > 0.03){
 			camera.position.x -=  Math.sign(xdiff) * nearlyThere
 			xIsClose = true
 		}
@@ -198,7 +205,7 @@ class App {
 			camera.position.y -= ydiff * slowInc //Too far away in positive direction
 			yIsClose = true
 		}
-		else if(absY > 0.1){
+		else if(absY > 0.03){
 			camera.position.y -=  Math.sign(ydiff) * nearlyThere
 			yIsClose = true
 		}
@@ -218,7 +225,7 @@ class App {
 			camera.position.z -= zdiff * slowInc //Too far away in positive direction
 			zIsClose = true
 		}
-		else if(absZ > 0.1){
+		else if(absZ > 0.03){
 			camera.position.z -= Math.sign(zdiff) * nearlyThere
 			zIsClose = true
 		}
@@ -236,14 +243,12 @@ class App {
 			zIsClose = false
 			reachedTargetFirstTime = false
 		} 
-		else if(xIsClose && yIsClose && zIsClose) { //We are approaching something that isn't the original spawn point
-			if(reachedTargetFirstTime == false){
-				fade()
-				setTimeout(function(){
-					changeWorld(cameraLock.name, false)
-					fade(false)
-				}, 1000)
-			}
+		else if(xIsClose && yIsClose && zIsClose && !reachedTargetFirstTime) { //We are approaching something that isn't the original spawn point
+			fade()
+			setTimeout(function(){
+				changeWorld(cameraLock.name, false)
+				fade(false)
+			}, 1000)
 			reachedTargetFirstTime = true
 		}
 	}
@@ -252,6 +257,7 @@ class App {
 		// * The original twitter world is what is causing that weird glitch where it jumps a few units forward and the close up world vanishes
 
 		scene = new THREE.Scene(); //Instantiate the scene
+		camera = new THREE.PerspectiveCamera(35, window.innerWidth/window.innerHeight, 0.1, 5000) //Instantiate and set up camera
 
 		document.body.addEventListener("mousemove", function () {
 			if(canPlayMusic) backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
@@ -271,6 +277,9 @@ class App {
 			loadingScreen?.classList.add('fade-out')
 			loadingScreen?.addEventListener('transitionend', onTransitionEnd)
 			canPlayMusic = true
+			camera.position.set(0, 400, 1200)
+			cameraLock = goToSpawn
+			reachedTargetFirstTime = true
 			//}
 		});
 		const loader = new THREE.TextureLoader(loadManager);
@@ -291,12 +300,6 @@ class App {
 		let twitterTexture = new THREE.TextureLoader(loadManager).load(twitterTexturePath, onTextureLoad)
 		let twitterNormal = new THREE.TextureLoader(loadManager).load(twitterNormalPath, onTextureLoad)
 		let twitterRoughness = new THREE.TextureLoader(loadManager).load(twitterRoughnessPath, onTextureLoad) 
-
-		//Instantiate and set up camera
-		camera = new THREE.PerspectiveCamera(35, window.innerWidth/window.innerHeight, 0.1, 5000)
-		camera.position.z = CAM_START.z //Move camera back so its not in center of scene
-		camera.position.y = CAM_START.y //Move camera back so its not in center of scene
-		camera.position.x = CAM_START.x
 
 		//Window event listeners
 		window.addEventListener("mousedown", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
@@ -319,7 +322,7 @@ class App {
 			//Create celestial entity object for autosage and add to scene
 			autosage = new CelestialEntity("autosage", true, 95, obj.scene);
 			let block: THREE.Group = autosage.entity;
-			block.scale.set(5,5,5) //5,5,5 is a good value
+			block.scale.set(7,7,7) //5,5,5 is a good value
 
 			let foundCube = true
 			block.traverse(function(child){
@@ -468,7 +471,7 @@ class App {
 		})
 
 		// * Create the moon
-		let moon = new CelestialEntity("moon", false, 120)
+		moon = new CelestialEntity("moon", false, 120)
 		moon.addMesh(
 			new THREE.SphereGeometry(6, 64, 64),
 			new THREE.MeshStandardMaterial({color: "white", map: moonTexture, normalMap: moonTexture})
@@ -491,7 +494,7 @@ class App {
 			twitter.adjustOrbit()
 
 			//Adjust rotations
-			autosage.rotate(0, 0, 0.01) //autosage.rotate(0.01, 0.005, 0.001)
+			autosage.rotate(0.001, 0.001, 0.01) //autosage.rotate(0.01, 0.005, 0.001)
 			moon.rotate(0.001, 0.001, 0)
 			twitter.rotate(0, 0, 0.002)
 
@@ -603,10 +606,16 @@ function changeWorld(celestialEntityEnum: ce, leaving: boolean){
 	if(leaving){
 		shouldPinCamera = false
 		camera.rotation.y = 0 //radians
+		twitter.distance /= 1
+		autosage.distance /= 1.5
+		moon.distance /= 2
 	}
 	else{
 		shouldPinCamera = true
 		camera.rotation.y = 1.57 //radians, this is effectively a 90 degree rotation left
+		twitter.distance *= 1
+		autosage.distance *= 1.5
+		moon.distance *= 2
 	}
 	switch(celestialEntityEnum){
 		case ce.blackHole:
