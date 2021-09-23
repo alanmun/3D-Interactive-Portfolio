@@ -508,7 +508,7 @@ class App {
 		moon = new CelestialEntity("moon", false, 120)
 		moon.addMesh(
 			new THREE.SphereGeometry(6, 64, 64),
-			new THREE.MeshStandardMaterial({color: "white", map: moonTexture, normalMap: moonTexture})
+			new THREE.MeshStandardMaterial({color: "white", map: moonTexture, bumpMap: moonNormal})
 		)
 		scene.add(moon.entity)
 
