@@ -84,7 +84,7 @@ class App {
 		let sizeGlow = THREE.MathUtils.randFloat(0.75, 0.95);
 		//let sizeCore = sizeGlow / 2
 		let color: THREE.Color
-		switch(THREE.MathUtils.randInt(1, 6)){
+		switch(THREE.MathUtils.randInt(1, 8)){
 			case 1:
 				color = new Color("#2407FF")
 				break
@@ -131,7 +131,7 @@ class App {
 		else zIsNeg = -1
 
 		//Set the closest and farthest stars can be
-		const innerBound = 350 //I believe with an inner bound of 250, I got a star to spawn only units in front of my camera's default spawn point
+		const innerBound = 380 //I believe with an inner bound of 250, I got a star to spawn only units in front of my camera's default spawn point
 		const outerBound = 700
 
 		x = THREE.MathUtils.randFloat(0, xIsNeg * outerBound)
@@ -271,10 +271,16 @@ class App {
 		controls = new OrbitControls(camera, renderer.domElement); //Move around in the scene with your mouse!
 		controls.rotateSpeed = 0.45
 		console.log(controls.rotateSpeed)
-		controls.enableZoom = false
+		controls.minDistance = 50
+		controls.maxDistance = 370
+		controls.enableZoom = true //Zooming isn't allowed as it can break the visuals
+		controls.enablePan = false //Panning isn't allowed as it can break the visuals as well
 
 		document.body.addEventListener("mousemove", function () {
 			if(canPlayMusic) backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
+		})
+		document.body.addEventListener("touchmove", function () {
+			if(canPlayMusic) backgroundAudio.play()
 		})
 
 		//Skybox, Loading Manager (which enforces loading screen)
@@ -509,8 +515,22 @@ class App {
 		moon = new CelestialEntity("moon", false, 110)
 		moon.addMesh(
 			new THREE.SphereGeometry(6, 64, 64),
-			new THREE.MeshStandardMaterial({color: "white", map: moonTexture, bumpMap: moonNormal})
+			new THREE.MeshStandardMaterial({map: moonTexture})
 		)
+		// * Design the close up world for moon
+		let moonCloseUp = new THREE.Group();
+		let moonCloseUpGeo = new THREE.PlaneGeometry(64, 64, 128, 128)
+		let moonCloseUpMat = new THREE.MeshStandardMaterial({map: moonTexture, bumpMap: moonNormal})
+		moonCloseUpMat.side = THREE.BackSide 
+		planeCurve(moonCloseUpGeo, 4)
+		let moonCloseUpMesh = new THREE.Mesh(
+			moonCloseUpGeo,
+			moonCloseUpMat
+		)
+		moonCloseUp.add(moonCloseUpMesh)
+		moon.setCloseUp(moonCloseUp)
+		moonCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90
+		moonCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
 		scene.add(moon.entity)
 
 		//Weird glitches? Can't get stuff to display? Just debug enable and make everything BasicMaterial to guarantee you're doing it right
@@ -519,6 +539,19 @@ class App {
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
+
+			// if(introSequenceDone){
+			// 	if(camera.position.distanceTo(blackHoleCore.position) > 370) {
+					
+			// 		console.log("Out of bounds", camera.position)
+			// 	}
+			// 	// if(camera.position.x > OUT_OF_BOUNDS.x) camera.position.x = OUT_OF_BOUNDS.x - 10
+			// 	// if(camera.position.x < -1*OUT_OF_BOUNDS.x) camera.position.x = (-1 * OUT_OF_BOUNDS.x) + 10
+			// 	// if(camera.position.y > OUT_OF_BOUNDS.y) camera.position.y = OUT_OF_BOUNDS.y - 10
+			// 	// if(camera.position.y > OUT_OF_BOUNDS.y) camera.position.y = (-1 * OUT_OF_BOUNDS.y) + 10
+			// 	// if(camera.position.z > OUT_OF_BOUNDS.z) camera.position.z = OUT_OF_BOUNDS.z - 10
+			// 	// if(camera.position.z > OUT_OF_BOUNDS.z) camera.position.z = (-1 * OUT_OF_BOUNDS.z) + 10
+			// }
 
 			//Black Hole shader manipulation
 			bh = blackHole.reverberate(bh)
@@ -630,6 +663,9 @@ function addText(celestialEntityEnum: ce){
 			title.innerHTML = "AutoSage (2021)"
 			body.innerHTML = "AutoSage is a Python written tool for users of BeatSage, an AI driven service made for the popular VR rhythm game Beat Saber. AutoSage simplifies and automates the process of using BeatSage for all of the songs the user wishes to play in Beat Saber. See the tool's repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/autosage\" target=\"_blank\">github.com/alanmun/autosage</a>"
 			break
+		case ce.moon:
+			title.innerHTML = "3D Interactive Portfolio (2021)"
+			body.innerHTML = "This portfolio is written in typescript using the three.js 3D graphics library and deployed using vite. My work on the AutoSage tool led me to discovering three.js. I was enamoured with the library and had to make something with it. I knew that I had always wanted a cool way to show my personal technological efforts and projects so I decided to represent them in their own worlds that can be visited by interacting with them. I learned more from undertaking this project than any other personal project I've ever worked on. I had never written three.js code before, my HTML and CSS skills have definitely improved since beginning, and I gave myself an introduction to shaders and 3D modelling in blender by creating the Beat Saber cube that is floating in space. This portfolio remains a continual work in progress as I plan to update it with new worlds for every technological endeavor I go on. See the repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/3D-Interactive-Portfolio\" target=\"_blank\">github.com/alanmun/3D-Interactive-Portfolio</a>"
 		default:
 			console.log("Unknown case in addText")
 			break
@@ -662,6 +698,15 @@ function changeWorld(celestialEntityEnum: ce, leaving: boolean){
 			break;
 		case ce.moon:
 			//TODO: Figure something out for moon maybe
+			if(leaving){
+				moon.swapEntities(scene)
+				removeText()
+			}
+			else{
+				moon.swapEntities(scene)
+				addText(celestialEntityEnum)
+				cameraLock.target = moon.entityCloseUp
+			}
 			break;
 		case ce.twitter:
 			if(leaving) {
