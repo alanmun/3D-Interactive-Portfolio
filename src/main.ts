@@ -18,11 +18,15 @@ import skyboxFront from './assets/skyboxwithsun/front.png?url'
 import skyboxBack from './assets/skyboxwithsun/back.png?url'
 import moonTexturePath from './assets/moon.jpg?url'
 import moonNormalPath from './assets/moonbumpmap.jpg?url'
-import twitterTexturePath from './assets/rockmoss.jpg?url'
-import twitterNormalPath from './assets/rockmossnormal.jpg?url'
-import twitterRoughnessPath from './assets/rockmossroughness.jpg?url'
+import twitterManMTLPath from './assets/man.mtl?url'
+import twitterManPath from './assets/man.obj?url'
+import twitterWorkstationMTLPath from './assets/workstation.mtl?url'
+import twitterWorkstationPath from './assets/workstation.obj?url'
 import twitterObjPath from './assets/twitter.obj?url'
 import beatSaberGlbPath from './assets/block.glb?url'
+import mutedPath from './assets/muted.png?url'
+import unmutedPath from './assets/unmuted.png?url'
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader';
 
 enum ce { //celestial entities
 	spawn,
@@ -48,11 +52,13 @@ let autosageCloseUp: THREE.Group
 
 let moon: CelestialEntity
 
-let canPlayMusic: boolean = false
+//let canPlayMusic: boolean = false
 var zoomOutAudio = new Audio(zoomOutPath);
 zoomOutAudio.volume = 0.8
+zoomOutAudio.muted = true
 var backgroundAudio = new Audio(backgroundPath)
 backgroundAudio.volume = 0.65
+backgroundAudio.muted = true
 
 //Used by adjustCamera, persisting across calls to know if we are close in the z, x, or y coord, and the second three tell if we were already close
 var xIsClose = false
@@ -276,51 +282,50 @@ class App {
 		controls.enableZoom = true //Zooming isn't allowed as it can break the visuals
 		controls.enablePan = false //Panning isn't allowed as it can break the visuals as well
 
-		document.body.addEventListener("mousemove", function () {
-			if(canPlayMusic) backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
-		})
-		document.body.addEventListener("touchmove", function () {
-			if(canPlayMusic) backgroundAudio.play()
-		})
+		// document.body.addEventListener("mousemove", function () {
+		// 	if(canPlayMusic) backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
+		// })
+		// document.body.addEventListener("touchmove", function () {
+		// 	if(canPlayMusic) backgroundAudio.play()
+		// })
+		document.getElementById("soundbutton")?.addEventListener("click", onVolumeClick);
 
 		//Skybox, Loading Manager (which enforces loading screen)
 		let skybox: THREE.Mesh
 		const loadManager = new THREE.LoadingManager(() => {
 			console.log("Loaded: " + loadedTotal)
-			//if(loadedTotal >= 0){
 			console.log("Loaded skybox")
 			skybox = new THREE.Mesh(skyboxGeom, skyboxMaterials)
 			skybox.name = "skybox" //Tag it so we can block mouse clicks from acting on it
 			scene.add(skybox)
 
+			twitterCloseUp.add(theMan)
+			twitterCloseUp.add(workstation)
+
 			const loadingScreen = document.querySelector('#loading-screen');
 			loadingScreen?.classList.add('fade-out')
 			loadingScreen?.addEventListener('transitionend', onTransitionEnd)
-			canPlayMusic = true
+			//canPlayMusic = true
 			camera.position.set(0, 400, 1200)
 			controls.enabled = false;
 			cameraLock = goToSpawn
 			reachedTargetFirstTime = true
-			//}
 		});
 		const loader = new THREE.TextureLoader(loadManager);
 		let skyboxGeom = new THREE.BoxGeometry(2100, 2100, 2100)
 		let skyboxMaterials = [
-			new THREE.MeshBasicMaterial({map: loader.load(skyboxRight, onTextureLoad)}),
-			new THREE.MeshBasicMaterial({map: loader.load(skyboxLeft, onTextureLoad)}),
-			new THREE.MeshBasicMaterial({map: loader.load(skyboxTop, onTextureLoad)}),
-			new THREE.MeshBasicMaterial({map: loader.load(skyboxBottom, onTextureLoad)}),
-			new THREE.MeshBasicMaterial({map: loader.load(skyboxFront, onTextureLoad)}),
-			new THREE.MeshBasicMaterial({map: loader.load(skyboxBack, onTextureLoad)})
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxRight)}),
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxLeft)}),
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxTop)}),
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxBottom)}),
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxFront)}),
+			new THREE.MeshBasicMaterial({map: loader.load(skyboxBack)})
 		];
 		skyboxMaterials.forEach(x => x.side = THREE.BackSide)
 
-		//Texture loading for various worlds
-		let moonTexture = new THREE.TextureLoader(loadManager).load(moonTexturePath, onTextureLoad)
-		let moonNormal = new THREE.TextureLoader(loadManager).load(moonNormalPath, onTextureLoad)
-		let twitterTexture = new THREE.TextureLoader(loadManager).load(twitterTexturePath, onTextureLoad)
-		let twitterNormal = new THREE.TextureLoader(loadManager).load(twitterNormalPath, onTextureLoad)
-		let twitterRoughness = new THREE.TextureLoader(loadManager).load(twitterRoughnessPath, onTextureLoad) 
+		//Texture and model loading for various worlds
+		let moonTexture = new THREE.TextureLoader(loadManager).load(moonTexturePath)
+		let moonNormal = new THREE.TextureLoader(loadManager).load(moonNormalPath)
 
 		//Window event listeners
 		window.addEventListener("click", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
@@ -342,7 +347,7 @@ class App {
 						foundCube = false //First child it finds is the cube itself instead of the arrow
 						child.material = new THREE.MeshPhongMaterial({ color: "#cc0000", shininess: 1, flatShading: true})
 					}
-					else{
+					else {
 						child.material = new THREE.MeshPhongMaterial({ color: "#ffffff", flatShading: true, side: THREE.DoubleSide}) 
 						//Flat shading might fix z fighting without having to resort to logarithmicDepthBuffer 
 						//which breaks any entities that use shaders
@@ -399,8 +404,6 @@ class App {
 			miniblock3.rotation.y += THREE.MathUtils.DEG2RAD * 30;
 			(miniblock3.children[0] as THREE.Mesh).material = new THREE.MeshPhongMaterial({ color: "#11a10a", shininess: 1, flatShading: true});
 			autosageCloseUp.add(miniblock3)
-			console.log(autosageCloseUp)
-			//scene.add(autosageCloseUp)
 		}, undefined, function ( error ) {
 			console.error( error );
 		});
@@ -411,6 +414,10 @@ class App {
 		scene.add(aL)
 		// const aL2 = new THREE.AmbientLight(new Color("white"))
 		// planetScene.add(aL2)
+
+		const pL = new THREE.PointLight(new Color("white"), .6) //A distance of over 1000 is req'd to reach twitter world 
+		pL.position.set(750,325,-1000)
+		scene.add(pL)
 
 		//GridHelper
 		if(debug){
@@ -453,29 +460,46 @@ class App {
 		*/
 		let blackHoleCore = new THREE.Mesh(
 			new THREE.SphereGeometry(4.75, 128, 128), //Was 4.75 in radius
-			new THREE.MeshPhysicalMaterial({ color: "black", clearcoat: 1, side: THREE.DoubleSide}),
+			new THREE.MeshPhysicalMaterial({ color: "black", clearcoat: 0, side: THREE.DoubleSide}), //clearcoat 0 prevents light shine mark on it from distant sun
 		)
 		blackHoleCore.name = "blackholecore"
 		scene.add(blackHoleCore)
 		scene.add(blackHole.entity)
 
-		// ! (Deprecated) Create star that belongs to solar system and provides light to the system
-		// let systemStar = new CelestialEntity("sun", true, 90)
-		// let systemStarTexture = new THREE.TextureLoader().load('./assets/8k_sun.jpg')
-		// const pL = new THREE.PointLight(new Color("white"), 2, 0) //light source
-		// if(debug) {
-		// 	const lH = new THREE.PointLightHelper(pL) //debugging tool
-		// 	scene.add(lH) //Debugging object doesn't need to be part of the group
-		// }
-		// systemStar.addMesh(
-		// 	new THREE.SphereGeometry(),
-		// 	new THREE.MeshStandardMaterial({ color: "gold", map: systemStarTexture})
-		// )
-		//Create a star that belongs to this solar system
-		// systemStar.add(pL) //Add our source of light to this group, so it is bound to the system's star and moves with it
-		// scene.add(systemStar)
-		// ! End Deprecated 
+		//Load and prep THE man
+		let theMan:THREE.Object3D
+		new MTLLoader(loadManager).load(twitterManMTLPath, function(mtl){
+			mtl.preload()
+			let gLoader = new OBJLoader(loadManager)
+			gLoader.setMaterials(mtl)
+			gLoader.load(twitterManPath, function(group){
+				group.scale.set(0.017, 0.017, 0.017)
+				group.position.set(-14, 4, 8)
+				group.rotateY(THREE.MathUtils.DEG2RAD * 270)
+				theMan = group
+			})
+		})	
 
+		//Load and prep workstation
+		let workstation:THREE.Object3D
+		new MTLLoader(loadManager).load(twitterWorkstationMTLPath, function(mtl){
+			mtl.preload()
+			let wsLoader = new OBJLoader(loadManager)
+			wsLoader.setMaterials(mtl)
+			wsLoader.load(twitterWorkstationPath, function(group){
+				group.traverse(function(child){
+					if(child instanceof THREE.Mesh){
+						child.material.side = THREE.DoubleSide
+					}
+				})
+
+				//Reposition the workstation and add to the close up entity
+				group.position.set(-12, 5, 5)
+				group.rotateY(THREE.MathUtils.DEG2RAD * 200)
+				group.scale.set(0.001, 0.001, 0.001)
+				workstation = group
+			})
+		})
 
 		// * Create the twitter planet from an .obj model
 		new OBJLoader(loadManager).load(twitterObjPath, function(group){
@@ -492,9 +516,10 @@ class App {
 			// * Design the close up world for twitter
 			twitterCloseUp = new THREE.Group();
 			let twitterCloseUpGeo = new THREE.PlaneGeometry(64, 64, 128, 128)
-			let twitterCloseUpMat = new THREE.MeshStandardMaterial({map: twitterTexture, roughnessMap: twitterRoughness, bumpMap: twitterNormal})
+			let twitterCloseUpMat = new THREE.MeshStandardMaterial({color: 0x3fbcff, metalness: .4})
 			twitterCloseUpMat.side = THREE.BackSide 
 			planeCurve(twitterCloseUpGeo, 4)
+			//let testTwitterCloseUpGeo = new THREE.WireframeGeometry(twitterCloseUpGeo)
 			let twitterCloseUpMesh = new THREE.Mesh(
 				twitterCloseUpGeo,
 				twitterCloseUpMat
@@ -504,11 +529,13 @@ class App {
 			twitter.setCloseUp(twitterCloseUp)
 			twitterCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90
 			twitterCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
-			for(let i = 0; i < 10; i++) twitter.addTree();
+
+			makeWings()
+			twitter.addTree(9, 0, 4.75, 0x6588c2);
+			twitter.addTree(12, 0, 5.25, 0x6588c2);
+			twitter.addTree(11, 0, 4.5, 0x6588c2);
 
 			scene.add(twitter.entity)
-			//twitter.cameraIsAt = true
-			onTextureLoad()
 		})
 
 		// * Create the moon
@@ -535,23 +562,19 @@ class App {
 
 		//Weird glitches? Can't get stuff to display? Just debug enable and make everything BasicMaterial to guarantee you're doing it right
 		//if(debug) scene.overrideMaterial = new MeshBasicMaterial({ color: 'green'})
+		// setTimeout(() => {
+		// 	cameraLock = {
+		// 		isLocked: true,
+		// 		name: ce.twitter,
+		// 		target: twitter.entity
+		// 	}
+		// 	changeWorld(ce.twitter, false)
+		// 	shouldPinCamera = true
+		// }, 2000)
 		
 		//three.js "game" loop
 		const animate = () =>{
 			requestAnimationFrame(animate)
-
-			// if(introSequenceDone){
-			// 	if(camera.position.distanceTo(blackHoleCore.position) > 370) {
-					
-			// 		console.log("Out of bounds", camera.position)
-			// 	}
-			// 	// if(camera.position.x > OUT_OF_BOUNDS.x) camera.position.x = OUT_OF_BOUNDS.x - 10
-			// 	// if(camera.position.x < -1*OUT_OF_BOUNDS.x) camera.position.x = (-1 * OUT_OF_BOUNDS.x) + 10
-			// 	// if(camera.position.y > OUT_OF_BOUNDS.y) camera.position.y = OUT_OF_BOUNDS.y - 10
-			// 	// if(camera.position.y > OUT_OF_BOUNDS.y) camera.position.y = (-1 * OUT_OF_BOUNDS.y) + 10
-			// 	// if(camera.position.z > OUT_OF_BOUNDS.z) camera.position.z = OUT_OF_BOUNDS.z - 10
-			// 	// if(camera.position.z > OUT_OF_BOUNDS.z) camera.position.z = (-1 * OUT_OF_BOUNDS.z) + 10
-			// }
 
 			//Black Hole shader manipulation
 			bh = blackHole.reverberate(bh)
@@ -580,6 +603,8 @@ class App {
 }
 
 function onMouseClick(event: THREE.Event) { 
+	if(event.target == document.getElementById("soundbutton")) return; //bail if click occurred on volume button
+
 	//calculate mouse position in normalized device coordinates  (-1 to +1) for both components
 	if(cameraLock.isLocked && !shouldPinCamera) return //Mouse clicking should have no effect when camera is targeting something
 	else if(shouldPinCamera){
@@ -656,8 +681,8 @@ function addText(celestialEntityEnum: ce){
 
 	switch(celestialEntityEnum){
 		case ce.twitter:
-			title.innerHTML = "What Song Is That? Twitter Bot (2020)"
-			body.innerHTML = "I decided to write and host a twitter bot for fun on my own server, using a Raspberry Pi, for a friend's twitter account. That bot has over a hundred thousand followers now. The success of that bot led me to make my own more sophisticated bot called What Song Is That? It takes requests from users who wish to know what song is playing in a tweet, queries Shazam's API on their behalf and displays its findings cleanly on a website I made for it. Visit <a style=\"text-decoration:none; color:salmon;\" href=\"https://whatsong.page\" target=\"_blank\">whatsong.page</a> for more information."
+			title.innerHTML = "What Song Is That? (2020)"
+			body.innerHTML = "I decided to write and host a twitter bot for fun on my own server, using a Raspberry Pi, for a friend's twitter account. That bot has over a hundred thousand followers now. The success of that bot led me to make my own more sophisticated bot called What Song Is That? It takes requests from users who wish to know what song is playing in a tweet, queries Shazam's API on their behalf and displays its findings cleanly on a website I made for it. Check out <a style=\"text-decoration:none; color:salmon;\" href=\"https://whatsong.page\" target=\"_blank\">whatsong.page</a> for more information."
 			break
 		case ce.autosage:
 			title.innerHTML = "AutoSage (2021)"
@@ -665,7 +690,7 @@ function addText(celestialEntityEnum: ce){
 			break
 		case ce.moon:
 			title.innerHTML = "3D Interactive Portfolio (2021)"
-			body.innerHTML = "This portfolio is written in typescript using the three.js 3D graphics library and deployed using vite. My work on the AutoSage tool led me to discovering three.js. I was enamoured with the library and had to make something with it. I knew that I had always wanted a cool way to show my personal technological efforts and projects so I decided to represent them in their own worlds that can be visited by interacting with them. I learned more from undertaking this project than any other personal project I've ever worked on. I had never written three.js code before, my HTML and CSS skills have definitely improved since beginning, and I gave myself an introduction to shaders and 3D modelling in blender by creating the Beat Saber cube that is floating in space. This portfolio remains a continual work in progress as I plan to update it with new worlds for every technological endeavor I go on. See the repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/3D-Interactive-Portfolio\" target=\"_blank\">github.com/alanmun/3D-Interactive-Portfolio</a>"
+			body.innerHTML = "This portfolio is written in typescript using the three.js 3D graphics library and deployed using vite. My work on the AutoSage tool led me to discovering three.js. I was enamoured with the library and had to make something with it. I had always wanted a cool way to show my personal technological efforts and projects so I decided to represent them in their own worlds that can be visited by interacting with them. I learned more from undertaking this project than any other personal project I've ever worked on. I had never written three.js code before, my HTML and CSS skills have definitely improved since beginning, and I gave myself an introduction to shaders and 3D modelling in blender by creating the Beat Saber cube that is floating in space. This portfolio remains a continual work in progress as I plan to update it with new worlds for every technological endeavor I go on. See the repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/3D-Interactive-Portfolio\" target=\"_blank\">github.com/alanmun/3D-Interactive-Portfolio</a>"
 		default:
 			console.log("Unknown case in addText")
 			break
@@ -751,6 +776,55 @@ function fade(out:boolean=true, speed: string="730ms"){
 	return false
 }
 
+//Creates the left and right wings on the twitter world, adds them to the overall close up twitter group
+function makeWings(){
+	//Create and define the wings
+	let tLeftWing = new THREE.Shape();
+	let tRightWing = new THREE.Shape();
+	tLeftWing.moveTo(80, 20);
+	tLeftWing.lineTo(40, 80);
+	tLeftWing.lineTo(80, 80);
+	tLeftWing.lineTo(80, 20);
+	tRightWing.moveTo(80, 20);
+	tRightWing.lineTo(40, 80);
+	tRightWing.lineTo(80, 80);
+	tRightWing.lineTo(80, 20);
+	let tLeftWingGeo = new THREE.ExtrudeGeometry(tLeftWing, {
+		depth: 0.4, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 
+	})
+	let tRightWingGeo = new THREE.ExtrudeGeometry(tRightWing, {
+		depth: 0.4, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 
+	})
+	let tLeftWingMesh = new THREE.Mesh(
+		tLeftWingGeo,
+		new THREE.MeshStandardMaterial({color: 0x3372d6, metalness: .4})
+	)
+	let tRightWingMesh = new THREE.Mesh(
+		tRightWingGeo,
+		new THREE.MeshStandardMaterial({color: 0x3372d6, metalness: .4})
+	)
+
+	//Scale both
+	tLeftWingMesh.scale.set(1,1.75,1)
+	tRightWingMesh.scale.set(1,1.75,1)
+
+	//Set position and orientation of left wing
+	tLeftWingMesh.position.set(-7, -95, 6)
+	tLeftWingMesh.rotateX(THREE.MathUtils.DEG2RAD * 0)
+	tLeftWingMesh.rotateY(THREE.MathUtils.DEG2RAD * 30)
+	tLeftWingMesh.rotateZ(THREE.MathUtils.DEG2RAD * 60)
+
+	//Set position and orientation of right wing
+	tRightWingMesh.position.set(-7, -95, -6)
+	tRightWingMesh.rotateX(THREE.MathUtils.DEG2RAD * 0)
+	tRightWingMesh.rotateY(THREE.MathUtils.DEG2RAD * 330)
+	tRightWingMesh.rotateZ(THREE.MathUtils.DEG2RAD * 60)
+
+	//Add to twitterCloseUp
+	twitterCloseUp.add(tRightWingMesh);
+	twitterCloseUp.add(tLeftWingMesh)
+}
+
 //Creates curved planes to simulate being on a world. Function authored by prisoner849
 function planeCurve(g: THREE.PlaneGeometry, z: number){
 	
@@ -795,23 +869,48 @@ function onKey(event: any){
 	}
 
 	if(debug){
-		if(keyCode == 37) camera.rotation.y += 0.1 //Left arrow
-		if(keyCode == 38) camera.rotation.x += 0.1 //Up arrow
-		if(keyCode == 39) camera.rotation.y -= 0.1 //Right arrow
-		if(keyCode == 40) camera.rotation.x -= 0.1 //Down arrow
-		if(keyCode == 79) {
-			controls.enabled = !controls.enabled
+		switch(keyCode){
+			case 37: 
+				camera.rotation.y += 0.1 //Left arrow
+				break
+			case 38:
+				camera.rotation.x += 0.1 //Up arrow\
+				break
+			case 39: 
+				camera.rotation.y -= 0.1 //Right arrow
+				break
+			case 40: 
+				camera.rotation.x -= 0.1 //Down arrow
+				break
+			// case 74: 
+			// 	camera.rotation.x -= 0.1 //Left J
+			// 	break
+			// case 73: 
+			// 	camera.position.z += 0.1 //Forward I
+			// 	break
+			// case 75: 
+			// 	camera.position.z -= 0.1 //Back K
+			// 	break
+			// case 76: 
+			// 	camera.rotation.x += 0.1 //Right L
+			// 	break
+			default: 
+				
 		}
 	}
+}
+
+function onVolumeClick(){
+	backgroundAudio.play();
+	backgroundAudio.muted = !backgroundAudio.muted;
+	zoomOutAudio.muted = !zoomOutAudio.muted;
+	if(zoomOutAudio.muted) (document.getElementById("soundbutton") as HTMLImageElement).src = mutedPath;
+	else (document.getElementById("soundbutton") as HTMLImageElement).src = unmutedPath;
 }
 
 //For use with loading screen
 function onTransitionEnd( event: any ) {
 	event.target.remove();	
-}
-
-function onTextureLoad(){
-	loadedTotal += 1
 }
 
 function onWindowResize() {

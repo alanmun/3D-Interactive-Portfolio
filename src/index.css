@@ -4,6 +4,18 @@ canvas {
   left: 0;
 }
 
+#soundbutton {
+  position: absolute;
+  bottom: 0;
+  margin-bottom: 1%;
+  right: 0;
+  margin-right: 1%;
+  width: 3%;
+  height: auto;
+  cursor: pointer;
+  z-index: 2;
+}
+
 /* Portfolio text stuff */
 /* span { I'd like to avoid a bg coloring if possible, but if I absolutely must, this will let me have a semi-transparent background on text
   background: rgba(0, 0, 0, 0.3)
@@ -14,9 +26,9 @@ canvas {
   display: grid;
   padding-left: 30px;
   padding-right: 30px;
-  grid-gap: 10px;
+  grid-gap: 0px;
   grid-template-columns: 100%;
-  grid-template-rows: 20% 80%;
+  grid-template-rows: auto 1fr;
   z-index: 2; /* For some reason you need a z-index of 2 or greater to print over the canvas */
 }
 
@@ -25,6 +37,7 @@ canvas {
   grid-column-end: 1;
   grid-row-start: 1;
   grid-row-end: 1;
+  height: 1rem;
   padding-bottom: 0%;
   font-size: 42px;
   font-family: 'Segoe UI', Verdana, sans-serif;
@@ -36,7 +49,7 @@ canvas {
   grid-row-start: 2;
   grid-row-end: 2;
   vertical-align: top;
-  text-align: justify;
+  text-align: left;
   font-size: 25px;
   font-family: 'Segoe UI Light', Verdana, sans-serif;
 }
@@ -44,11 +57,13 @@ canvas {
 /* This is basically an easy naive way to support mobile devices (or really portrait mode I should say) */
 @media only screen and (max-width: 500px) {
   .portfolio-title { 
-    padding-bottom: 20%;
     font-size: 28px; 
   }
   .portfolio-body { 
     font-size: 13px; 
+  }
+  #soundbutton {
+    width: 5%;
   }
 }
 
@@ -205,6 +220,7 @@ div {
 #root {
   --dark-bg: rgba(15, 15, 15, 0.6);
   --spacing: 300px;
+  width: 100%;
 }
 
 body {
