@@ -486,7 +486,7 @@ class App {
 				pond = group
 				pond.scale.set(0.02, 0.02, 0.02)
 				pond.rotation.set(0, -8.2, 0)
-				pond.position.set(-16.5, 2.9, -4)
+				pond.position.set(-16.5, 2.8, -4)
 				pond.traverse(function(child){
 					if(child instanceof THREE.Mesh){
 						if(child.name === "Componente_24_001"){ //Base of pool
