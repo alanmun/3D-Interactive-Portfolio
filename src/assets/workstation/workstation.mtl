@@ -1,0 +1,112 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 11.10.2015 01:08:46
+
+#Monitor?
+newmtl wire_087224198
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka 0 0 0
+	Kd 0 0 0
+	Ks 0 0 0
+
+#Chair and cabinet thingy?
+newmtl wire_224086086
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka .243, .224, .216
+	Kd .243, .224, .216
+	Ks .243, .224, .216
+
+#Top of printer? Maybe not
+newmtl wire_177028149
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka .349, .322, .31
+	Kd .349, .322, .31
+	Ks .349, .322, .31
+
+#Back board
+newmtl wire_134006006
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka .118, .118, .145
+	Kd .118, .118, .145
+	Ks .118, .118, .145
+
+#Desk itself
+newmtl wire_006134006
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka .118, .118, .145
+	Kd .118, .118, .145
+	Ks .118, .118, .145
+
+#Bottom of printer
+newmtl wire_224198087
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka 	.349, .322, .31
+	Kd 	.349, .322, .31
+	Ks 	.349, .322, .31
+
+#Side board right side
+newmtl wire_028089177
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka .118, .118, .145
+	Kd .118, .118, .145
+	Ks .118, .118, .145
+
+#???
+newmtl wire_143224087
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka .118, .118, .145
+	Kd .118, .118, .145
+	Ks .118, .118, .145
+
+#Drawer maybe
+newmtl wire_134110008
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka .118, .118, .145
+	Kd .118, .118, .145
+	Ks .118, .118, .145
+
+#Mount for monitor... and the left side board for some reason and the top of the printer copier thing
+newmtl wire_229166215
+	Ns 32
+	d 1
+	Tr 0
+	Tf 1 1 1
+	illum 2
+	Ka .118, .118, .145
+	Kd .118, .118, .145
+	Ks .118, .118, .145

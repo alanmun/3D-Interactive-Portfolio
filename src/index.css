@@ -24,8 +24,8 @@ canvas {
 .portfolio {
   visibility: hidden;
   display: grid;
-  padding-left: 30px;
-  padding-right: 30px;
+  padding-left: 7%;
+  padding-right: 7%;
   grid-gap: 0px;
   grid-template-columns: 100%;
   grid-template-rows: auto 1fr;

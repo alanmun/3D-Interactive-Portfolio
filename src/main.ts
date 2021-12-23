@@ -1,11 +1,12 @@
 import './index.css'
 import { CelestialEntity } from './celestialentity'
-import { vShader, fShader } from "./atmosphericGlowShader";
+import { Debug } from './PortfolioDebugger'
+import { vShader, fShader } from "./atmosphericGlowShader"
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { Color } from 'three';
+import { Color } from 'three'
 
 //Asset paths need to be imported to be linked at compile time. Force everything to be a url using ?url to be safe because I know it works from preview
 import zoomOutPath from './assets/zoomout.wav?url'
@@ -18,15 +19,19 @@ import skyboxFront from './assets/skyboxwithsun/front.png?url'
 import skyboxBack from './assets/skyboxwithsun/back.png?url'
 import moonTexturePath from './assets/moon.jpg?url'
 import moonNormalPath from './assets/moonbumpmap.jpg?url'
-import twitterManMTLPath from './assets/man.mtl?url'
-import twitterManPath from './assets/man.obj?url'
-import twitterWorkstationMTLPath from './assets/workstation.mtl?url'
-import twitterWorkstationPath from './assets/workstation.obj?url'
+import twitterMoosePath from './assets/moose/scene.gltf?url'
+import twitterFoxPath from './assets/fox/scene.gltf?url'
+import twitterPondPath from './assets/pond/pond.obj?url'
+import twitterPondMTLPath from './assets/pond/pond.mtl?url'
+import twitterGrassPath from './assets/grass/grass.obj?url'
+import twitterGrassMTLPath from './assets/grass/grass.mtl?url'
+//import twitterWorkstationMTLPath from './assets/workstation.mtl?url'
+//import twitterWorkstationPath from './assets/workstation.obj?url'
 import twitterObjPath from './assets/twitter.obj?url'
 import beatSaberGlbPath from './assets/block.glb?url'
 import mutedPath from './assets/muted.png?url'
 import unmutedPath from './assets/unmuted.png?url'
-import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 
 enum ce { //celestial entities
 	spawn,
@@ -36,8 +41,6 @@ enum ce { //celestial entities
 	moon
 }
 
-let loadedTotal = 0
-let debug = false //dev mode
 let controls: OrbitControls
 
 let scene: THREE.Scene;
@@ -46,6 +49,11 @@ let renderer: THREE.WebGLRenderer;
 
 let twitter: CelestialEntity //For twitter.obj model
 let twitterCloseUp: THREE.Group
+let pond: THREE.Object3D
+let fox: THREE.Object3D
+let moose: THREE.Object3D
+let grass: THREE.Object3D
+//let newGrass: THREE.Object3D //debug var for testing out new placements
 
 let autosage: CelestialEntity
 let autosageCloseUp: THREE.Group
@@ -276,31 +284,32 @@ class App {
 		
 		controls = new OrbitControls(camera, renderer.domElement); //Move around in the scene with your mouse!
 		controls.rotateSpeed = 0.45
-		console.log(controls.rotateSpeed)
 		controls.minDistance = 50
 		controls.maxDistance = 370
 		controls.enableZoom = true //Zooming isn't allowed as it can break the visuals
 		controls.enablePan = false //Panning isn't allowed as it can break the visuals as well
 
-		// document.body.addEventListener("mousemove", function () {
-		// 	if(canPlayMusic) backgroundAudio.play() //Do not start music until mouse is moved. Chrome does not allow audio to autoplay for spam reasons
-		// })
-		// document.body.addEventListener("touchmove", function () {
-		// 	if(canPlayMusic) backgroundAudio.play()
-		// })
 		document.getElementById("soundbutton")?.addEventListener("click", onVolumeClick);
 
 		//Skybox, Loading Manager (which enforces loading screen)
 		let skybox: THREE.Mesh
 		const loadManager = new THREE.LoadingManager(() => {
-			console.log("Loaded: " + loadedTotal)
 			console.log("Loaded skybox")
 			skybox = new THREE.Mesh(skyboxGeom, skyboxMaterials)
 			skybox.name = "skybox" //Tag it so we can block mouse clicks from acting on it
 			scene.add(skybox)
 
-			twitterCloseUp.add(theMan)
-			twitterCloseUp.add(workstation)
+			//Now that we are sure everything is loaded, add these models to their worlds
+			twitterCloseUp.add(pond)
+			twitterCloseUp.add(fox)
+			twitterCloseUp.add(moose)
+			twitter.addGrass(-13.5, 3.7, -9, 0x3e629d, grass);
+			twitter.addGrass(-17.6, 2.9, -7, 0x37568a, grass);
+			twitter.addGrass(-15.6, 2.9, -6.5, 0x37568a, grass);
+			twitter.addGrass(-14.1, 3.4, 9.1, 0x37568a, grass);
+			twitter.addGrass(-16.6, 2.8, -7.3, 0x37568a, grass);
+			twitter.addGrass(-17.5, 2.8, -8.3, 0x37568a, grass);
+			//twitterCloseUp.add(workstation)
 
 			const loadingScreen = document.querySelector('#loading-screen');
 			loadingScreen?.classList.add('fade-out')
@@ -393,11 +402,13 @@ class App {
 			miniblock1.rotation.y += THREE.MathUtils.DEG2RAD * 60;
 			(miniblock1.children[0] as THREE.Mesh).material = new THREE.MeshPhongMaterial({ color: "#0007cc", shininess: 1, flatShading: true});
 			autosageCloseUp.add(miniblock1)
+
 			let miniblock2 = miniblock1.clone(true)
 			miniblock2.position.set(-40,1,-12.5)
 			miniblock2.rotation.y += THREE.MathUtils.DEG2RAD * 30;
 			(miniblock1.children[0] as THREE.Mesh).material = new THREE.MeshPhongMaterial({ color: "#cc00c9", shininess: 1, flatShading: true});
 			autosageCloseUp.add(miniblock2)
+
 			let miniblock3 = miniblock1.clone(true)
 			miniblock3.position.set(-35,1,15);
 			miniblock3.rotation.x -= THREE.MathUtils.DEG2RAD * 90;
@@ -420,7 +431,7 @@ class App {
 		scene.add(pL)
 
 		//GridHelper
-		if(debug){
+		if(Debug.mode){
 			const gH = new THREE.GridHelper(200, 50)
 			gH.name = "gridhelper"
 			scene.add(gH)
@@ -466,40 +477,83 @@ class App {
 		scene.add(blackHoleCore)
 		scene.add(blackHole.entity)
 
-		//Load and prep THE man
-		let theMan:THREE.Object3D
-		new MTLLoader(loadManager).load(twitterManMTLPath, function(mtl){
+		//Load and prep the pond
+		new MTLLoader(loadManager).load(twitterPondMTLPath, function(mtl){
 			mtl.preload()
 			let gLoader = new OBJLoader(loadManager)
 			gLoader.setMaterials(mtl)
-			gLoader.load(twitterManPath, function(group){
-				group.scale.set(0.017, 0.017, 0.017)
-				group.position.set(-14, 4, 8)
-				group.rotateY(THREE.MathUtils.DEG2RAD * 270)
-				theMan = group
-			})
-		})	
-
-		//Load and prep workstation
-		let workstation:THREE.Object3D
-		new MTLLoader(loadManager).load(twitterWorkstationMTLPath, function(mtl){
-			mtl.preload()
-			let wsLoader = new OBJLoader(loadManager)
-			wsLoader.setMaterials(mtl)
-			wsLoader.load(twitterWorkstationPath, function(group){
-				group.traverse(function(child){
+			gLoader.load(twitterPondPath, function(group){
+				pond = group
+				pond.scale.set(0.02, 0.02, 0.02)
+				pond.rotation.set(0, -8.2, 0)
+				pond.position.set(-16.5, 2.9, -4)
+				pond.traverse(function(child){
 					if(child instanceof THREE.Mesh){
+						if(child.name === "Componente_24_001"){ //Base of pool
+							child.material = new THREE.MeshStandardMaterial({ color: 0x462E1A, roughness: 0, metalness: 0, flatShading: false})
+							//child.material.depthTest = false
+							//child.renderOrder = 1
+						}
+						else{ //Water itself
+							child.material = new THREE.MeshStandardMaterial({ color: 0x74ccf4, opacity: 0.6, metalness: 0, flatShading: false})
+							child.material.transparent = true
+							child.material.depthTest = false
+							child.renderOrder = 1
+						}
 						child.material.side = THREE.DoubleSide
 					}
 				})
-
-				//Reposition the workstation and add to the close up entity
-				group.position.set(-12, 5, 5)
-				group.rotateY(THREE.MathUtils.DEG2RAD * 200)
-				group.scale.set(0.001, 0.001, 0.001)
-				workstation = group
 			})
 		})
+
+		//Load and prep the moose
+		new GLTFLoader(loadManager).load(twitterMoosePath, function(gltf){
+			moose = gltf.scene
+			moose.scale.set(.5, .5, .5)
+			moose.position.set(-20.8, 4.5, 9.1)
+			moose.rotation.set(0.1, -12.9, 0.1)
+		})
+
+		//Load and prep the fox
+		new GLTFLoader(loadManager).load(twitterFoxPath, function(gltf){
+			fox = gltf.scene
+			fox.scale.set(0.04, .024, 0.03)
+			fox.position.set(-19.8, 3.5, -7.3)
+			fox.rotation.set(0, -11.7, 0)
+		})
+
+		//Load and prep the grass(es)
+		new MTLLoader(loadManager).load(twitterGrassMTLPath, function(mtl){
+			mtl.preload()
+
+			let gLoader = new OBJLoader(loadManager)
+			gLoader.setMaterials(mtl)
+			gLoader.load(twitterGrassPath, function(group){
+				grass = group
+				grass.scale.set(0.06, 0.06, 0.06)
+			})
+		})
+
+		// ! Load and prep workstation (Deprecated)
+		//let workstation:THREE.Object3D
+		//new MTLLoader(loadManager).load(twitterWorkstationMTLPath, function(mtl){
+		//	mtl.preload()
+		//	let wsLoader = new OBJLoader(loadManager)
+		//	wsLoader.setMaterials(mtl)
+		//	wsLoader.load(twitterWorkstationPath, function(group){
+		//		group.traverse(function(child){
+		//			if(child instanceof THREE.Mesh){
+		//				child.material.side = THREE.DoubleSide
+		//			}
+		//		})
+		//
+		//		//Reposition the workstation and add to the close up entity
+		//		group.position.set(-12, 5, 5)
+		//		group.rotateY(THREE.MathUtils.DEG2RAD * 200)
+		//		group.scale.set(0.001, 0.001, 0.001)
+		//		workstation = group
+		//	})
+		//})
 
 		// * Create the twitter planet from an .obj model
 		new OBJLoader(loadManager).load(twitterObjPath, function(group){
@@ -529,11 +583,19 @@ class App {
 			twitter.setCloseUp(twitterCloseUp)
 			twitterCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90
 			twitterCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
+			//twitterCloseUpMesh.material.depthTest = false //Allow others to occlude our world
 
 			makeWings()
-			twitter.addTree(9, 0, 4.75, 0x6588c2);
-			twitter.addTree(12, 0, 5.25, 0x6588c2);
-			twitter.addTree(11, 0, 4.5, 0x6588c2);
+			twitter.addTree(-9, 6, -4.75, 0x7796c9);
+			twitter.addTree(-12, 6, -5.25, 0x6588c2);
+			twitter.addTree(-11, 6, -4.5, 0x6588c2);
+			twitter.addTree(-9, 6, 5.05, 0x537abb);
+			twitter.addTree(-20.2, 4.8, 10.05, 0x7796c9);
+			twitter.addTree(-22.3, 4.8, 10.05, 0x37568a);
+			twitter.addTree(-19.9, 4.5, 11.25, 0x37568a);
+			twitter.addTree(-24.4, 4, 13.05, 0x37568a);
+
+			//newTree = twitter.addTree(-24.4, 4, 13.05, 0x37568a);
 
 			scene.add(twitter.entity)
 		})
@@ -588,9 +650,6 @@ class App {
 			autosage.rotate(0.001, 0.001, 0.01) //autosage.rotate(0.01, 0.005, 0.001)
 			moon.rotate(0.001, 0.001, 0)
 			twitter.rotate(0, 0, 0.002)
-
-			//This below thing is annoying. If camera moves and you have update in game loop, it keeps trying to control the camera for you
-			//if(orbitControlsMode) controls.update() //Adding an else after if(cameraLock.isLocked) and putting this there doesn't work, I should revisit this
 
 			if(cameraLock.isLocked) {
 				if(shouldPinCamera) this.pinCameraToWorld(cameraLock.target)
@@ -868,36 +927,7 @@ function onKey(event: any){
 		backOut();
 	}
 
-	if(debug){
-		switch(keyCode){
-			case 37: 
-				camera.rotation.y += 0.1 //Left arrow
-				break
-			case 38:
-				camera.rotation.x += 0.1 //Up arrow\
-				break
-			case 39: 
-				camera.rotation.y -= 0.1 //Right arrow
-				break
-			case 40: 
-				camera.rotation.x -= 0.1 //Down arrow
-				break
-			// case 74: 
-			// 	camera.rotation.x -= 0.1 //Left J
-			// 	break
-			// case 73: 
-			// 	camera.position.z += 0.1 //Forward I
-			// 	break
-			// case 75: 
-			// 	camera.position.z -= 0.1 //Back K
-			// 	break
-			// case 76: 
-			// 	camera.rotation.x += 0.1 //Right L
-			// 	break
-			default: 
-				
-		}
-	}
+	Debug.debuggerKeys(moose, keyCode)
 }
 
 function onVolumeClick(){
