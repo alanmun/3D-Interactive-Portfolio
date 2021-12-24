@@ -6,7 +6,6 @@ import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { Color } from 'three'
 
 //Asset paths need to be imported to be linked at compile time. Force everything to be a url using ?url to be safe because I know it works from preview
 import zoomOutPath from './assets/zoomout.wav?url'
@@ -19,8 +18,8 @@ import skyboxFront from './assets/skyboxwithsun/front.png?url'
 import skyboxBack from './assets/skyboxwithsun/back.png?url'
 import moonTexturePath from './assets/moon.jpg?url'
 import moonNormalPath from './assets/moonbumpmap.jpg?url'
-import twitterMoosePath from './assets/moose/scene.gltf?url'
-import twitterFoxPath from './assets/fox/scene.gltf?url'
+//import twitterMoosePath from './assets/moose/scene.gltf?url'
+//import twitterFoxPath from './assets/fox/scene.gltf?url'
 import twitterPondPath from './assets/pond/pond.obj?url'
 import twitterPondMTLPath from './assets/pond/pond.mtl?url'
 import twitterGrassPath from './assets/grass/grass.obj?url'
@@ -100,13 +99,13 @@ class App {
 		let color: THREE.Color
 		switch(THREE.MathUtils.randInt(1, 8)){
 			case 1:
-				color = new Color("#2407FF")
+				color = new THREE.Color("#2407FF")
 				break
 			case 2:
-				color = new Color("#FFB200")
+				color = new THREE.Color("#FFB200")
 				break
 			default: //12.5% chance for blueish, 12.5% orangish, 75% chance for white
-				color = new Color("white")
+				color = new THREE.Color("white")
 				break 
 		}
 		// const core = new THREE.Mesh(
@@ -421,12 +420,12 @@ class App {
 		
 
 		//Add some light
-		const aL = new THREE.AmbientLight(new Color("white"), 1)
+		const aL = new THREE.AmbientLight(new THREE.Color("white"), 1)
 		scene.add(aL)
-		// const aL2 = new THREE.AmbientLight(new Color("white"))
+		// const aL2 = new THREE.AmbientLight(new THREE.Color("white"))
 		// planetScene.add(aL2)
 
-		const pL = new THREE.PointLight(new Color("white"), .6) //A distance of over 1000 is req'd to reach twitter world 
+		const pL = new THREE.PointLight(new THREE.Color("white"), .6) //A distance of over 1000 is req'd to reach twitter world 
 		pL.position.set(750,325,-1000)
 		scene.add(pL)
 
@@ -507,7 +506,7 @@ class App {
 		})
 
 		//Load and prep the moose
-		new GLTFLoader(loadManager).load(twitterMoosePath, function(gltf){
+		new GLTFLoader(loadManager).load('./assets/moose/scene.gltf', function(gltf){
 			moose = gltf.scene
 			moose.scale.set(.5, .5, .5)
 			moose.position.set(-20.8, 4.5, 9.1)
@@ -515,7 +514,7 @@ class App {
 		})
 
 		//Load and prep the fox
-		new GLTFLoader(loadManager).load(twitterFoxPath, function(gltf){
+		new GLTFLoader(loadManager).load('./assets/fox/scene.gltf', function(gltf){
 			fox = gltf.scene
 			fox.scale.set(0.04, .024, 0.03)
 			fox.position.set(-19.8, 3.5, -7.3)

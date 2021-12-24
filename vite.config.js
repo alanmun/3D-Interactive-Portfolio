@@ -1,5 +1,12 @@
 // vite.config.js
-export default {
-  // config options
-  //base: "/3D-Interactive-Portfolio/"
-}
+import { defineConfig } from 'vite'
+
+export default defineConfig(({}) => {
+  return {
+    publicDir: './static',
+    build: {
+      emptyOutDir: false,
+      outDir: './dist'
+    }
+  }
+});
