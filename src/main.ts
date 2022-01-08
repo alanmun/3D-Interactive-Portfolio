@@ -1,4 +1,4 @@
-import './index.css'
+import './portfolio.css'
 import { CelestialEntity } from './celestialentity'
 import { Debug } from './PortfolioDebugger'
 import { vShader, fShader } from "./atmosphericGlowShader"
@@ -8,7 +8,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 //Asset paths need to be imported to be linked at compile time. Force everything to be a url using ?url to be safe because I know it works from preview
-import zoomOutPath from './assets/zoomout.wav?url'
+import zoomInPath from './assets/distantboom.wav?url'
+import zoomOutPath from './assets/zoomoutmodified.wav?url'
 import backgroundPath from './assets/background.mp3?url'
 import skyboxRight from './assets/skyboxwithsun/right.png?url'
 import skyboxLeft from './assets/skyboxwithsun/left.png?url'
@@ -18,8 +19,6 @@ import skyboxFront from './assets/skyboxwithsun/front.png?url'
 import skyboxBack from './assets/skyboxwithsun/back.png?url'
 import moonTexturePath from './assets/moon.jpg?url'
 import moonNormalPath from './assets/moonbumpmap.jpg?url'
-//import twitterMoosePath from './assets/moose/scene.gltf?url'
-//import twitterFoxPath from './assets/fox/scene.gltf?url'
 import twitterPondPath from './assets/pond/pond.obj?url'
 import twitterPondMTLPath from './assets/pond/pond.mtl?url'
 import twitterGrassPath from './assets/grass/grass.obj?url'
@@ -59,9 +58,11 @@ let autosageCloseUp: THREE.Group
 
 let moon: CelestialEntity
 
-//let canPlayMusic: boolean = false
+var zoomInAudio = new Audio(zoomInPath);
+zoomInAudio.muted = true
+zoomInAudio.volume = 0.6
 var zoomOutAudio = new Audio(zoomOutPath);
-zoomOutAudio.volume = 0.8
+zoomOutAudio.volume = 0.6
 zoomOutAudio.muted = true
 var backgroundAudio = new Audio(backgroundPath)
 backgroundAudio.volume = 0.65
@@ -163,8 +164,6 @@ class App {
 	}
 
 	pinCameraToWorld(target: THREE.Object3D){
-		//console.log(camera.rotation.x)
-		//console.log(camera.rotation.y)
 		camera.position.set(target.position.x, (target.position.y + 8), target.position.z) //Was same, same+10, same
 	}
 
@@ -267,7 +266,8 @@ class App {
 	}
 
 	init() {
-		// * The original twitter world is what is causing that weird glitch where it jumps a few units forward and the close up world vanishes
+		// ? The original twitter world is what is causing that weird glitch where it jumps a few units forward and the close up world vanishes
+		// ! close up worlds are not being named for some reason. Their names should be "{noncloseupname} close" but are instead ""
 
 		scene = new THREE.Scene(); //Instantiate the scene
 		camera = new THREE.PerspectiveCamera(35, window.innerWidth/window.innerHeight, 0.1, 5000) //Instantiate and set up camera
@@ -285,10 +285,8 @@ class App {
 		controls.rotateSpeed = 0.45
 		controls.minDistance = 50
 		controls.maxDistance = 370
-		controls.enableZoom = true //Zooming isn't allowed as it can break the visuals
+		controls.enableZoom = true
 		controls.enablePan = false //Panning isn't allowed as it can break the visuals as well
-
-		document.getElementById("soundbutton")?.addEventListener("click", onVolumeClick);
 
 		//Skybox, Loading Manager (which enforces loading screen)
 		let skybox: THREE.Mesh
@@ -331,14 +329,19 @@ class App {
 		];
 		skyboxMaterials.forEach(x => x.side = THREE.BackSide)
 
+		//Window event listeners
+		//let options = {
+		//	capture: true,
+		//	once: false
+		//}
+		document.body.addEventListener("touch", onInteract, false) //Some browsers simulate click when touching on device, but this is still needed for the ones that don't
+		document.body.addEventListener("click", onInteract, false)
+		window.addEventListener("keydown", onKey, false)
+		window.addEventListener("resize", onWindowResize, false)
+
 		//Texture and model loading for various worlds
 		let moonTexture = new THREE.TextureLoader(loadManager).load(moonTexturePath)
 		let moonNormal = new THREE.TextureLoader(loadManager).load(moonNormalPath)
-
-		//Window event listeners
-		window.addEventListener("click", onMouseClick, false) //If orbit controls are on, they intercept the mouse click and this doesn't work
-		window.addEventListener("keydown", onKey, false)
-		window.addEventListener("resize", onWindowResize, false)
 
 		// * Create the autosage planet, which is currently represented by a torus until I can add a beat saber block
 		new GLTFLoader(loadManager).load(beatSaberGlbPath, function(obj){
@@ -417,27 +420,6 @@ class App {
 		}, undefined, function ( error ) {
 			console.error( error );
 		});
-		
-
-		//Add some light
-		const aL = new THREE.AmbientLight(new THREE.Color("white"), 1)
-		scene.add(aL)
-		// const aL2 = new THREE.AmbientLight(new THREE.Color("white"))
-		// planetScene.add(aL2)
-
-		const pL = new THREE.PointLight(new THREE.Color("white"), .6) //A distance of over 1000 is req'd to reach twitter world 
-		pL.position.set(750,325,-1000)
-		scene.add(pL)
-
-		//GridHelper
-		if(Debug.mode){
-			const gH = new THREE.GridHelper(200, 50)
-			gH.name = "gridhelper"
-			scene.add(gH)
-		} 
-
-		//Populate the universe
-		for(let i = 0; i < 600; i++) this.addStar() //with stars
 
 		// * Create the black hole
 		let bh: number = 0
@@ -603,13 +585,13 @@ class App {
 		moon = new CelestialEntity("moon", false, 110)
 		moon.addMesh(
 			new THREE.SphereGeometry(6, 64, 64),
-			new THREE.MeshStandardMaterial({map: moonTexture})
+			new THREE.MeshStandardMaterial({map: moonTexture, normalMap: moonNormal})
 		)
 		// * Design the close up world for moon
 		let moonCloseUp = new THREE.Group();
 		let moonCloseUpGeo = new THREE.PlaneGeometry(64, 64, 128, 128)
-		let moonCloseUpMat = new THREE.MeshStandardMaterial({map: moonTexture, bumpMap: moonNormal})
-		moonCloseUpMat.side = THREE.BackSide 
+		let moonCloseUpMat = new THREE.MeshStandardMaterial({map: moonTexture, normalMap: moonNormal})
+		moonCloseUpMat.side = THREE.BackSide
 		planeCurve(moonCloseUpGeo, 4)
 		let moonCloseUpMesh = new THREE.Mesh(
 			moonCloseUpGeo,
@@ -620,6 +602,25 @@ class App {
 		moonCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90
 		moonCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
 		scene.add(moon.entity)
+
+		// * Add some light
+		const aL = new THREE.AmbientLight(new THREE.Color("white"), 1)
+		scene.add(aL)
+		
+		// * Provide light from the sun in the far distance
+		const pL = new THREE.PointLight(new THREE.Color("white"), .6) //A distance of over 1000 is req'd to reach twitter world 
+		pL.position.set(750,325,-1000)
+		scene.add(pL)
+
+		// * GridHelper
+		if(Debug.mode){
+			const gH = new THREE.GridHelper(200, 50)
+			gH.name = "gridhelper"
+			scene.add(gH)
+		} 
+
+		// * Populate the universe with stars
+		for(let i = 0; i < 1000; i++) this.addStar()
 
 		//Weird glitches? Can't get stuff to display? Just debug enable and make everything BasicMaterial to guarantee you're doing it right
 		//if(debug) scene.overrideMaterial = new MeshBasicMaterial({ color: 'green'})
@@ -660,67 +661,67 @@ class App {
 	}
 }
 
-function onMouseClick(event: THREE.Event) { 
-	if(event.target == document.getElementById("soundbutton")) return; //bail if click occurred on volume button
-
-	//calculate mouse position in normalized device coordinates  (-1 to +1) for both components
-	if(cameraLock.isLocked && !shouldPinCamera) return //Mouse clicking should have no effect when camera is targeting something
-	else if(shouldPinCamera){
-		backOut() //If cam wasn't locked, and shouldPinCamera is true, we are at a close up world.
-		return
+function onInteract(event:any) {
+	event.preventDefault()
+	if(event.target == document.getElementById("soundbutton")){
+		onVolumeClick();
+		return; //bail if click occurred on volume button
+	} 
+	if(event.target == document.getElementById("backbutton")){
+		onBackClick(); //No need to return since this action leaves the webpage
 	}
 
+	//calculate mouse position in normalized device coordinates  (-1 to +1) for both components
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1; //I believe these convert to centered normalized coordinates x,y at 0,0 is exact center of screen
 	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; // height 100, click at 5, -5/100 = -0.05*2 is -slowInc + 1 means click was registered at y = 0.9
 
 	raycaster.setFromCamera(mouse, camera); // update the picking ray with the camera and mouse position
+	var intersects = raycaster.intersectObjects(scene.children, true);
+	console.log(intersects[0].object.name)
+	console.log(intersects[0].object)
+
+	
+	if(cameraLock.isLocked && !shouldPinCamera) return //Mouse clicking should have no effect when camera is targeting something
+	else if(shouldPinCamera && intersects[0].object.name == "skybox"){
+		backOut() //If cam wasn't locked, and shouldPinCamera is true, we are at a close up world.
+		return
+	}
+
+	/*
+	* Because there are so many misfires, and so many things I DON'T want the user to be able to click, I've decided to switch to an approach of
+	* only allowing a click if it matches these whitelisted names, instead of blacklisting every name I come across that I don't want to allow + "" (no name) 
+	*/
 	if(!shouldPinCamera && raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(autosage.entity))){
 		console.log("Hit detected on autosage world (not close up)")
+		zoomInAudio.play();
 		controls.enabled = false;
 		cameraLock = {
 			isLocked: true,
 			target: autosage.entity,
 			name: ce.autosage
 		}
-		return
 	}
-	if(!shouldPinCamera && raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(twitter.entity))){
+	else if(!shouldPinCamera && raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(twitter.entity))){
 		console.log("Hit detected on twitter world (not close up)")
 		// * We intersected on our twitter.obj model which is a THREE.Group and so can't be detected the normal way below
 		// * Actually, I think you can intersect on THREE.Group, there is some other weird reason it can't be detected the normal way
+		zoomInAudio.play();
 		controls.enabled = false;
 		cameraLock = {
 			isLocked: true,
 			target: twitter.entity,
 			name: ce.twitter
 		}
-		return
 	}
-	//This is busted for some reason, Cannot read property 'updateWorldMatrix' of undefined' did not look into it yet
-	// if(raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(systemStar.entity))){
-	// 	cameraLock.isLocked = true;
-	// 	cameraLock.target = systemStar.entity;
-	// 	return
-	// }
-
-	// * Check for intersections on any mesh. Because intersectObjects() sorts the result by distance, closest first, we don't need to iterate 
-	// * through. We only want the closest hit
-	var intersects = raycaster.intersectObjects(scene.children);
-
-	console.log(intersects[0].object.name)
-
-	//These clickable things shouldn't be clickable
-	if(intersects[0].object.name == "star" ||
-	 intersects[0].object.name == "skybox" ||
-	 intersects[0].object.name == "blackhole" ||
-	 intersects[0].object.name == "blackholecore" ||
-	 intersects[0].object.name == "gridhelper" ) return; 
-	
-	controls.enabled = false;
-	cameraLock.isLocked = true;
-	cameraLock.target = intersects[0].object;
-	if(intersects[0].object.name == "moon") cameraLock.name = ce.moon
-	else if(intersects[0].object.name == "autosage") cameraLock.name = ce.autosage
+	else if(!shouldPinCamera && intersects[0].object.name == "moon"){
+		zoomInAudio.play();
+		controls.enabled = false;
+		cameraLock = {
+			isLocked: true,
+			target: moon.entity,
+			name: ce.moon
+		}
+	}
 }
 
 //Common actions to take when backing out of a world
@@ -749,6 +750,7 @@ function addText(celestialEntityEnum: ce){
 		case ce.moon:
 			title.innerHTML = "3D Interactive Portfolio (2021)"
 			body.innerHTML = "This portfolio is written in typescript using the three.js 3D graphics library and deployed using vite. My work on the AutoSage tool led me to discovering three.js. I was enamoured with the library and had to make something with it. I had always wanted a cool way to show my personal technological efforts and projects so I decided to represent them in their own worlds that can be visited by interacting with them. I learned more from undertaking this project than any other personal project I've ever worked on. I had never written three.js code before, my HTML and CSS skills have definitely improved since beginning, and I gave myself an introduction to shaders and 3D modelling in blender by creating the Beat Saber cube that is floating in space. This portfolio remains a continual work in progress as I plan to update it with new worlds for every technological endeavor I go on. See the repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/3D-Interactive-Portfolio\" target=\"_blank\">github.com/alanmun/3D-Interactive-Portfolio</a>"
+			break
 		default:
 			console.log("Unknown case in addText")
 			break
@@ -926,13 +928,18 @@ function onKey(event: any){
 		backOut();
 	}
 
-	Debug.debuggerKeys(moose, keyCode)
+	Debug.debuggerKeys(camera, keyCode)
+}
+
+function onBackClick(){
+	history.back()
 }
 
 function onVolumeClick(){
 	backgroundAudio.play();
 	backgroundAudio.muted = !backgroundAudio.muted;
 	zoomOutAudio.muted = !zoomOutAudio.muted;
+	zoomInAudio.muted = !zoomInAudio.muted;
 	if(zoomOutAudio.muted) (document.getElementById("soundbutton") as HTMLImageElement).src = mutedPath;
 	else (document.getElementById("soundbutton") as HTMLImageElement).src = unmutedPath;
 }

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="./src/assets/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My 3D Portfolio</title>
+  </head>
+  <body class="container">
+    <div id="root">
+      <section id="loading-screen">
+        <div id="loader"></div>
+        <p id="loading-screen-title">Interactive 3D Portfolio by Alan Munirji <br> <p id=disclaimer style="font-size: smaller; text-align: center;"></p></p>
+        <div class="piccontainer">
+          <img id="spacebarpic" src="./src/assets/spacebarpress.png">
+          <img id="mousepic" src="./src/assets/mouseclick.png">
+        </div>
+        <p id="loading-screen-disclaimer">Best viewed in a landscape orientation</p>
+      </section>
+      <div class="portfolio" id="portfolioDiv">
+        <h1 class="portfolio-title" id="title"></h1>
+        <p class="portfolio-body"><span id="spanBody"></span></p>
+      </div>
+      <img class="noselect" id="soundbutton" src="./src/assets/muted.png"/>
+      <img class="noselect" id="backbutton" src="./src/assets/goback.png"/>
+      <canvas class="noselect" id="bg"></canvas>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

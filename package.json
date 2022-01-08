@@ -15,6 +15,7 @@
     "vite": "^2.4.4"
   },
   "dependencies": {
+    "@picocss/pico": "^1.4.3",
     "three": "^0.131.3"
   }
 }

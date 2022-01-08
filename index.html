@@ -3,28 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="./src/assets/favicon.ico" />
+    <link rel="stylesheet" href="node_modules/@picocss/pico/css/pico.css">
+    <link rel="stylesheet" href="index.css"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My 3D Portfolio</title>
+    <title> </title>
   </head>
-  <body class="container">
-    <div id="root">
-      <section id="loading-screen">
-        <div id="loader"></div>
-        <p id="loading-screen-title">Interactive 3D Portfolio by Alan Munirji <br> <p id=disclaimer style="font-size: smaller; text-align: center;">(This portfolio is still a WIP 🙂)</p></p>
-        <div class="piccontainer">
-          <img id="spacebarpic" src="./src/assets/spacebarpress.png">
-          <img id="mousepic" src="./src/assets/mouseclick.png">
+  <body class="noscroll">
+    <main class="container">
+      <div class="grid noselect">
+        <div class="unit">
+          <a class="noline" href="./CV_Resume.pdf">
+            <img src="./src/assets/cvresume.png">
+            <p class="title">View my CV/resume</p>
+          </a>
         </div>
-        <p id="loading-screen-disclaimer">Best viewed in a landscape orientation</p>
-      </section>
-      <div class="portfolio" id="portfolioDiv">
-        <h1 class="portfolio-title" id="title"></h1>
-        <!-- <div class="break"></div> -->
-        <p class="portfolio-body"><span id="spanBody"></span></p>
+        <div class="unit">
+          <a class="noline" href="./portfolio.html">
+            <img src="./src/assets/portfolio.png">
+            <p class="title">View my personal portfolio</p>
+          </a>
+        </div>
       </div>
-      <img id="soundbutton" src="./src/assets/muted.png"/>
-      <canvas id="bg"></canvas>
-    </div>
-    <script type="module" src="/src/main.ts"></script>
+      <div>
+        <p> Other stuff you might want to check out: </p>
+        <ul>
+          <li> <a href="https://github.com/alanmun/" target="_blank">My GitHub</a></li>
+          <li> <a href="https://linkedin.com/in/alan-munirji-" target="_blank">My LinkedIn</a></li>
+          <li> <a href="https://alanmun.github.io/WhatSongIsThat" target="_blank">What Song Is That?</a></li>
+        </ul>
+      </div>
+    </main>
+    <footer id="footer">Created by Alan Munirji - Feel free to reach me at munirjialan@gmail.com</footer>
   </body>
 </html>

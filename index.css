@@ -1,0 +1,54 @@
+.title{
+    color:ghostwhite;
+    text-align: center;
+}
+
+a:visited { text-decoration: none;}
+a:hover {text-decoration: none;}
+a:active {text-decoration: none;}
+
+.unit{
+    border-radius: 10%;
+    align-items: center;
+    justify-items: center;
+}
+
+img:hover{
+    box-shadow:
+    inset 0 0 40px 5px rgb(39, 39, 39),
+    0 0 40px 5px rgb(39, 39, 39);
+} 
+
+img{
+    border-radius: 20%;
+    height: 75%;
+    width: 95%;
+}
+
+#footer {
+    font-size: .85vw;
+    position: fixed;
+    text-align: left;
+    left: 1%;
+    bottom: -10%;
+    width: 100%;
+}
+
+.noselect { /* Don't allow people to highlight this element */
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Old versions of Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+  }
+.noscroll {
+    -ms-overflow-style: none;  /* Hide scroll bar on Internet Explorer 10+ */
+    scrollbar-width: none;  /* Hide scroll bar on Firefox */
+}
+.noscroll::-webkit-scrollbar { 
+    display: none;  /* Hide scroll bar on Safari and Chrome */
+    width: 0;
+    height: 0;
+}

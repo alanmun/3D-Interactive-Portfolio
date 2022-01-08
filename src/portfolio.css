@@ -4,6 +4,18 @@ canvas {
   left: 0;
 }
 
+#backbutton {
+  position: absolute;
+  bottom: 0;
+  margin-bottom: 1%;
+  left: 0;
+  margin-left: 1%;
+  width: 3%;
+  height: auto;
+  cursor: pointer;
+  z-index: 2;
+}
+
 #soundbutton {
   position: absolute;
   bottom: 0;
@@ -17,10 +29,6 @@ canvas {
 }
 
 /* Portfolio text stuff */
-/* span { I'd like to avoid a bg coloring if possible, but if I absolutely must, this will let me have a semi-transparent background on text
-  background: rgba(0, 0, 0, 0.3)
-} */
-
 .portfolio {
   visibility: hidden;
   display: grid;
@@ -39,7 +47,7 @@ canvas {
   grid-row-end: 1;
   height: 1rem;
   padding-bottom: 0%;
-  font-size: 42px;
+  font-size: 4vw;
   font-family: 'Segoe UI', Verdana, sans-serif;
 }
 
@@ -50,21 +58,8 @@ canvas {
   grid-row-end: 2;
   vertical-align: top;
   text-align: left;
-  font-size: 25px;
+  font-size: 1.75vw;
   font-family: 'Segoe UI Light', Verdana, sans-serif;
-}
-
-/* This is basically an easy naive way to support mobile devices (or really portrait mode I should say) */
-@media only screen and (max-width: 500px) {
-  .portfolio-title { 
-    font-size: 28px; 
-  }
-  .portfolio-body { 
-    font-size: 13px; 
-  }
-  #soundbutton {
-    width: 5%;
-  }
 }
 
 div {
@@ -116,6 +111,7 @@ div {
   margin-left: 27%;
 }
 
+/* Portrait mode detection */
 @media only screen and (max-width: 500px) {
   #loading-screen-disclaimer{
     visibility: visible;
@@ -132,6 +128,9 @@ div {
   #mousepic { 
     padding-top: 130%;
     min-width: 50%;
+  }
+  #soundbutton {
+    width: 5%;
   }
 }
 
@@ -229,6 +228,15 @@ body {
   overflow-y: hidden; /* This used to be visible, but the loading screen was being stupid and wouldn't stop being scrollable so I made it hidden */
 }
 
+.noselect { /* Don't allow people to highlight this element */
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+}
 .container {
   -ms-overflow-style: none;  /* Hide scroll bar on Internet Explorer 10+ */
   scrollbar-width: none;  /* Hide scroll bar on Firefox */
