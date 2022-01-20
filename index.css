@@ -1,7 +1,43 @@
 :root{
-    background: #1a2833;
+    background: black;
+    /* background: #1a2833; */
     /* --background-color: #1a2833; */
 }
+/* Intro Screen */
+
+body {
+    overflow-y: hidden;
+    /* index.js sets this back to auto */
+}
+
+#intro-screen-title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: 1s opacity;
+}
+
+#intro-screen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: #000000;
+    overflow-y: hidden; /* Supposed to keep loading screen from being scrollable, but isn't working. It seems it works by adding this to body element */
+	opacity: 1;
+    transition: 1s opacity;
+}
+
+.fade-out{
+    opacity: 0;
+}
+#intro-screen.fade-out {
+    opacity: 0;
+}
+
+/* End Intro Screen CSS */
 
 p{
     color:rgb(201, 207, 212);
@@ -9,9 +45,10 @@ p{
 
 .miscgrid{
     display: grid;
-    grid-template-columns: auto auto auto;
-    grid-template-rows: auto;
+    grid-template-columns: 5em;
+    grid-template-rows: auto auto auto;
     column-gap: 10px;
+    row-gap: 10px;
     padding-right: 10px; /* This is done because <main>'s class is weird and doesn't contain it properly in mobile */
 }
 
@@ -36,10 +73,6 @@ p{
     grid-row-end: 1;
     width: 75%;
 }
-
-/* #otherstuff {
-   
-} */
 
 /*    SVG Animation   */
 
@@ -108,11 +141,7 @@ p{
 
 #footer {
     font-size: .85vw;
-    /* background-color: #1b2832; */
-    position: fixed;
-    text-align: left;
-    left: 1rem;
-    bottom: -3.5rem;
+    text-align: center;
     width: 100%;
 }
 
