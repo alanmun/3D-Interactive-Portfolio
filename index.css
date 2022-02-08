@@ -5,10 +5,15 @@
 }
 /* Intro Screen */
 
+/* 
 body {
-    overflow-y: hidden;
-    /* index.js sets this back to auto */
-}
+    /* overflow-y: hidden;  Disabling this because its too wonky right now*
+    /* index.js sets this back to auto *
+
+    Instead of doing this, I should see if I can make the intro screen longer than the entire web page itself so you can just allow scrolling, but no matter
+    how far down you scroll its long enough to cover evberything
+} 
+*/
 
 #intro-screen-title {
     position: absolute;

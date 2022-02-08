@@ -94,18 +94,21 @@ const goToSpawn = {isLocked: true, target: { position: CAM_START }, name: ce.spa
 class App {
 
 	//Adds a star in a random spot, if negZOnly is passed in as true, it won't put any stars in pos z, helping to "background" the stars better
-	addStar(negZOnly=false){
+	addStar(){
 		let sizeGlow = THREE.MathUtils.randFloat(0.75, 0.95);
 		//let sizeCore = sizeGlow / 2
 		let color: THREE.Color
 		switch(THREE.MathUtils.randInt(1, 8)){
 			case 1:
-				color = new THREE.Color("#2407FF")
+				color = new THREE.Color("#3d33ff")
 				break
 			case 2:
-				color = new THREE.Color("#FFB200")
+				color = new THREE.Color("#ffcb54")
 				break
-			default: //12.5% chance for blueish, 12.5% orangish, 75% chance for white
+			case 3:
+				color = new THREE.Color("#70e0e0")
+				break
+			default: //12.5% chance for blueish, 12.5% orangish, 12.5% for turquise, rest for white
 				color = new THREE.Color("white")
 				break 
 		}
@@ -138,14 +141,13 @@ class App {
 		//star.add(core)
 
 		let x,y,z;
-		let xIsNeg, yIsNeg, zIsNeg
+		let xIsNeg, yIsNeg, zIsNeg;
 		xIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
 		yIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
-		if(!negZOnly) zIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
-		else zIsNeg = -1
+		zIsNeg = (THREE.MathUtils.randInt(0, 1) == 0) ? -1:1
 
 		//Set the closest and farthest stars can be
-		const innerBound = 380 //I believe with an inner bound of 250, I got a star to spawn only units in front of my camera's default spawn point
+		const innerBound = 480 //I believe with an inner bound of 250, I got a star to spawn only units in front of my camera's default spawn point
 		const outerBound = 700
 
 		x = THREE.MathUtils.randFloat(0, xIsNeg * outerBound)
@@ -283,8 +285,8 @@ class App {
 		
 		controls = new OrbitControls(camera, renderer.domElement); //Move around in the scene with your mouse!
 		controls.rotateSpeed = 0.45
-		controls.minDistance = 50
-		controls.maxDistance = 370
+		controls.minDistance = 35
+		controls.maxDistance = 470
 		controls.enableZoom = true
 		controls.enablePan = false //Panning isn't allowed as it can break the visuals as well
 
@@ -670,6 +672,10 @@ function onInteract(event:any) {
 	if(event.target == document.getElementById("backbutton")){
 		onBackClick(); //No need to return since this action leaves the webpage
 	}
+	if(event.target instanceof HTMLAnchorElement){
+		window.open(event.target.href, '_blank')
+		return; //Bail if click occurs on hyperlink
+	}
 
 	//calculate mouse position in normalized device coordinates  (-1 to +1) for both components
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1; //I believe these convert to centered normalized coordinates x,y at 0,0 is exact center of screen
@@ -724,7 +730,7 @@ function onInteract(event:any) {
 	}
 }
 
-//Common actions to take when backing out of a world
+//Routine actions to take when backing out of a world
 function backOut(){
 	fade(false); //Ask fade function to fade us again
 	changeWorld(cameraLock.name, true)
@@ -741,15 +747,15 @@ function addText(celestialEntityEnum: ce){
 	switch(celestialEntityEnum){
 		case ce.twitter:
 			title.innerHTML = "What Song Is That? (2020)"
-			body.innerHTML = "I decided to write and host a twitter bot for fun on my own server, using a Raspberry Pi, for a friend's twitter account. That bot has over a hundred thousand followers now. The success of that bot led me to make my own more sophisticated bot called What Song Is That? It takes requests from users who wish to know what song is playing in a tweet, queries Shazam's API on their behalf and displays its findings cleanly on a website I made for it. Check out <a style=\"text-decoration:none; color:salmon;\" href=\"https://whatsong.page\" target=\"_blank\">whatsong.page</a> for more information."
+			body.innerHTML = "I decided to write and host a twitter bot for fun on my own server, using a Raspberry Pi, for a friend's twitter account. That bot has over a hundred thousand followers now. The success of that bot led me to make my own more sophisticated bot called What Song Is That? It takes requests from users who wish to know what song is playing in a tweet, queries Shazam's API on their behalf and displays its findings cleanly on a website I made for it. Check out <a style=\"text-decoration:none; color:salmon;\" href=\"https://alanmun.github.io/WhatSongIsThat\" target=\"_blank\">whatsong.page</a> for more information."
 			break
 		case ce.autosage:
 			title.innerHTML = "AutoSage (2021)"
-			body.innerHTML = "AutoSage is a Python written tool for users of BeatSage, an AI driven service made for the popular VR rhythm game Beat Saber. AutoSage simplifies and automates the process of using BeatSage for all of the songs the user wishes to play in Beat Saber. See the tool's repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/autosage\" target=\"_blank\">github.com/alanmun/autosage</a>"
+			body.innerHTML = "AutoSage is a Python written app for users of BeatSage, an AI driven service made for the popular VR rhythm game Beat Saber. AutoSage simplifies and automates the process of using BeatSage for all of the songs the user wishes to play in Beat Saber. The tool has been updated to be packaged into a Windows executable using PyInstaller, and features a UI built using Tkinter for ease of use. See the tool's repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/autosage\" target=\"_blank\">github.com/alanmun/autosage</a>"
 			break
 		case ce.moon:
 			title.innerHTML = "3D Interactive Portfolio (2021)"
-			body.innerHTML = "This portfolio is written in typescript using the three.js 3D graphics library and deployed using vite. My work on the AutoSage tool led me to discovering three.js. I was enamoured with the library and had to make something with it. I had always wanted a cool way to show my personal technological efforts and projects so I decided to represent them in their own worlds that can be visited by interacting with them. I learned more from undertaking this project than any other personal project I've ever worked on. I had never written three.js code before, my HTML and CSS skills have definitely improved since beginning, and I gave myself an introduction to shaders and 3D modelling in blender by creating the Beat Saber cube that is floating in space. This portfolio remains a continual work in progress as I plan to update it with new worlds for every technological endeavor I go on. See the repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/3D-Interactive-Portfolio\" target=\"_blank\">github.com/alanmun/3D-Interactive-Portfolio</a>"
+			body.innerHTML = "This portfolio is written in TypeScript using the three.js 3D graphics library and deployed using vite. My work on the AutoSage tool led me to discovering three.js. I was enamoured with the library and had to make something with it. I wanted a cool way to show my personal technological efforts and projects, so I decided to represent them in their own worlds that can be visited by interacting with them. Every project I've undertaken has had a focus on what I stand to learn from it, and I have learned more from undertaking this project than any other personal project I've ever worked on. I had never written three.js code before, my HTML and CSS skills have definitely improved since beginning, and I gave myself an introduction to shaders and 3D modelling in blender by creating the Beat Saber cube that is floating in space. This portfolio remains a continual work in progress as I plan to update it with new worlds for every technological endeavor I go on. See the repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/3D-Interactive-Portfolio\" target=\"_blank\">github.com/alanmun/3D-Interactive-Portfolio</a>"
 			break
 		default:
 			console.log("Unknown case in addText")
