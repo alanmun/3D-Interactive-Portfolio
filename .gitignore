@@ -3,6 +3,7 @@ node_modules
 dist-ssr
 *.local
 /src/unused
+NotesToSelf.md
 
 //Build files
 /dist
