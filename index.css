@@ -50,17 +50,19 @@ p{
 
 .miscgrid{
     display: grid;
-    grid-template-columns: 5em;
-    grid-template-rows: auto auto auto;
-    column-gap: 10px;
+    grid-template-columns: 24.7% 24.7% 24.7%; /*please fix this later bruh*/
+    grid-template-rows: auto;
+    column-gap: 150px;
     row-gap: 10px;
     padding-right: 10px; /* This is done because <main>'s class is weird and doesn't contain it properly in mobile */
 }
 
-.mygrid {
+.maingrid {
     display: grid;
-    grid-template-columns: 50% 50%;
+    grid-template-columns: 42.5% 42.5%;
+    column-gap: 15%;
     grid-template-rows: auto;
+    margin-bottom: 10%;
 }
 
 #resume{
@@ -68,7 +70,6 @@ p{
     grid-column-end: 1;
     grid-row-start: 1;
     grid-row-end: 1;
-    width: 75%;
 }
 
 #portfolio{
@@ -76,7 +77,6 @@ p{
     grid-column-end: 2;
     grid-row-start: 1;
     grid-row-end: 1;
-    width: 75%;
 }
 
 /*    SVG Animation   */

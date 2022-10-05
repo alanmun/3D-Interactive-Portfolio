@@ -1,6 +1,17 @@
 let introTexts = ["Created by Alan Munirji"]
 let introCounter = 0;
 let introSplashTime = 1000; //How long to keep showing when last intro text gets on screen
+let hasVisited = localStorage.getItem('hasVisited');
+
+//Only show the splash screen the first ever time the page is loaded. Use localStorage, which persists cookies across sessions instead of sessionStorage
+if(!hasVisited){
+    setTimeout(swapIntroText, 500);
+    localStorage.setItem('hasVisited', true);
+}
+else{
+    const introScreen = document.querySelector('#intro-screen');
+    introScreen.remove();
+}
 
 function swapIntroText(){
     const introScreen = document.querySelector('#intro-screen');
@@ -37,4 +48,3 @@ function onTransitionEnd(event) {
 
 //window.focus();
 //window.scrollTo(200, 500); Why doesn't this work? focus before doesn't work, I stopped body from having overflow-y:hidden which some people said could cause it
-setTimeout(swapIntroText, 500);
