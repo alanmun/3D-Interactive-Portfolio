@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@picocss/pico": "^1.4.3",
+    "minimatch": "^3.0.5",
     "three": "^0.131.3"
   }
 }
