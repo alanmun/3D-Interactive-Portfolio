@@ -16,7 +16,7 @@ body {
 */
 
 #intro-screen-title {
-    position: absolute;
+    position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -28,7 +28,7 @@ body {
 	top: 0;
 	left: 0;
 	width: 100%;
-	height: 100%;
+	height: 200%;
 	background-color: #000000;
     overflow-y: hidden; /* Supposed to keep loading screen from being scrollable, but isn't working. It seems it works by adding this to body element */
 	opacity: 1;
@@ -44,43 +44,47 @@ body {
 
 /* End Intro Screen CSS */
 
-p{
+p {
     color:rgb(201, 207, 212);
 }
 
-.miscgrid{
-    display: grid;
-    grid-template-columns: 24.7% 24.7% 24.7%; /*please fix this later bruh*/
-    grid-template-rows: auto;
-    column-gap: 150px;
-    row-gap: 10px;
-    padding-right: 10px; /* This is done because <main>'s class is weird and doesn't contain it properly in mobile */
+/* picocss adds a padding top and bottom of ~5-10%, I don't want the top padding*/
+.container {
+    padding-top: 1%;
+    padding-bottom: 1%;
 }
 
-.maingrid {
-    display: grid;
-    grid-template-columns: 42.5% 42.5%;
-    column-gap: 15%;
-    grid-template-rows: auto;
-    margin-bottom: 10%;
+.barcontainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin-bottom: 2%;
 }
 
-#resume{
-    grid-column-start: 1;
-    grid-column-end: 1;
-    grid-row-start: 1;
-    grid-row-end: 1;
+.barchild {
+    flex-basis: 20%;
 }
 
-#portfolio{
-    grid-column-start: 2;
-    grid-column-end: 2;
-    grid-row-start: 1;
-    grid-row-end: 1;
+.maincontainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+.mainchild{
+    flex-basis: 40%;
+    margin-bottom: 2%;
+    margin-top: 5%;
+}
+
+#footer {
+    position: relative;
+    font-size: .85vw;
+    text-align: center;
+    width: 100%;
 }
 
 /*    SVG Animation   */
-
 #Contents { opacity: 0; }
 #SVGDocument:hover #Contents {
     opacity: 1;
@@ -144,12 +148,6 @@ p{
 
 /* End SVG Animation  */
 
-#footer {
-    font-size: .85vw;
-    text-align: center;
-    width: 100%;
-}
-
 /* Target mobile platforms */
 /* @media screen and (max-width: 320px){
     svg{
@@ -170,8 +168,20 @@ p{
     -ms-overflow-style: none;  /* Hide scroll bar on Internet Explorer 10+ */
     scrollbar-width: none;  /* Hide scroll bar on Firefox */
 }
-.noscroll::-webkit-scrollbar { 
+.noscroll::-webkit-scrollbar {
     display: none;  /* Hide scroll bar on Safari and Chrome */
     width: 0;
     height: 0;
+}
+
+@media (max-width: 780px) {
+    .container {
+        padding-top: 5%;
+    }
+    .mainchild {
+        flex-basis: 80%;
+    }
+    #footer {
+        font-size: 2vw;
+    }
 }
