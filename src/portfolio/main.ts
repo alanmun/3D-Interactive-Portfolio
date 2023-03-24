@@ -31,7 +31,7 @@ import twitterObjPath from './assets/twitter.obj?url'
 import beatSaberGlbPath from './assets/block.glb?url'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 
-let wb: UniverseBuilder;
+let ub: UniverseBuilder;
 
 let controls: OrbitControls
 
@@ -773,7 +773,8 @@ class UniverseBuilder {
 
 
 
-wb = new UniverseBuilder();
-wb.animate();
+ub = new UniverseBuilder();
+ub.animate();
+console.log("???")
 
 //TODO: Ideally I would like to asynchronously start animating the world, and continue loading of close up worlds here for a faster load time of the entire portfolio.

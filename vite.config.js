@@ -10,9 +10,9 @@ export default defineConfig(({}) => {
       outDir: './dist',
       rollupOptions:{
         input: {
-          main: resolve(__dirname, 'index.html'),
-          src: resolve(__dirname, 'portfolio.html'),
-          whoami: resolve(__dirname, 'whoami.html')
+          main: resolve(__dirname, './src/index.html'),
+          src: resolve(__dirname, './src/portfolio/portfolio.html'),
+          whoami: resolve(__dirname, './src/whoami.html')
         }
       }
     }
