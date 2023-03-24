@@ -1,3 +1,5 @@
+//This script handles the intro sequence logic
+
 let introTexts = ["Created by Alan Munirji"]
 let introCounter = 0;
 let introSplashTime = 1000; //How long to keep showing when last intro text gets on screen

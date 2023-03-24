@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 
 export module Debug {
-    export let mode:boolean = false //Set to true to enable dev mode
+    export let enabled:boolean = false //Set to true to enable dev enabled
     let orientationSensitivity = 0.1 //How fine to tune the entity's orientation
     let positionSensitivity = 0.5 //How fine to tune the entity's position
 
     export function debuggerKeys(object:THREE.Object3D, keyCode:number){
-        if(!mode) return
+        if(!enabled) return
 
         switch(keyCode){
 			case 78: //N key
@@ -63,7 +63,7 @@ export module Debug {
     }
 
     export function adjSens(sign:number){
-        if(!mode) return
+        if(!enabled) return
 
         positionSensitivity += (0.1 * sign)
         orientationSensitivity += (0.01  * sign)
@@ -71,41 +71,41 @@ export module Debug {
     }
 
     export function xPos(object:THREE.Object3D){
-        if(!mode) return
+        if(!enabled) return;
 
         object.position.x += positionSensitivity
-        console.log(object.position)
+        console.log(object.position);
     }
     export function xMin(object:THREE.Object3D){
-        if(!mode) return
+        if(!enabled) return;
 
         object.position.x -= positionSensitivity
-        console.log(object.position)
+        console.log(object.position);
     }
 
     export function yPos(object:THREE.Object3D){
-        if(!mode) return
+        if(!enabled) return;
 
         object.position.y += positionSensitivity
-        console.log(object.position)
+        console.log(object.position);
     }
     export function yMin(object:THREE.Object3D){
-        if(!mode) return
+        if(!enabled) return;
 
-        object.position.y -= positionSensitivity
-        console.log(object.position)
+        object.position.y -= positionSensitivity;
+        console.log(object.position);
     }
 
     export function zPos(object:THREE.Object3D){
-        if(!mode) return
+        if(!enabled) return
 
-        object.position.z += positionSensitivity
-        console.log(object.position)
+        object.position.z += positionSensitivity;
+        console.log(object.position);
     }
     export function zMin(object:THREE.Object3D){
-        if(!mode) return
+        if(!enabled) return;
 
-        object.position.z -= positionSensitivity
-        console.log(object.position)
+        object.position.z -= positionSensitivity;
+        console.log(object.position);
     }
 }
