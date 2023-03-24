@@ -771,8 +771,6 @@ class UniverseBuilder {
 	}
 }
 
-
-
 ub = new UniverseBuilder();
 ub.animate();
 console.log("???")
