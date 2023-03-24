@@ -3,7 +3,7 @@
 import './portfolio.css'
 import { UI } from './adjustUI'
 import { UniverseCamera } from './adjustCamera'
-import { CelestialEntity } from './celestialentity'
+import { CelestialEntity } from './CelestialEntity'
 import { Debug } from './PortfolioDebugger'
 import { CE, Direction, onTransitionEnd } from './utils'
 import { vShader, fShader } from "./atmosphericGlowShader"

@@ -1,6 +1,6 @@
 //This script handles all logic for moving the three.js camera around
 import * as THREE from 'three'
-import { CE, Direction } from './utils'
+import { CE } from './utils'
 
 
 //3D coordinates for where the camera should spawn at
