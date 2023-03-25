@@ -10,11 +10,16 @@ export default defineConfig(({}) => {
       outDir: './dist',
       rollupOptions:{
         input: {
-          main: resolve(__dirname, './src/index.html'),
-          src: resolve(__dirname, './src/portfolio/portfolio.html'),
+          main: resolve(__dirname, 'index.html'),
+          portfolio: resolve(__dirname, './src/portfolio.html'),
           whoami: resolve(__dirname, './src/whoami.html')
         }
       }
     }
   }
 });
+
+/*
+
+
+*/
