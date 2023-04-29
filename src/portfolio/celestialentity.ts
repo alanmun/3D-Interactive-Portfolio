@@ -1,7 +1,13 @@
-import * as THREE from 'three'
+import * as THREE from 'three';
 
-export class CelestialEntity {
-    isGroup: boolean = false
+interface RotationVector {
+	x: number;
+	y: number;
+	z: number;
+}
+
+export abstract class CelestialEntity {
+    rotationVector: THREE.Vector3 = new THREE.Vector3();
     distance: number = 0
 	tilt: number = THREE.MathUtils.randInt(-70, 10)
     theta: number = THREE.MathUtils.randFloat(0.0, 6.28318530718) //When a CE is made, give it a theta at random between 0 and 2pi
@@ -9,15 +15,15 @@ export class CelestialEntity {
     entity: any = null //THREE.Mesh representation of our CE. If CE is a group, this is the THREE.Group representation instead
 	entityCloseUp: any = null //THREE.Mesh representation of our CE when we visit it close up
 
-    constructor(name: string, isAGroup: boolean, distanceFromWhatItOrbits: number, alreadyMadeEntity: any=null){
-        if(alreadyMadeEntity != null) this.entity = alreadyMadeEntity
-		else{
-			if(this.isGroup) this.entity = new THREE.Group()
-			else this.entity = new THREE.Mesh()
-		}
+    constructor(name: string, distanceFromWhatItOrbits: number, entity: THREE.Object3D){
+        //if(alreadyMadeEntity != null) this.entity = alreadyMadeEntity
+		// else{
+		// 	if(this.isGroup) this.entity = new THREE.Group()
+		// 	else this.entity = new THREE.Mesh()
+		// }
 		
+		this.entity = entity
 		this.entity.name = name
-		this.isGroup = isAGroup
         this.distance = distanceFromWhatItOrbits
     }
 
@@ -35,14 +41,10 @@ export class CelestialEntity {
 		}
 	}
 
-    addMesh(geo: any, mat: any){
-        if(this.isGroup){
-            this.entity.add(new THREE.Mesh(geo, mat))
-        }
-        else{ //Treat it as a mesh
-			this.entity.geometry = geo
-            this.entity.material = mat
-        }
+	//only planets using addmesh (moon bh) arent groups..
+    setGeoAndMat(geo: any, mat: any){
+		this.entity.geometry = geo;
+		this.entity.material = mat;
     }
 
 	setCloseUp(anEntity: any){
@@ -52,14 +54,14 @@ export class CelestialEntity {
 	}
 
 	//Rotates the celestial entity by +=ing specified x, y, and z
-	rotate(x: number, y: number, z: number){
-		this.entity.rotation.x += x
-		this.entity.rotation.y += y 
-		this.entity.rotation.z += z
+	public rotate(){
+		this.entity.rotation.x += this.rotationVector.x;
+		this.entity.rotation.y += this.rotationVector.y; 
+		this.entity.rotation.z += this.rotationVector.z;
 	}
 
     //Adjust the orbit of an entity, distance specifies how far away and theta is what degree it is with respect to what it orbits
-	adjustOrbit() {
+	public adjustOrbit() {
 		let entityToMove
 		if(this.cameraIsAt) entityToMove = this.entityCloseUp
 		else entityToMove = this.entity
@@ -95,7 +97,7 @@ export class CelestialEntity {
 
 	//Quickly generate grass entities at specific positions, using a base grass object as an "original" to duplicate
 	addGrass(x:number, y:number, z:number, color:number, original:THREE.Object3D){
-		let grass:THREE.Object3D = original.clone(true)
+		let grass:THREE.Object3D = original.clone(true);
 
 		grass.position.set(x, y, z)
 		grass.traverse(function(child){
@@ -146,23 +148,38 @@ export class CelestialEntity {
 		return root
 	}
 
-	reverberate(tick: number){
-		if(this.entity.name == "blackhole"){
-			// let scaleVary = Math.sin(tick) * 0.02 + 1 //This scales the size of the black hole from 98% to 102%
-			// this.entity.scale.set(scaleVary, scaleVary, scaleVary)
-
-			let vary = Math.sin(tick) * 0.5 + 0.5 //Convert -1.0-1.0 to 0.0-1.0
-			const c1 = new THREE.Color("#BAD1FF")
-			const c2 = new THREE.Color("#FFFFFF")
-			this.entity.material.uniforms.glowColor.value = c1.lerp(c2, vary)
-
-			let inc: number
-			let randIncPick = THREE.MathUtils.randInt(1, 10)
-			if(randIncPick > 8) inc = 0.4 //THREE.MathUtils.randFloat(0.1, 0.3)
-			else inc = 0
-			return tick + inc
+	//Creates curved planes to simulate being on a world. Function authored by prisoner849
+	protected planeCurve(g: THREE.PlaneGeometry, z: number){
+	
+		let p = g.parameters;
+		let hw = p.width * 0.5;
+		
+		let a = new THREE.Vector2(-hw, 0);
+		let b = new THREE.Vector2(0, z);
+		let c = new THREE.Vector2(hw, 0);
+		
+		let ab = new THREE.Vector2().subVectors(a, b);
+		let bc = new THREE.Vector2().subVectors(b, c);
+		let ac = new THREE.Vector2().subVectors(a, c);
+		
+		let r = (ab.length() * bc.length() * ac.length()) / (2 * Math.abs(ab.cross(ac)));
+		
+		let center = new THREE.Vector2(0, z - r);
+		let baseV = new THREE.Vector2().subVectors(a, center);
+		let baseAngle = baseV.angle() - (Math.PI * 0.5);
+		let arc = baseAngle * 2;
+		
+		let uv = g.attributes.uv;
+		let pos = g.attributes.position;
+		let mainV = new THREE.Vector2();
+		for (let i = 0; i < uv.count; i++){
+			let uvRatio = 1 - uv.getX(i);
+		let y = pos.getY(i);
+		mainV.copy(c).rotateAround(center, (arc * uvRatio));
+		pos.setXYZ(i, mainV.x, y, -mainV.y);
 		}
-		return 0
+		
+		pos.needsUpdate = true;
 	}
 
 	//Setters

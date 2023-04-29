@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 
 export module Debug {
-    export let enabled:boolean = false //Set to true to enable dev enabled
+    export let enabled:boolean = false; //Set to true to enable dev enabled
     let orientationSensitivity = 0.1 //How fine to tune the entity's orientation
     let positionSensitivity = 0.5 //How fine to tune the entity's position
 
