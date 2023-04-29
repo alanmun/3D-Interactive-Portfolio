@@ -127,10 +127,10 @@ class UniverseBuilder {
 		//	capture: true,
 		//	once: false
 		//}
-		document.body.addEventListener("touch", this.onInteract, false) //Some browsers simulate click when touching on device, but this is still needed for the ones that don't
-		document.body.addEventListener("click", this.onInteract, false)
-		window.addEventListener("keydown", this.onKey, false)
-		window.addEventListener("resize", this.onWindowResize, false)
+		document.body.addEventListener("touch", this.onInteract.bind(this), false) //Some browsers simulate click when touching on device, but this is still needed for the ones that don't
+		document.body.addEventListener("click", this.onInteract.bind(this), false)
+		window.addEventListener("keydown", this.onKey.bind(this), false)
+		window.addEventListener("resize", this.onWindowResize.bind(this), false)
 
 		//Texture and model loading for various worlds
 		let moonTexture = new THREE.TextureLoader(loadManager).load(moonTexturePath)
@@ -280,16 +280,16 @@ class UniverseBuilder {
 			})
 		})
 
-		//Load and prep the moose
-		new GLTFLoader(loadManager).load('./assets/moose/scene.gltf', function(gltf){
+		//Load and position the moose
+		new GLTFLoader(loadManager).load((location.href.includes('localhost') ? './portfolio' : '.') + '/assets/moose/scene.gltf', function(gltf){
 			moose = gltf.scene
 			moose.scale.set(.5, .5, .5)
 			moose.position.set(-20.8, 4.5, 9.1)
 			moose.rotation.set(0.1, -12.9, 0.1)
 		})
 
-		//Load and prep the fox
-		new GLTFLoader(loadManager).load('./assets/fox/scene.gltf', function(gltf){
+		//Load and position the fox
+		new GLTFLoader(loadManager).load((location.href.includes('localhost') ? './portfolio' : '.') + '/assets/fox/scene.gltf', function(gltf){
 			fox = gltf.scene
 			fox.scale.set(0.04, .024, 0.03)
 			fox.position.set(-19.8, 3.5, -7.3)
@@ -372,7 +372,7 @@ class UniverseBuilder {
 			//newTree = twitter.addTree(-24.4, 4, 13.05, 0x37568a);
 
 			scene.add(twitter.entity)
-		})
+		}.bind(this));
 
 		// * Create the moon
 		moon = new CelestialEntity("moon", false, 110)
@@ -434,15 +434,17 @@ class UniverseBuilder {
 			//Black Hole shader manipulation
 			bh = blackHole.reverberate(bh)
 			
-			//Adjust orbits
-			autosage.adjustOrbit()
-			moon.adjustOrbit()
-			twitter.adjustOrbit()
+			if(autosage && moon && twitter){
+				//Adjust orbits
+				autosage.adjustOrbit()
+				moon.adjustOrbit()
+				twitter.adjustOrbit()
 
-			//Adjust rotations
-			autosage.rotate(0.001, 0.001, 0.01) //autosage.rotate(0.01, 0.005, 0.001)
-			moon.rotate(0.001, 0.001, 0)
-			twitter.rotate(0, 0, 0.002)
+				//Adjust rotations
+				autosage.rotate(0.001, 0.001, 0.01) //autosage.rotate(0.01, 0.005, 0.001)
+				moon.rotate(0.001, 0.001, 0)
+				twitter.rotate(0, 0, 0.002)
+			}
 
 			//Adjust camera
 			let status = this.uc.animateCamera();
@@ -456,7 +458,7 @@ class UniverseBuilder {
 				setTimeout(function(this: UniverseBuilder){
 					this.changeWorld(this.uc.cameraLock.name, false)
 					this.ui.fade(Direction.in)
-				}, 1000)
+				}.bind(this), 1000)
 			}
 
 			renderer.render(scene, this.uc.camera);
@@ -773,6 +775,5 @@ class UniverseBuilder {
 
 ub = new UniverseBuilder();
 ub.animate();
-console.log("???")
 
 //TODO: Ideally I would like to asynchronously start animating the world, and continue loading of close up worlds here for a faster load time of the entire portfolio.
