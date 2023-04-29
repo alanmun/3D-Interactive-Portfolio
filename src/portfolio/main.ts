@@ -4,6 +4,10 @@ import './portfolio.css'
 import { UI } from './adjustUI'
 import { UniverseCamera } from './adjustCamera'
 import { CelestialEntity } from './CelestialEntity'
+import { BlackHole } from './BlackHole'
+import { AutoSage } from './AutoSage';
+import { Moon } from './Moon'
+import { Twitter } from './Twitter'
 import { Debug } from './PortfolioDebugger'
 import { CE, Direction, onTransitionEnd } from './utils'
 import { vShader, fShader } from "./atmosphericGlowShader"
@@ -19,8 +23,6 @@ import skyboxTop from './assets/skyboxwithsun/top.png?url'
 import skyboxBottom from './assets/skyboxwithsun/bottom.png?url'
 import skyboxFront from './assets/skyboxwithsun/front.png?url'
 import skyboxBack from './assets/skyboxwithsun/back.png?url'
-import moonTexturePath from './assets/moon.jpg?url'
-import moonNormalPath from './assets/moonbumpmap.jpg?url'
 import twitterPondPath from './assets/pond/pond.obj?url'
 import twitterPondMTLPath from './assets/pond/pond.mtl?url'
 import twitterGrassPath from './assets/grass/grass.obj?url'
@@ -39,7 +41,6 @@ let scene: THREE.Scene;
 let renderer: THREE.WebGLRenderer;
 
 let twitter: CelestialEntity //For twitter.obj model
-let twitterCloseUp: THREE.Group
 let pond: THREE.Object3D
 let fox: THREE.Object3D
 let moose: THREE.Object3D
@@ -86,31 +87,20 @@ class UniverseBuilder {
 
 		//Skybox, Loading Manager (which enforces loading screen)
 		let skybox: THREE.Mesh
-		const loadManager = new THREE.LoadingManager(() => {
+		const loadingManager = new THREE.LoadingManager();
+		loadingManager.onLoad = () => {
 			console.log("Loaded skybox")
 			skybox = new THREE.Mesh(skyboxGeom, skyboxMaterials)
 			skybox.name = "skybox" //Tag it so we can block mouse clicks from acting on it
-			scene.add(skybox)
-
-			//Now that we are sure everything is loaded, add these models to their worlds
-			twitterCloseUp.add(pond)
-			twitterCloseUp.add(fox)
-			twitterCloseUp.add(moose)
-			twitter.addGrass(-13.5, 3.7, -9, 0x3e629d, grass);
-			twitter.addGrass(-17.6, 2.9, -7, 0x37568a, grass);
-			twitter.addGrass(-15.6, 2.9, -6.5, 0x37568a, grass);
-			twitter.addGrass(-14.1, 3.4, 9.1, 0x37568a, grass);
-			twitter.addGrass(-16.6, 2.8, -7.3, 0x37568a, grass);
-			twitter.addGrass(-17.5, 2.8, -8.3, 0x37568a, grass);
-			//twitterCloseUp.add(workstation)
+			scene.add(skybox);
 
 			const loadingScreen = document.querySelector('#loading-screen');
 			loadingScreen?.classList.add('fade-out')
 			loadingScreen?.addEventListener('transitionend', onTransitionEnd)
 			this.uc.setupCamera();
 			controls.enabled = false;
-		});
-		const loader = new THREE.TextureLoader(loadManager);
+		};
+		const loader = new THREE.TextureLoader(loadingManager);
 		let skyboxGeom = new THREE.BoxGeometry(2100, 2100, 2100)
 		let skyboxMaterials = [
 			new THREE.MeshBasicMaterial({map: loader.load(skyboxRight)}),
@@ -132,132 +122,31 @@ class UniverseBuilder {
 		window.addEventListener("keydown", this.onKey.bind(this), false)
 		window.addEventListener("resize", this.onWindowResize.bind(this), false)
 
-		//Texture and model loading for various worlds
-		let moonTexture = new THREE.TextureLoader(loadManager).load(moonTexturePath)
-		let moonNormal = new THREE.TextureLoader(loadManager).load(moonNormalPath)
+
 
 		// * Create the autosage planet
-		new GLTFLoader(loadManager).load(beatSaberGlbPath, function(obj){
+		new GLTFLoader(loadingManager).load(beatSaberGlbPath, function(obj){
 			//Create celestial entity object for autosage and add to scene
-			autosage = new CelestialEntity("autosage", true, 85, obj.scene);
-			let block: THREE.Group = autosage.entity;
-			block.scale.set(7,7,7) //5,5,5 is a good value
-
-			let foundCube = true
-			block.traverse(function(child){
-				if(child instanceof THREE.Mesh){
-					//console.log(child)
-					if(foundCube) {
-						foundCube = false //First child it finds is the cube itself instead of the arrow
-						child.material = new THREE.MeshPhongMaterial({ color: "#cc0000", shininess: 1, flatShading: true})
-					}
-					else {
-						child.material = new THREE.MeshPhongMaterial({ color: "#ffffff", flatShading: true, side: THREE.DoubleSide}) 
-						//Flat shading might fix z fighting without having to resort to logarithmicDepthBuffer 
-						//which breaks any entities that use shaders
-					}
-				}
-			})
-
-			scene.add(autosage.entity)
-
-			//Initialize close up world for autosage
-			autosageCloseUp = new THREE.Group();
-			const roundedRectShape = new THREE.Shape();
-			( function roundedRect( ctx, x, y, width, height, radius ) {
-				ctx.moveTo( x, y + radius );
-				ctx.lineTo( x, y + height - radius );
-				ctx.quadraticCurveTo( x, y + height, x + radius, y + height );
-				ctx.lineTo( x + width - radius, y + height );
-				ctx.quadraticCurveTo( x + width, y + height, x + width, y + height - radius );
-				ctx.lineTo( x + width, y + radius );
-				ctx.quadraticCurveTo( x + width, y, x + width - radius, y );
-				ctx.lineTo( x + radius, y );
-				ctx.quadraticCurveTo( x, y, x, y + radius );
-			} )( roundedRectShape, 0, 0, 50, 100, 10 );
-			let autosageCloseUpGeo = new THREE.ShapeGeometry(roundedRectShape) //new THREE.PlaneGeometry(64, 96, 32, 32)
-			autosageCloseUpGeo.center()
-			let autosageCloseUpMat = new THREE.MeshStandardMaterial({color: "red", metalness: 0.1})
-			autosageCloseUpMat.side = THREE.BackSide 
-			let autosageCloseUpMesh = new THREE.Mesh(
-				autosageCloseUpGeo,
-				autosageCloseUpMat
-			)
-			autosageCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90
-			autosageCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
-			autosageCloseUp.add(autosageCloseUpMesh)
-			autosage.setCloseUp(autosageCloseUp)
-			
-			//Create copies of the original block and use them as decorations
-			let miniblock1 = new THREE.Group()
-			miniblock1 = block.clone(true)
-			miniblock1.position.set(-40,1,-15)
-			miniblock1.scale.set(1,1,1)
-			miniblock1.name = "miniblock1"
-			miniblock1.rotation.y += THREE.MathUtils.DEG2RAD * 60;
-			(miniblock1.children[0] as THREE.Mesh).material = new THREE.MeshPhongMaterial({ color: "#0007cc", shininess: 1, flatShading: true});
-			autosageCloseUp.add(miniblock1)
-
-			let miniblock2 = miniblock1.clone(true)
-			miniblock2.position.set(-40,1,-12.5)
-			miniblock2.rotation.y += THREE.MathUtils.DEG2RAD * 30;
-			(miniblock1.children[0] as THREE.Mesh).material = new THREE.MeshPhongMaterial({ color: "#cc00c9", shininess: 1, flatShading: true});
-			autosageCloseUp.add(miniblock2)
-
-			let miniblock3 = miniblock1.clone(true)
-			miniblock3.position.set(-35,1,15);
-			miniblock3.rotation.x -= THREE.MathUtils.DEG2RAD * 90;
-			miniblock3.rotation.y += THREE.MathUtils.DEG2RAD * 30;
-			(miniblock3.children[0] as THREE.Mesh).material = new THREE.MeshPhongMaterial({ color: "#11a10a", shininess: 1, flatShading: true});
-			autosageCloseUp.add(miniblock3)
+			autosage = new AutoSage(85, obj.scene);
+			scene.add(autosage.entity);
 		}, undefined, function ( error ) {
 			console.error( error );
 		});
 
 		// * Create the black hole
-		let bh: number = 0
-		let blackHole = new CelestialEntity("blackhole", false, 0)
-		blackHole.addMesh(
-			new THREE.SphereGeometry(6, 128, 128),
-			//new THREE.MeshStandardMaterial({ color: "black", roughness: 0, metalness: 1, flatShading: false})
-			new THREE.ShaderMaterial({
-				uniforms: {
-					glowColor: {
-						value: new THREE.Vector3(0.1, 0.1, 0.1) //Color is overwritten by reverberate function
-					},
-					"p": {
-						value: 6
-					},
-					"c": {
-						value: 0.25
-					},
-					viewVector: { value: this.uc.camera.position}
-				},
-				vertexShader: vShader,
-				fragmentShader: fShader,
-				side: THREE.BackSide,
-				blending: THREE.AdditiveBlending,
-				transparent: true
-			})
-		)
+		let blackHole = new BlackHole("blackhole", new THREE.Mesh(), this.uc.camera, scene)
 		/* TODO: Maybe I should merge this into one black hole THREE.Group, right now I'm lazy and don't care to figure out how to traverse and select
 			the mesh with shader material on it so I can modify that one in reverberate()
 		*/
-		let blackHoleCore = new THREE.Mesh(
-			new THREE.SphereGeometry(4.75, 128, 128), //Was 4.75 in radius
-			new THREE.MeshPhysicalMaterial({ color: "black", clearcoat: 0, side: THREE.DoubleSide}), //clearcoat 0 prevents light shine mark on it from distant sun
-		)
-		blackHoleCore.name = "blackholecore"
-		scene.add(blackHoleCore)
-		scene.add(blackHole.entity)
+
 
 		//Load and prep the pond
-		new MTLLoader(loadManager).load(twitterPondMTLPath, function(mtl){
+		new MTLLoader(loadingManager).load(twitterPondMTLPath, function(mtl){
 			mtl.preload()
-			let gLoader = new OBJLoader(loadManager)
+			let gLoader = new OBJLoader(loadingManager)
 			gLoader.setMaterials(mtl)
 			gLoader.load(twitterPondPath, function(group){
-				pond = group
+				pond = group;
 				pond.scale.set(0.02, 0.02, 0.02)
 				pond.rotation.set(0, -8.2, 0)
 				pond.position.set(-16.5, 2.8, -4)
@@ -276,125 +165,70 @@ class UniverseBuilder {
 						}
 						child.material.side = THREE.DoubleSide
 					}
-				})
-			})
-		})
+				});
+				twitter.entityCloseUp.add(pond);
+			});
+		});
 
 		//Load and position the moose
-		new GLTFLoader(loadManager).load((location.href.includes('localhost') ? './portfolio' : '.') + '/assets/moose/scene.gltf', function(gltf){
-			moose = gltf.scene
-			moose.scale.set(.5, .5, .5)
-			moose.position.set(-20.8, 4.5, 9.1)
-			moose.rotation.set(0.1, -12.9, 0.1)
+		new GLTFLoader(loadingManager).load((location.href.includes('localhost') ? './portfolio' : '.') + '/assets/moose/scene.gltf', function(gltf){
+			moose = gltf.scene;
+			moose.scale.set(.5, .5, .5);
+			moose.position.set(-20.8, 4.5, 9.1);
+			moose.rotation.set(0.1, -12.9, 0.1);
+			twitter.entityCloseUp.add(moose);
 		})
 
 		//Load and position the fox
-		new GLTFLoader(loadManager).load((location.href.includes('localhost') ? './portfolio' : '.') + '/assets/fox/scene.gltf', function(gltf){
-			fox = gltf.scene
-			fox.scale.set(0.04, .024, 0.03)
-			fox.position.set(-19.8, 3.5, -7.3)
-			fox.rotation.set(0, -11.7, 0)
+		new GLTFLoader(loadingManager).load((location.href.includes('localhost') ? './portfolio' : '.') + '/assets/fox/scene.gltf', function(gltf){
+			fox = gltf.scene;
+			fox.scale.set(0.04, .024, 0.03);
+			fox.position.set(-19.8, 3.5, -7.3);
+			fox.rotation.set(0, -11.7, 0);
+			twitter.entityCloseUp.add(fox);
 		})
-
-		//Load and prep the grass(es)
-		new MTLLoader(loadManager).load(twitterGrassMTLPath, function(mtl){
-			mtl.preload()
-
-			let gLoader = new OBJLoader(loadManager)
-			gLoader.setMaterials(mtl)
-			gLoader.load(twitterGrassPath, function(group){
-				grass = group
-				grass.scale.set(0.06, 0.06, 0.06)
-			})
-		})
-
-		// ! Load and prep workstation (Deprecated)
-		//let workstation:THREE.Object3D
-		//new MTLLoader(loadManager).load(twitterWorkstationMTLPath, function(mtl){
-		//	mtl.preload()
-		//	let wsLoader = new OBJLoader(loadManager)
-		//	wsLoader.setMaterials(mtl)
-		//	wsLoader.load(twitterWorkstationPath, function(group){
-		//		group.traverse(function(child){
-		//			if(child instanceof THREE.Mesh){
-		//				child.material.side = THREE.DoubleSide
-		//			}
-		//		})
-		//
-		//		//Reposition the workstation and add to the close up entity
-		//		group.position.set(-12, 5, 5)
-		//		group.rotateY(THREE.MathUtils.DEG2RAD * 200)
-		//		group.scale.set(0.001, 0.001, 0.001)
-		//		workstation = group
-		//	})
-		//})
 
 		// * Create the twitter planet from an .obj model
-		new OBJLoader(loadManager).load(twitterObjPath, function(this: UniverseBuilder, group: THREE.Group){
+		new OBJLoader(loadingManager).load(twitterObjPath, function(this: UniverseBuilder, group: THREE.Group){
 			group.traverse(function(child){
 				if(child instanceof THREE.Mesh){
 					//console.log(child)
 					child.material = new THREE.MeshStandardMaterial({ color: 0x3fbcff, roughness: 0, metalness: 0, flatShading: false})
 					child.rotation.y += 7.5 //For start up sake I like to start it at this rotation so it looks more presentable, not that important
 				}
-			})
-			//console.log(twitter)
-			twitter = new CelestialEntity("twitter", true, 45, group)
+			});
 
-			// * Design the close up world for twitter
-			twitterCloseUp = new THREE.Group();
-			let twitterCloseUpGeo = new THREE.PlaneGeometry(64, 64, 128, 128)
-			let twitterCloseUpMat = new THREE.MeshStandardMaterial({color: 0x3fbcff, metalness: .4})
-			twitterCloseUpMat.side = THREE.BackSide 
-			this.planeCurve(twitterCloseUpGeo, 4)
-			//let testTwitterCloseUpGeo = new THREE.WireframeGeometry(twitterCloseUpGeo)
-			let twitterCloseUpMesh = new THREE.Mesh(
-				twitterCloseUpGeo,
-				twitterCloseUpMat
-			)
-			twitterCloseUp.add(twitterCloseUpMesh)
-
-			twitter.setCloseUp(twitterCloseUp)
-			twitterCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90
-			twitterCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
-			//twitterCloseUpMesh.material.depthTest = false //Allow others to occlude our world
-
-			this.makeWings()
-			twitter.addTree(-9, 6, -4.75, 0x7796c9);
-			twitter.addTree(-12, 6, -5.25, 0x6588c2);
-			twitter.addTree(-11, 6, -4.5, 0x6588c2);
-			twitter.addTree(-9, 6, 5.05, 0x537abb);
-			twitter.addTree(-20.2, 4.8, 10.05, 0x7796c9);
-			twitter.addTree(-22.3, 4.8, 10.05, 0x37568a);
-			twitter.addTree(-19.9, 4.5, 11.25, 0x37568a);
-			twitter.addTree(-24.4, 4, 13.05, 0x37568a);
-
-			//newTree = twitter.addTree(-24.4, 4, 13.05, 0x37568a);
-
-			scene.add(twitter.entity)
+			twitter = new Twitter("twitter", 45, group, loadingManager, pond, fox, moose, grass);		
+			scene.add(twitter.entity);
 		}.bind(this));
 
+		//Load and prep the grass(es)
+		new MTLLoader(loadingManager).load(twitterGrassMTLPath, function(mtl){
+			mtl.preload();
+
+			let gLoader = new OBJLoader(loadingManager)
+			gLoader.setMaterials(mtl)
+			gLoader.load(twitterGrassPath, function(group){
+				grass = group;
+				grass.scale.set(0.06, 0.06, 0.06);
+				
+				/* 
+				TODO: These should ideally occur inside of Twitter.
+						but I have problems I need to solve with asynchronicity
+						and the objects not being defined yet
+				*/
+				twitter.addGrass(-13.5, 3.7, -9, 0x3e629d, grass);
+				twitter.addGrass(-17.6, 2.9, -7, 0x37568a, grass);
+				twitter.addGrass(-15.6, 2.9, -6.5, 0x37568a, grass);
+				twitter.addGrass(-14.1, 3.4, 9.1, 0x37568a, grass);
+				twitter.addGrass(-16.6, 2.8, -7.3, 0x37568a, grass);
+				twitter.addGrass(-17.5, 2.8, -8.3, 0x37568a, grass);
+				});
+		});
+
 		// * Create the moon
-		moon = new CelestialEntity("moon", false, 110)
-		moon.addMesh(
-			new THREE.SphereGeometry(6, 64, 64),
-			new THREE.MeshStandardMaterial({map: moonTexture, normalMap: moonNormal})
-		)
-		// * Design the close up world for moon
-		let moonCloseUp = new THREE.Group();
-		let moonCloseUpGeo = new THREE.PlaneGeometry(64, 64, 128, 128)
-		let moonCloseUpMat = new THREE.MeshStandardMaterial({map: moonTexture, normalMap: moonNormal})
-		moonCloseUpMat.side = THREE.BackSide
-		this.planeCurve(moonCloseUpGeo, 4)
-		let moonCloseUpMesh = new THREE.Mesh(
-			moonCloseUpGeo,
-			moonCloseUpMat
-		)
-		moonCloseUp.add(moonCloseUpMesh)
-		moon.setCloseUp(moonCloseUp)
-		moonCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90
-		moonCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90
-		scene.add(moon.entity)
+		moon = new Moon(110, new THREE.Mesh(), loadingManager);
+		scene.add(moon.entity);
 
 		// * Add some light
 		const aL = new THREE.AmbientLight(new THREE.Color("white"), 1)
@@ -416,14 +250,14 @@ class UniverseBuilder {
 		for(let i = 0; i < 1000; i++) this.addStar()
 
 		//Weird glitches? Can't get stuff to display? Just debug enable and make everything BasicMaterial to guarantee you're doing it right
-		//if(debug) scene.overrideMaterial = new MeshBasicMaterial({ color: 'green'})
+		if(Debug.enabled) scene.overrideMaterial = new THREE.MeshBasicMaterial({ color: 'green'});
 		// setTimeout(() => {
 		// 	cameraLock = {
 		// 		isLocked: true,
 		// 		name: CE.twitter,
 		// 		target: twitter.entity
 		// 	}
-		// 	changeWorld(CE.twitter, false)
+		// 	this.changeWorld(CE.twitter, false)
 		// 	shouldPinCamera = true
 		// }, 2000)
 		
@@ -432,18 +266,12 @@ class UniverseBuilder {
 			requestAnimationFrame(this.animate)
 
 			//Black Hole shader manipulation
-			bh = blackHole.reverberate(bh)
+			blackHole.reverberate();
 			
-			if(autosage && moon && twitter){
-				//Adjust orbits
-				autosage.adjustOrbit()
-				moon.adjustOrbit()
-				twitter.adjustOrbit()
-
-				//Adjust rotations
-				autosage.rotate(0.001, 0.001, 0.01) //autosage.rotate(0.01, 0.005, 0.001)
-				moon.rotate(0.001, 0.001, 0)
-				twitter.rotate(0, 0, 0.002)
+			for(const celestialEntity of [autosage, moon, twitter]){
+				if(!celestialEntity) continue;
+				celestialEntity.adjustOrbit();
+				celestialEntity.rotate();
 			}
 
 			//Adjust camera
@@ -600,89 +428,6 @@ class UniverseBuilder {
 		this.changeWorld(this.uc.cameraLock.name, true);
 		this.uc.setCameraToSpawn();
 		this.ui.playZoom(Direction.out);
-	}
-
-	//Creates the left and right wings on the twitter world, adds them to the overall close up twitter group
-	public makeWings(){
-		//Create and define the wings
-		let tLeftWing = new THREE.Shape();
-		let tRightWing = new THREE.Shape();
-		tLeftWing.moveTo(80, 20);
-		tLeftWing.lineTo(40, 80);
-		tLeftWing.lineTo(80, 80);
-		tLeftWing.lineTo(80, 20);
-		tRightWing.moveTo(80, 20);
-		tRightWing.lineTo(40, 80);
-		tRightWing.lineTo(80, 80);
-		tRightWing.lineTo(80, 20);
-		let tLeftWingGeo = new THREE.ExtrudeGeometry(tLeftWing, {
-			depth: 0.4, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 
-		})
-		let tRightWingGeo = new THREE.ExtrudeGeometry(tRightWing, {
-			depth: 0.4, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 
-		})
-		let tLeftWingMesh = new THREE.Mesh(
-			tLeftWingGeo,
-			new THREE.MeshStandardMaterial({color: 0x3372d6, metalness: .4})
-		)
-		let tRightWingMesh = new THREE.Mesh(
-			tRightWingGeo,
-			new THREE.MeshStandardMaterial({color: 0x3372d6, metalness: .4})
-		)
-
-		//Scale both
-		tLeftWingMesh.scale.set(1,1.75,1)
-		tRightWingMesh.scale.set(1,1.75,1)
-
-		//Set position and orientation of left wing
-		tLeftWingMesh.position.set(-7, -95, 6)
-		tLeftWingMesh.rotateX(THREE.MathUtils.DEG2RAD * 0)
-		tLeftWingMesh.rotateY(THREE.MathUtils.DEG2RAD * 30)
-		tLeftWingMesh.rotateZ(THREE.MathUtils.DEG2RAD * 60)
-
-		//Set position and orientation of right wing
-		tRightWingMesh.position.set(-7, -95, -6)
-		tRightWingMesh.rotateX(THREE.MathUtils.DEG2RAD * 0)
-		tRightWingMesh.rotateY(THREE.MathUtils.DEG2RAD * 330)
-		tRightWingMesh.rotateZ(THREE.MathUtils.DEG2RAD * 60)
-
-		//Add to twitterCloseUp
-		twitterCloseUp.add(tRightWingMesh);
-		twitterCloseUp.add(tLeftWingMesh)
-	}
-
-	//Creates curved planes to simulate being on a world. Function authored by prisoner849
-	public planeCurve(g: THREE.PlaneGeometry, z: number){
-		
-		let p = g.parameters;
-		let hw = p.width * 0.5;
-		
-		let a = new THREE.Vector2(-hw, 0);
-		let b = new THREE.Vector2(0, z);
-		let c = new THREE.Vector2(hw, 0);
-		
-		let ab = new THREE.Vector2().subVectors(a, b);
-		let bc = new THREE.Vector2().subVectors(b, c);
-		let ac = new THREE.Vector2().subVectors(a, c);
-		
-		let r = (ab.length() * bc.length() * ac.length()) / (2 * Math.abs(ab.cross(ac)));
-		
-		let center = new THREE.Vector2(0, z - r);
-		let baseV = new THREE.Vector2().subVectors(a, center);
-		let baseAngle = baseV.angle() - (Math.PI * 0.5);
-		let arc = baseAngle * 2;
-		
-		let uv = g.attributes.uv;
-		let pos = g.attributes.position;
-		let mainV = new THREE.Vector2();
-		for (let i = 0; i < uv.count; i++){
-			let uvRatio = 1 - uv.getX(i);
-		let y = pos.getY(i);
-		mainV.copy(c).rotateAround(center, (arc * uvRatio));
-		pos.setXYZ(i, mainV.x, y, -mainV.y);
-		}
-		
-		pos.needsUpdate = true;
 	}
 
 	//TODO: A GOOD CHUNK OF THE CODE IN HERE SHOULD BE MOVED INTO adjustCamera.ts
