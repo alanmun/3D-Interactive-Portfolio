@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 export class Twitter extends CelestialEntity {
 
-    constructor(name: string, orbitalRadius: number, group: THREE.Group, loadingManager: THREE.LoadingManager, pond: THREE.Object3D, fox: THREE.Object3D, moose: THREE.Object3D, grass: THREE.Object3D){
+    constructor(name: string, orbitalRadius: number, group: THREE.Group){
         super(name, orbitalRadius, group);
 
         this.rotationVector = new THREE.Vector3(0, 0, 0.002);

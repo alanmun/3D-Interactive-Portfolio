@@ -48,7 +48,6 @@ let grass: THREE.Object3D
 //let newGrass: THREE.Object3D //debug var for testing out new placements
 
 let autosage: CelestialEntity
-let autosageCloseUp: THREE.Group
 
 let moon: CelestialEntity
 
@@ -170,8 +169,8 @@ class UniverseBuilder {
 			});
 		});
 
-		//Load and position the moose
-		new GLTFLoader(loadingManager).load((location.href.includes('localhost') ? './portfolio' : '.') + '/assets/moose/scene.gltf', function(gltf){
+		//Load and position the moose (localhost:3000 is dev server where assets are in different place)
+		new GLTFLoader(loadingManager).load((location.href.includes('localhost:3000') ? './portfolio' : '..') + '/assets/moose/scene.gltf', function(gltf){
 			moose = gltf.scene;
 			moose.scale.set(.5, .5, .5);
 			moose.position.set(-20.8, 4.5, 9.1);
@@ -179,8 +178,8 @@ class UniverseBuilder {
 			twitter.entityCloseUp.add(moose);
 		})
 
-		//Load and position the fox
-		new GLTFLoader(loadingManager).load((location.href.includes('localhost') ? './portfolio' : '.') + '/assets/fox/scene.gltf', function(gltf){
+		//Load and position the fox (localhost:3000 is dev server where assets are in different place)
+		new GLTFLoader(loadingManager).load((location.href.includes('localhost:3000') ? './portfolio' : '..') + '/assets/fox/scene.gltf', function(gltf){
 			fox = gltf.scene;
 			fox.scale.set(0.04, .024, 0.03);
 			fox.position.set(-19.8, 3.5, -7.3);
@@ -198,7 +197,7 @@ class UniverseBuilder {
 				}
 			});
 
-			twitter = new Twitter("twitter", 45, group, loadingManager, pond, fox, moose, grass);		
+			twitter = new Twitter("twitter", 45, group);		
 			scene.add(twitter.entity);
 		}.bind(this));
 

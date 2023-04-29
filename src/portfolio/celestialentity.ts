@@ -1,11 +1,5 @@
 import * as THREE from 'three';
 
-interface RotationVector {
-	x: number;
-	y: number;
-	z: number;
-}
-
 export abstract class CelestialEntity {
     rotationVector: THREE.Vector3 = new THREE.Vector3();
     distance: number = 0
