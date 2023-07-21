@@ -6,7 +6,7 @@ let introSplashTime = 1000; //How long to keep showing when last intro text gets
 let hasVisited = localStorage.getItem('hasVisited');
 
 //Only show the splash screen the first ever time the page is loaded. Use localStorage, which persists cookies across sessions instead of sessionStorage
-if(!hasVisited){
+if(false){ //Disabling splash screen, its too extra
     setTimeout(swapIntroText, 500);
     localStorage.setItem('hasVisited', true);
 }
