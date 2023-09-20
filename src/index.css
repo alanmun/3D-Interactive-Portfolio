@@ -91,59 +91,39 @@ p {
     transition-duration: 1000ms;
 }
 
-#Star   {opacity: 0;}
-#Star_2 { opacity: 0;}
-#Star_3 { opacity: 0;}
-#Star_4 { opacity: 0;}
-#Star_5 { opacity: 0;}
-#Star_6 { opacity: 0;}
-#Star_7 { opacity: 0;}
-#Star_8 { opacity: 0;}
-#Star_9 { opacity: 0;}
-#SVGUniverse:active #Star {
+:is(#Star, #Star_2, #Star_3, #Star_4, #Star_5, #Star_6, #Star_7, #Star_8, #Star_9) {
+    opacity: 0;
+}
+:is(#Star, #Star_2, #Star_3, #Star_4, #Star_5, #Star_6, #Star_7, #Star_8, #Star_9):hover {
     opacity: 1;
-    transition-delay: 100ms;
     transition-duration: 1000ms;
+}
+#SVGUniverse:active #Star {
+    transition-delay: 100ms;
 }
 #SVGUniverse:hover #Star_2 {
-    opacity: 1;
     transition-delay: 290ms;
-    transition-duration: 1000ms;
 }
 #SVGUniverse:hover #Star_3 {
-    opacity: 1;
     transition-delay: 20ms;
-    transition-duration: 1000ms;
 }
 #SVGUniverse:hover #Star_4 {
-    opacity: 1;
     transition-delay: 160ms;
-    transition-duration: 1000ms;
 }
 #SVGUniverse:hover #Star_5 {
-    opacity: 1;
     transition-delay: 500ms;
-    transition-duration: 1000ms;
 }
 #SVGUniverse:hover #Star_6 {
-    opacity: 1;
     transition-delay: 135ms;
-    transition-duration: 1000ms;
 }
 #SVGUniverse:hover #Star_7 {
-    opacity: 1;
     transition-delay: 240ms;
-    transition-duration: 1000ms;
 }
 #SVGUniverse:hover #Star_8 {
-    opacity: 1;
     transition-delay: 390ms;
-    transition-duration: 1000ms;
 }
 #SVGUniverse:hover #Star_9 {
-    opacity: 1;
     transition-delay: 70ms;
-    transition-duration: 1000ms;
 }
 
 /* End SVG Animation  */
