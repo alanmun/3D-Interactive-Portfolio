@@ -44,7 +44,7 @@ export class UI {
                 break
             case CE.autosage:
                 title.innerHTML = "AutoSage (2021)"
-                body.innerHTML = "AutoSage is a Python written app for users of BeatSage, an AI driven serviCE made for the popular VR rhythm game Beat Saber. AutoSage simplifies and automates the proCEss of using BeatSage for all of the songs the user wishes to play in Beat Saber. The tool has been updated to be packaged into a Windows executable using PyInstaller, and features a UI built using Tkinter for ease of use. See the tool's repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/autosage\" target=\"_blank\">github.com/alanmun/autosage</a>"
+                body.innerHTML = "AutoSage is a Python written app for users of BeatSage, an AI driven service made for the popular VR rhythm game Beat Saber. AutoSage simplifies and automates the proCEss of using BeatSage for all of the songs the user wishes to play in Beat Saber. The tool has been updated to be packaged into a Windows executable using PyInstaller, and features a UI built using Tkinter for ease of use. See the tool's repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/autosage\" target=\"_blank\">github.com/alanmun/autosage</a>"
                 break
             case CE.moon:
                 title.innerHTML = "3D Interactive Portfolio (2021)"
