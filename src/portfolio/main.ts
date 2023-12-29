@@ -1,20 +1,22 @@
 //This script is the entrypoint for the 3D Portfolio
 
-import './portfolio.css'
-import { UI } from './adjustUI'
-import { UniverseCamera } from './adjustCamera'
-import { CelestialEntity } from './CelestialEntity'
-import { BlackHole } from './BlackHole'
+import './portfolio.css';
+import { UI } from './adjustUI';
+import { UniverseCamera } from './adjustCamera';
+import { CelestialEntity } from './CelestialEntity';
+import { BlackHole } from './BlackHole';
 import { AutoSage } from './AutoSage';
-import { Moon } from './Moon'
-import { Twitter } from './Twitter'
-import { Debug } from './PortfolioDebugger'
-import { CE, Direction, onTransitionEnd } from './utils'
+import { Moon } from './Moon';
+import { Twitter } from './Twitter';
+import { Finn } from './Finn';
+import { Debug } from './PortfolioDebugger';
+import { Spawn, Direction, onTransitionEnd } from './utils'
 import { vShader, fShader } from "./atmosphericGlowShader"
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 
 //Asset paths need to be imported to be linked at compile time. Force everything to be a url using ?url to be safe because I know it works from preview
 import skyboxRight from './assets/skyboxwithsun/right.png?url'
@@ -31,7 +33,7 @@ import twitterGrassMTLPath from './assets/grass/grass.mtl?url'
 //import twitterWorkstationPath from './assets/workstation.obj?url'
 import twitterObjPath from './assets/twitter.obj?url'
 import beatSaberGlbPath from './assets/block.glb?url'
-import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
+import finnGLTFPath from './assets/leaf/scene.gltf?url'
 
 let ub: UniverseBuilder;
 
@@ -40,14 +42,15 @@ let controls: OrbitControls
 let scene: THREE.Scene;
 let renderer: THREE.WebGLRenderer;
 
+let finn: CelestialEntity
+
+let autosage: CelestialEntity
+
 let twitter: CelestialEntity //For twitter.obj model
 let pond: THREE.Object3D
 let fox: THREE.Object3D
 let moose: THREE.Object3D
 let grass: THREE.Object3D
-//let newGrass: THREE.Object3D //debug var for testing out new placements
-
-let autosage: CelestialEntity
 
 let moon: CelestialEntity
 
@@ -121,19 +124,23 @@ class UniverseBuilder {
 		window.addEventListener("keydown", this.onKey.bind(this), false)
 		window.addEventListener("resize", this.onWindowResize.bind(this), false)
 
-
+		// * Create Finn planet
+		new GLTFLoader(loadingManager).load(finnGLTFPath, function(gltf: any){
+      finn = new Finn(loadingManager, gltf.scene);
+      scene.add(finn.entity);
+    })
 
 		// * Create the autosage planet
 		new GLTFLoader(loadingManager).load(beatSaberGlbPath, function(obj){
 			//Create celestial entity object for autosage and add to scene
-			autosage = new AutoSage(85, obj.scene);
+			autosage = new AutoSage(obj.scene);
 			scene.add(autosage.entity);
 		}, undefined, function ( error ) {
 			console.error( error );
 		});
 
 		// * Create the black hole
-		let blackHole = new BlackHole("blackhole", new THREE.Mesh(), this.uc.camera, scene)
+		let blackHole = new BlackHole(new THREE.Mesh(), this.uc.camera, scene)
 		/* TODO: Maybe I should merge this into one black hole THREE.Group, right now I'm lazy and don't care to figure out how to traverse and select
 			the mesh with shader material on it so I can modify that one in reverberate()
 		*/
@@ -169,8 +176,8 @@ class UniverseBuilder {
 			});
 		});
 
-		//Load and position the moose (localhost:3000 is dev server where assets are in different place)
-		new GLTFLoader(loadingManager).load((location.href.includes('localhost:3000') ? './portfolio' : '..') + '/assets/moose/scene.gltf', function(gltf){
+		//Load and position the moose
+		new GLTFLoader(loadingManager).load('../assets/moose/scene.gltf', function(gltf){
 			moose = gltf.scene;
 			moose.scale.set(.5, .5, .5);
 			moose.position.set(-20.8, 4.5, 9.1);
@@ -178,8 +185,8 @@ class UniverseBuilder {
 			twitter.entityCloseUp.add(moose);
 		})
 
-		//Load and position the fox (localhost:3000 is dev server where assets are in different place)
-		new GLTFLoader(loadingManager).load((location.href.includes('localhost:3000') ? './portfolio' : '..') + '/assets/fox/scene.gltf', function(gltf){
+		//Load and position the fox
+		new GLTFLoader(loadingManager).load('../assets/fox/scene.gltf', function(gltf){
 			fox = gltf.scene;
 			fox.scale.set(0.04, .024, 0.03);
 			fox.position.set(-19.8, 3.5, -7.3);
@@ -197,7 +204,7 @@ class UniverseBuilder {
 				}
 			});
 
-			twitter = new Twitter("twitter", 45, group);		
+			twitter = new Twitter(group);		
 			scene.add(twitter.entity);
 		}.bind(this));
 
@@ -226,7 +233,7 @@ class UniverseBuilder {
 		});
 
 		// * Create the moon
-		moon = new Moon(110, new THREE.Mesh(), loadingManager);
+		moon = new Moon(new THREE.Mesh(), loadingManager);
 		scene.add(moon.entity);
 
 		// * Add some light
@@ -267,7 +274,7 @@ class UniverseBuilder {
 			//Black Hole shader manipulation
 			blackHole.reverberate();
 			
-			for(const celestialEntity of [autosage, moon, twitter]){
+			for(const celestialEntity of [autosage, moon, twitter, finn]){
 				if(!celestialEntity) continue;
 				celestialEntity.adjustOrbit();
 				celestialEntity.rotate();
@@ -283,7 +290,7 @@ class UniverseBuilder {
 			else if(status === "approached world"){
 				this.ui.fade(Direction.out)
 				setTimeout(function(this: UniverseBuilder){
-					this.changeWorld(this.uc.cameraLock.name, false)
+					this.changeWorld(this.uc.cameraLock.entity!, false);
 					this.ui.fade(Direction.in)
 				}.bind(this), 1000)
 			}
@@ -364,67 +371,35 @@ class UniverseBuilder {
 		scene.add(star)
 	}
 
-	public changeWorld(celestialEntityEnum: CE, leaving: boolean){
+	public changeWorld(cEntity: CelestialEntity, leaving: boolean){
+		console.log("changewrld w:", cEntity, leaving)
 		if(leaving){
 			this.uc.setCameraForLeaving();
 			twitter.distance /= 1
 			autosage.distance /= 1.5
 			moon.distance /= 2
+			finn.distance /= 2.25
+
+			cEntity.swapEntities(scene)
+			this.ui.removeText()
 		}
 		else{
 			this.uc.setCameraForEntering();
 			twitter.distance *= 1
 			autosage.distance *= 1.5
 			moon.distance *= 2
-		}
+			finn.distance *= 2.25
 
-		switch(celestialEntityEnum){
-			case CE.blackHole:
-				//TODO: Idk what to even do if you enter a black hole, should just disable this honestly
-				break;
-			case CE.moon:
-				//TODO: Figure something out for moon maybe
-				if(leaving){
-					moon.swapEntities(scene)
-					this.ui.removeText()
-				}
-				else{
-					moon.swapEntities(scene)
-					this.ui.addText(celestialEntityEnum)
-					this.uc.cameraLock.target = moon.entityCloseUp;
-				}
-				break;
-			case CE.twitter:
-				if(leaving) {
-					twitter.swapEntities(scene)
-					this.ui.removeText()
-				}
-				else {
-					twitter.swapEntities(scene)
-					this.ui.addText(celestialEntityEnum)
-					this.uc.cameraLock.target = twitter.entityCloseUp;
-				}
-				break;
-			case CE.autosage:
-				if(leaving){
-					autosage.swapEntities(scene);
-					this.ui.removeText();
-				}
-				else {
-					autosage.swapEntities(scene)
-					this.ui.addText(celestialEntityEnum)
-					this.uc.cameraLock.target = autosage.entityCloseUp;
-				}
-				break;
-			default:
-				console.log("DEFAULT TRIGGERED!?!?!?!?");
+			cEntity.swapEntities(scene)
+			this.ui.addText(cEntity)
+			this.uc.cameraLock.target = cEntity.entityCloseUp;
 		}
 	}
 
 	//Routine actions to take when backing out of a world
 	private exitWorld(){
 		this.ui.fade(Direction.in); //Ask fade function to fade us again
-		this.changeWorld(this.uc.cameraLock.name, true);
+		this.changeWorld(this.uc.cameraLock.entity!, true);
 		this.uc.setCameraToSpawn();
 		this.ui.playZoom(Direction.out);
 	}
@@ -466,34 +441,30 @@ class UniverseBuilder {
 		*/
 		if(!this.uc.shouldPinCamera && raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(autosage.entity))){
 			console.log("Hit detected on autosage world (not close up)")
-			this.ui.playZoom(Direction.in);
-			controls.enabled = false;
-			this.uc.cameraLock = {
-				isLocked: true,
-				target: autosage.entity,
-				name: CE.autosage
-			}
+			this.registerHitOnEntity(autosage);
 		}
 		else if(!this.uc.shouldPinCamera && raycaster.ray.intersectsBox(new THREE.Box3().setFromObject(twitter.entity))){
 			console.log("Hit detected on twitter world (not close up)")
 			// * We intersected on our twitter.obj model which is a THREE.Group and so can't be detected the normal way below
 			// * Actually, I think you can intersect on THREE.Group, there is some other weird reason it can't be detected the normal way
-			this.ui.playZoom(Direction.in);
-			controls.enabled = false;
-			this.uc.cameraLock = {
-				isLocked: true,
-				target: twitter.entity,
-				name: CE.twitter
-			}
+			this.registerHitOnEntity(twitter);
 		}
 		else if(!this.uc.shouldPinCamera && intersects[0].object.name == "moon"){
-			this.ui.playZoom(Direction.in);
-			controls.enabled = false;
-			this.uc.cameraLock = {
-				isLocked: true,
-				target: moon.entity,
-				name: CE.moon
-			}
+			this.registerHitOnEntity(moon);
+		}
+		else if(!this.uc.shouldPinCamera && intersects[0].object.name == "finnMesh"){
+			this.registerHitOnEntity(finn);
+		}
+	}
+
+	// * Actions to take when a valid celestial entity is clicked on.
+	private registerHitOnEntity(ce: CelestialEntity){
+		this.ui.playZoom(Direction.in);
+		controls.enabled = false;
+		this.uc.cameraLock = {
+			isLocked: true,
+			target: ce.entity,
+			entity: ce
 		}
 	}
 
@@ -501,7 +472,7 @@ class UniverseBuilder {
 	private onKey(event: any){
 		var keyCode = event.which
 		if(keyCode == 32 || keyCode == 27){ //Space and Esc respectively
-			if(this.uc.cameraLock.name == CE.spawn) return //Do nothing if cameraLock was last locked onto spawn (prevents zoomout audio file spam etc)
+			if(this.uc.cameraLock.entity == null) return //Do nothing if cameraLock was last locked onto spawn (prevents zoomout audio file spam etc)
 			if(this.uc.cameraLock.isLocked && !this.uc.shouldPinCamera) return //space/esc keys should have no effect when camera is targeting something
 			this.exitWorld();
 		}

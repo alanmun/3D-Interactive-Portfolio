@@ -3,8 +3,11 @@ import * as THREE from 'three';
 
 export class AutoSage extends CelestialEntity {
 
-    constructor(orbitalRadius: number, entityMesh: THREE.Group){
-        super('autosage', orbitalRadius, entityMesh);
+    constructor(entityMesh: THREE.Group){
+        super('autosage', 75, entityMesh);
+
+        this.titleContent = "AutoSage (2021)" 
+        this.bodyContent = "AutoSage is a Python written app for users of BeatSage, an AI driven service made for the popular VR rhythm game Beat Saber. AutoSage simplifies and automates the process of using BeatSage for all of the songs the user wishes to play in Beat Saber. The tool has been updated to be packaged into a Windows executable using PyInstaller, and features a UI built using Tkinter for ease of use. See the tool's repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/autosage\" target=\"_blank\">github.com/alan mun/autosage</a>"
 
         this.rotationVector = new THREE.Vector3(0.001, 0.001, 0.01);
 

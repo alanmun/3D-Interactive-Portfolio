@@ -31,34 +31,25 @@ canvas {
 /* Portfolio text stuff */
 .portfolio {
   visibility: hidden;
-  display: grid;
-  padding-left: 7%;
-  padding-right: 7%;
-  grid-gap: 0px;
-  grid-template-columns: 100%;
-  grid-template-rows: auto 1fr;
-  z-index: 2; /* For some reason you need a z-index of 2 or greater to print over the canvas */
+  padding-left: 3%;
+  padding-right: 3%;
+  z-index: 2; /* you need a z-index of 2 or greater to print over the canvas */
 }
 
 .portfolio-title {
-  grid-column-start: 1;
-  grid-column-end: 1;
-  grid-row-start: 1;
-  grid-row-end: 1;
-  height: 1rem;
-  padding-bottom: 0%;
-  font-size: 4vw;
+  padding-bottom: 1%;
+  margin: 0;
+  font-size: 3.5vw;
   font-family: 'Segoe UI', Verdana, sans-serif;
 }
 
 .portfolio-body {
-  grid-column-start: 1;
-  grid-column-end: 1;
-  grid-row-start: 2;
-  grid-row-end: 2;
+  margin: 0;
   vertical-align: top;
   text-align: left;
-  font-size: 1.75vw;
+  white-space: pre-line;
+  word-wrap: break-word;
+  font-size: 1.6vw;
   font-family: 'Segoe UI Light', Verdana, sans-serif;
 }
 

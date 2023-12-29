@@ -7,7 +7,8 @@ export enum CE {
 	blackHole,
 	twitter,
 	autosage,
-	moon
+	moon,
+	finn
 }
 
 //This enum is used for both zoom direction (zoom in, zoom out) and fade direction (fade in fade out)
@@ -20,3 +21,5 @@ export enum Direction {
 export function onTransitionEnd(event: any) {
 	event.target.remove();	
 }
+
+export type Spawn = null;

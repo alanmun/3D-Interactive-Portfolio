@@ -1,0 +1,11 @@
+Model Information:
+* title:	Leaf
+* source:	https://sketchfab.com/3d-models/leaf-ccc5090b0a9a4368b5376cd93a1e495d
+* author:	Cxrly97 (https://sketchfab.com/Cxrly97)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Leaf" (https://sketchfab.com/3d-models/leaf-ccc5090b0a9a4368b5376cd93a1e495d) by Cxrly97 (https://sketchfab.com/Cxrly97) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

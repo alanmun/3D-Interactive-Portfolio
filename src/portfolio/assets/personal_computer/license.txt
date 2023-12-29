@@ -1,0 +1,11 @@
+Model Information:
+* title:	Personal Computer
+* source:	https://sketchfab.com/3d-models/personal-computer-b943e06de72c4b2b9ac6b9d7ca813f8f
+* author:	Juan Foo (https://sketchfab.com/juanotron)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Personal Computer" (https://sketchfab.com/3d-models/personal-computer-b943e06de72c4b2b9ac6b9d7ca813f8f) by Juan Foo (https://sketchfab.com/juanotron) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
