@@ -1,7 +1,10 @@
 import { CelestialEntity } from "./CelestialEntity";
 import * as THREE from 'three';
-import moonTexturePath from './assets/moon.jpg?url'
-import moonNormalPath from './assets/moonbumpmap.jpg?url'
+
+import outerColorPath from './assets/moon/outer_moon/moon.jpg?url'
+import outerBumpPath from './assets/moon/outer_moon/moonbumpmap.jpg?url'
+import groundColorPath from './assets/moon/closeup/lroc_color_poles_4k.jpg?url'
+import groundDisplacementPath from './assets/moon/closeup/ldem_4.jpg?url'
 
 export class Moon extends CelestialEntity {
 
@@ -14,19 +17,29 @@ export class Moon extends CelestialEntity {
 		//Set rotation values for every tick
 		this.rotationVector = new THREE.Vector3(0.001, 0.001, 0);
 
-		//Texture and model loading for various worlds
-		let moonTexture = new THREE.TextureLoader(loadManager).load(moonTexturePath);
-		let moonNormal = new THREE.TextureLoader(loadManager).load(moonNormalPath);
+		//* Texture and model loading for outer world
+		let outerColor = new THREE.TextureLoader(loadManager).load(outerColorPath);
+		let outerNormal = new THREE.TextureLoader(loadManager).load(outerBumpPath);
 
 		this.setGeoAndMat(
 			new THREE.SphereGeometry(6, 64, 64),
-			new THREE.MeshStandardMaterial({ map: moonTexture, normalMap: moonNormal })
+			new THREE.MeshStandardMaterial({ map: outerColor, normalMap: outerNormal })
 		);
+
+		// * Texture for close up
+		let groundColor = new THREE.TextureLoader(loadManager).load(groundColorPath);
+		let groundDisplacement = new THREE.TextureLoader(loadManager).load(groundDisplacementPath);
 
 		// * Create the close up world for moon
 		let moonCloseUp = new THREE.Group();
 		let moonCloseUpGeo = new THREE.PlaneGeometry(64, 64, 128, 128)
-		let moonCloseUpMat = new THREE.MeshStandardMaterial({ map: moonTexture, normalMap: moonNormal })
+		let moonCloseUpMat = new THREE.MeshStandardMaterial({ 
+			map: groundColor, 
+			displacementMap: groundDisplacement,
+			displacementScale: 0.3
+		})
+		moonCloseUpMat.color.multiplyScalar(0.9);
+		console.log("Moon close up material:", moonCloseUpMat)
 		moonCloseUpMat.side = THREE.BackSide;
 		this.planeCurve(moonCloseUpGeo, 4);
 		let moonCloseUpMesh = new THREE.Mesh(

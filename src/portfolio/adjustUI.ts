@@ -40,9 +40,6 @@ export class UI {
 
     title.innerHTML = cEntity.titleContent;
     body.innerHTML = cEntity.bodyContent;
-
-    //title.innerHTML = `<pre>${cEntity.titleContent}</pre>`;
-    //body.innerHTML = `<pre>${cEntity.bodyContent}</pre>`;
   }
 
   public removeText(): void {

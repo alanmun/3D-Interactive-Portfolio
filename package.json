@@ -9,7 +9,7 @@
     "serve": "vite preview"
   },
   "devDependencies": {
-    "@types/three": "^0.131.0",
+    "@types/three": "^0.131.1",
     "gh-pages": "^3.2.3",
     "typescript": "^4.3.2",
     "vite": "^3.2.7"
@@ -17,6 +17,6 @@
   "dependencies": {
     "@picocss/pico": "^1.4.3",
     "minimatch": "^3.0.5",
-    "three": "^0.131.3"
+    "three": "^0.131.1"
   }
 }

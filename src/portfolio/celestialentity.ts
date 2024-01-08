@@ -10,14 +10,9 @@ export abstract class CelestialEntity {
 	entityCloseUp: any = null //THREE.Mesh representation of our CE when we visit it close up
 	titleContent: string = "" //Names the portfolio entry
 	bodyContent: string = "" //Describes this portfolio entry
+	objToDebug: any = null; //A target object to debug, used when adding new models to some close up world
 
 	constructor(name: string, distanceFromWhatItOrbits: number, entity: THREE.Object3D) {
-		//if(alreadyMadeEntity != null) this.entity = alreadyMadeEntity
-		// else{
-		// 	if(this.isGroup) this.entity = new THREE.Group()
-		// 	else this.entity = new THREE.Mesh()
-		// }
-
 		this.entity = entity
 		this.entity.name = name
 		this.distance = distanceFromWhatItOrbits

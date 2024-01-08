@@ -10,13 +10,16 @@ import { Moon } from './Moon';
 import { Twitter } from './Twitter';
 import { Finn } from './Finn';
 import { Debug } from './PortfolioDebugger';
-import { Spawn, Direction, onTransitionEnd } from './utils'
+import { Direction, onTransitionEnd } from './utils'
 import { vShader, fShader } from "./atmosphericGlowShader"
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 //Asset paths need to be imported to be linked at compile time. Force everything to be a url using ?url to be safe because I know it works from preview
 import skyboxRight from './assets/skyboxwithsun/right.png?url'
@@ -33,7 +36,7 @@ import twitterGrassMTLPath from './assets/grass/grass.mtl?url'
 //import twitterWorkstationPath from './assets/workstation.obj?url'
 import twitterObjPath from './assets/twitter.obj?url'
 import beatSaberGlbPath from './assets/block.glb?url'
-import finnGLTFPath from './assets/leaf/scene.gltf?url'
+const finnGLTFPath = '../assets/leaf/scene.gltf'
 
 let ub: UniverseBuilder;
 
@@ -59,10 +62,10 @@ let moon: CelestialEntity
 var raycaster = new THREE.Raycaster(); 
 var mouse = new THREE.Vector2(); //2D representation of where a mouse click occurs
 
-class UniverseBuilder {
+export class UniverseBuilder {
 
 	private ui = new UI();
-	private uc = new UniverseCamera();
+	public uc = new UniverseCamera();
 	public animate: () => void; //The "game" loop of three.js
 
 	constructor(){
@@ -101,6 +104,8 @@ class UniverseBuilder {
 			loadingScreen?.addEventListener('transitionend', onTransitionEnd)
 			this.uc.setupCamera();
 			controls.enabled = false;
+
+			//Debug.debugCloseUpWorld(this, finn); //* Uncomment this to instantly visit this world for dev purposes
 		};
 		const loader = new THREE.TextureLoader(loadingManager);
 		let skyboxGeom = new THREE.BoxGeometry(2100, 2100, 2100)
@@ -237,37 +242,25 @@ class UniverseBuilder {
 		scene.add(moon.entity);
 
 		// * Add some light
-		const aL = new THREE.AmbientLight(new THREE.Color("white"), 1)
+		const aL = new THREE.AmbientLight(new THREE.Color("white"), 0.9)
 		scene.add(aL)
 		
 		// * Provide light from the sun in the far distance
-		const pL = new THREE.PointLight(new THREE.Color("white"), .6) //A distance of over 1000 is req'd to reach twitter world 
-		pL.position.set(750,325,-1000)
+		const pL = new THREE.PointLight(new THREE.Color("white"), .7) 
+		pL.position.set(750,325,-1000) //A distance of over 1000 is req'd to reach twitter world 
 		scene.add(pL)
-
-		// * GridHelper
-		if(Debug.enabled){
-			const gH = new THREE.GridHelper(200, 50)
-			gH.name = "gridhelper"
-			scene.add(gH)
-		} 
 
 		// * Populate the universe with stars
 		for(let i = 0; i < 1000; i++) this.addStar()
 
-		//Weird glitches? Can't get stuff to display? Just debug enable and make everything BasicMaterial to guarantee you're doing it right
-		if(Debug.enabled) scene.overrideMaterial = new THREE.MeshBasicMaterial({ color: 'green'});
-		// setTimeout(() => {
-		// 	cameraLock = {
-		// 		isLocked: true,
-		// 		name: CE.twitter,
-		// 		target: twitter.entity
-		// 	}
-		// 	this.changeWorld(CE.twitter, false)
-		// 	shouldPinCamera = true
-		// }, 2000)
+		// * Post processing
+		const composer = new EffectComposer(renderer);
+		const renderPass = new RenderPass(scene, this.uc.camera);
+		composer.addPass(renderPass);
+		const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.2, 0, 0);
+		composer.addPass(bloomPass);
 		
-		//three.js "game" loop
+		//* three.js "game" loop
 		this.animate = () =>{
 			requestAnimationFrame(this.animate)
 
@@ -295,7 +288,8 @@ class UniverseBuilder {
 				}.bind(this), 1000)
 			}
 
-			renderer.render(scene, this.uc.camera);
+			//renderer.render(scene, this.uc.camera);
+			composer.render()
 		}
 	}
 
@@ -377,8 +371,8 @@ class UniverseBuilder {
 			this.uc.setCameraForLeaving();
 			twitter.distance /= 1
 			autosage.distance /= 1.5
-			moon.distance /= 2
-			finn.distance /= 2.25
+			finn.distance /= 2
+			moon.distance /= 2.25
 
 			cEntity.swapEntities(scene)
 			this.ui.removeText()
@@ -387,8 +381,8 @@ class UniverseBuilder {
 			this.uc.setCameraForEntering();
 			twitter.distance *= 1
 			autosage.distance *= 1.5
-			moon.distance *= 2
-			finn.distance *= 2.25
+			finn.distance *= 2
+			moon.distance *= 2.25
 
 			cEntity.swapEntities(scene)
 			this.ui.addText(cEntity)
@@ -477,7 +471,7 @@ class UniverseBuilder {
 			this.exitWorld();
 		}
 
-		Debug.debuggerKeys(this.uc.camera, keyCode)
+		//Debug.debuggerKeys(this.uc.camera, keyCode)
 	}
 
 	private onWindowResize() {
@@ -490,5 +484,3 @@ class UniverseBuilder {
 
 ub = new UniverseBuilder();
 ub.animate();
-
-//TODO: Ideally I would like to asynchronously start animating the world, and continue loading of close up worlds here for a faster load time of the entire portfolio.
