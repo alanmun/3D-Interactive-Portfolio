@@ -131,9 +131,9 @@ export class UniverseBuilder {
 
 		// * Create Finn planet
 		new GLTFLoader(loadingManager).load(finnGLTFPath, function(gltf: any){
-      finn = new Finn(loadingManager, gltf.scene);
-      scene.add(finn.entity);
-    })
+			finn = new Finn(loadingManager, gltf.scene);
+			scene.add(finn.entity);
+		})
 
 		// * Create the autosage planet
 		new GLTFLoader(loadingManager).load(beatSaberGlbPath, function(obj){
