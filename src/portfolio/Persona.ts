@@ -1,53 +1,17 @@
 import { CelestialEntity } from "./CelestialEntity";
 import * as THREE from 'three';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 
-import outerColorPath from './assets/mask/outer_moon/moon.jpg?url'
-import outerBumpPath from './assets/mask/outer_moon/moonbumpmap.jpg?url'
+export class Persona extends CelestialEntity {
 
-export class Moon extends CelestialEntity {
+	constructor(loadManager: THREE.LoadingManager, entity: THREE.Group) {
+		super('p5r', 130, entity);
 
-	constructor(entityMesh: THREE.Mesh, loadManager: THREE.LoadingManager) {
-		super('moon', 110, entityMesh);
+		entity.scale.multiplyScalar(0.15);
 
-		this.titleContent = "3D Interactive Portfolio (2021)"
-		this.bodyContent = "This portfolio is written in TypeScript using the three.js 3D graphics library and deployed using vite. My work on the AutoSage tool led me to discovering three.js. I was enamoured with the library and had to make something with it. I wanted a cool way to show my personal technological efforts and projects, so I decided to represent them in their own worlds that can be visited by interacting with them. Every project I've undertaken has had a focus on what I stand to learn from it, and I have learned more from undertaking this project than any other personal project I've ever worked on. I had never written three.js code before, my HTML and CSS skills have definitely improved since beginning, and I gave myself an introduction to shaders and 3D modelling in blender by creating the Beat Saber cube that is floating in space. This portfolio remains a continual work in progress as I plan to update it with new worlds for every technological endeavor I go on. See the repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/3D-Interactive-Portfolio\" target=\"_blank\">github.com/alanmun/3D-Interactive-Portfolio</a>"
+		this.titleContent = "Persona 5 Royal Theme for Discord"
+		this.bodyContent = "After enjoying the game so much, I decided to make a style for Discord themed around Persona 5 Royal. The theme is made entirely out of CSS. It was quite a challenge to hack Discord's UI using nothing but CSS- a lot of times I ran into roadblocks where things just weren't possible without access to JavaScript. This limitation caused me to get very creative with some styles. See the theme's repo here: <a style=\"text-decoration:none; color:salmon;\" href=\"https://github.com/alanmun/p5r-discord-theme\" target=\"_blank\">github.com/alanmun/p5r-discord-theme</a>"
 
 		//Set rotation values for every tick
-		this.rotationVector = new THREE.Vector3(0.001, 0.001, 0);
-
-		//* Texture and model loading for outer world
-		let outerColor = new THREE.TextureLoader(loadManager).load(outerColorPath);
-		let outerNormal = new THREE.TextureLoader(loadManager).load(outerBumpPath);
-
-		this.setGeoAndMat(
-			new THREE.SphereGeometry(6, 64, 64),
-			new THREE.MeshStandardMaterial({ map: outerColor, normalMap: outerNormal })
-		);
-
-		// * Texture for close up
-		let groundColor = new THREE.TextureLoader(loadManager).load(groundColorPath);
-		let groundDisplacement = new THREE.TextureLoader(loadManager).load(groundDisplacementPath);
-
-		// * Create the close up world for moon
-		let moonCloseUp = new THREE.Group();
-		let moonCloseUpGeo = new THREE.PlaneGeometry(64, 64, 128, 128)
-		let moonCloseUpMat = new THREE.MeshStandardMaterial({ 
-			map: groundColor, 
-			displacementMap: groundDisplacement,
-			displacementScale: 0.3
-		})
-		moonCloseUpMat.color.multiplyScalar(0.9);
-		console.log("Moon close up material:", moonCloseUpMat)
-		moonCloseUpMat.side = THREE.BackSide;
-		this.planeCurve(moonCloseUpGeo, 4);
-		let moonCloseUpMesh = new THREE.Mesh(
-			moonCloseUpGeo,
-			moonCloseUpMat
-		);
-		moonCloseUpMesh.rotation.x += THREE.MathUtils.DEG2RAD * 90;
-		moonCloseUpMesh.rotation.z += THREE.MathUtils.DEG2RAD * 90;
-		moonCloseUp.add(moonCloseUpMesh);
-		this.setCloseUp(moonCloseUp);
+		this.rotationVector = new THREE.Vector3(0.001, 0.005, 0);
 	}
 }

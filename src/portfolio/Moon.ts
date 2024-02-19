@@ -39,7 +39,6 @@ export class Moon extends CelestialEntity {
 			displacementScale: 0.3
 		})
 		moonCloseUpMat.color.multiplyScalar(0.9);
-		console.log("Moon close up material:", moonCloseUpMat)
 		moonCloseUpMat.side = THREE.BackSide;
 		this.planeCurve(moonCloseUpGeo, 4);
 		let moonCloseUpMesh = new THREE.Mesh(

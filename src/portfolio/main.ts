@@ -9,12 +9,14 @@ import { AutoSage } from './AutoSage';
 import { Moon } from './Moon';
 import { Twitter } from './Twitter';
 import { Finn } from './Finn';
+import { Persona } from './Persona';
 import { Debug } from './PortfolioDebugger';
 import { Direction, onTransitionEnd } from './utils'
 import { vShader, fShader } from "./atmosphericGlowShader"
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -32,11 +34,10 @@ import twitterPondPath from './assets/pond/pond.obj?url'
 import twitterPondMTLPath from './assets/pond/pond.mtl?url'
 import twitterGrassPath from './assets/grass/grass.obj?url'
 import twitterGrassMTLPath from './assets/grass/grass.mtl?url'
-//import twitterWorkstationMTLPath from './assets/workstation.mtl?url'
-//import twitterWorkstationPath from './assets/workstation.obj?url'
 import twitterObjPath from './assets/twitter.obj?url'
 import beatSaberGlbPath from './assets/block.glb?url'
 const finnGLTFPath = '../assets/leaf/scene.gltf'
+import maskPath from './assets/persona/p5_mask.fbx?url'
 
 let ub: UniverseBuilder;
 
@@ -44,6 +45,8 @@ let controls: OrbitControls
 
 let scene: THREE.Scene;
 let renderer: THREE.WebGLRenderer;
+
+let p5r: CelestialEntity
 
 let finn: CelestialEntity
 
@@ -128,6 +131,13 @@ export class UniverseBuilder {
 		document.body.addEventListener("click", this.onInteract.bind(this), false)
 		window.addEventListener("keydown", this.onKey.bind(this), false)
 		window.addEventListener("resize", this.onWindowResize.bind(this), false)
+
+		// * Create Persona 5 Royal Theme planet
+		new FBXLoader(loadingManager).load(maskPath, (fbx: THREE.Group) => {
+			p5r = new Persona(loadingManager, fbx);
+			console.log(fbx);
+			scene.add(p5r.entity);
+		});
 
 		// * Create Finn planet
 		new GLTFLoader(loadingManager).load(finnGLTFPath, function(gltf: any){
@@ -267,7 +277,7 @@ export class UniverseBuilder {
 			//Black Hole shader manipulation
 			blackHole.reverberate();
 			
-			for(const celestialEntity of [autosage, moon, twitter, finn]){
+			for(const celestialEntity of [autosage, moon, twitter, finn, p5r]){
 				if(!celestialEntity) continue;
 				celestialEntity.adjustOrbit();
 				celestialEntity.rotate();

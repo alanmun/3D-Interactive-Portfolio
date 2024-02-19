@@ -83,14 +83,16 @@ div {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: flex-start;
+  
+  height: 100%;
+  align-items: center
 }
 
 #spacebarpic {
   min-width: 0;
   max-width: 35%;
   height: auto;
-  margin-top: -3%;
+  margin-top: 0%;
   margin-left: 4%;
 }
 

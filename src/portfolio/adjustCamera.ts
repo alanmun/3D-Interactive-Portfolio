@@ -7,8 +7,8 @@ import { CelestialEntity } from './CelestialEntity'
 //3D coordinates for where the camera should spawn at
 const CAM_START = {
 	x: 0,
-	y: 0,//-27.5, //For some reason the grid and black hole seemed to be centered here instead of at 0...
-	z: 360
+	y: 0,
+	z: 390
 }
 
 //Preset for cameraLock that contains what the values should be for a camera at spawn
