@@ -166,7 +166,6 @@ p {
     }
 }
 
-/* New single-page app layout */
 .app-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -182,6 +181,9 @@ p {
   border-right: 1px solid rgba(255,255,255,0.08);
   background: black;
 }
+.home-section {
+  max-width: 800px;
+}
 .sidebar nav {
   display: flex;
   flex-direction: column;
@@ -190,17 +192,19 @@ p {
 .nav-button {
   width: 100%;
   text-align: left;
-  border-radius: 0;
+  border: none;
 }
 .nav-group summary {
   cursor: pointer;
   list-style: none;
   padding: 0.4rem 0;
   font-weight: 600;
+  margin-left: 18px;
 }
 .nav-group[open] summary {
   opacity: 1;
 }
+
 .blogs-list {
   display: flex;
   flex-direction: column;
@@ -225,16 +229,24 @@ p {
 .blogs-month li {
   margin: 0.15rem 0;
 }
+
+#nav-projects {
+  margin-left: -1px;
+}
+
 .content {
   padding: 2rem 1.5rem;
 }
-.home-section {
-  max-width: 800px;
-}
+
 .socials {
   margin: 0.25rem 0 0 0.5rem;
   padding-left: 1rem;
 }
+
+#nav-resume {
+  margin-left: 10px;
+}
+
 @media (max-width: 900px) {
   .app-layout {
     grid-template-columns: 1fr;
