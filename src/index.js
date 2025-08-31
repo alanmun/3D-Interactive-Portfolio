@@ -1,8 +1,10 @@
+import { marked } from 'marked';
+
 /**
  * SPA controller for sidebar + content
  */
 
-const BLOG_INDEX_URL = './src/blogs.json';
+const BLOG_INDEX_URL = './blogs/index.json';
 const RESUME_URL = 'https://docs.google.com/document/d/1k2DykOWzGUJDyEUucN_9BKA7eyEeuJnOn75vVY4Cdjs/edit?tab=t.0'; // Update to your public resume link
 
 // Helpers
@@ -32,29 +34,59 @@ function renderBlogsList(posts) {
   if (!container) return;
   container.innerHTML = '';
 
-  const grouped = groupByMonth(posts);
-  if (grouped.length === 0) {
+  if (!Array.isArray(posts) || posts.length === 0) {
     container.innerHTML = '<p style="opacity:0.8">No blog posts yet.</p>';
     return;
   }
 
-  for (const [monthKey, list] of grouped) {
-    const section = document.createElement('div');
-    section.className = 'blogs-month';
-    section.innerHTML = `<h4>${monthKey}</h4>`;
-    const ul = document.createElement('ul');
-    for (const post of list) {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.href = post.url;
-      a.textContent = post.title;
-      a.target = post.external === false ? '_self' : '_blank';
-      a.rel = 'noopener';
-      li.appendChild(a);
-      ul.appendChild(li);
-    }
-    section.appendChild(ul);
-    container.appendChild(section);
+  // Sort by title ascending
+  const sorted = [...posts].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+
+  const ul = document.createElement('ul');
+  for (const post of sorted) {
+    if (!post?.title || !post?.path) continue;
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '#';
+    a.textContent = post.title;
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      showBlog(post.path, post.title);
+    });
+    li.appendChild(a);
+    ul.appendChild(li);
+  }
+  container.appendChild(ul);
+}
+
+function renderHome() {
+  const content = document.getElementById('content');
+  if (!content) return;
+  content.innerHTML = `
+    <section id="home" class="home-section">
+      <h1>Welcome!</h1>
+      <p>Hi, I'm Alan. I'm a software engineer with a focus in backend and applied AI by career. I am an amateur game dev, and I like to write about what I learn.</p>
+    </section>
+  `;
+}
+
+async function showBlog(mdPath, title) {
+  const content = document.getElementById('content');
+  if (!content) return;
+  try {
+    const res = await fetch(mdPath, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const md = await res.text();
+    const html = marked.parse(md);
+    content.innerHTML = `
+      <article class="blog-post">
+        <h1>${title}</h1>
+        ${html}
+      </article>
+    `;
+    window.scrollTo(0, 0);
+  } catch (e) {
+    content.innerHTML = `<p style="color:#f88">Failed to load blog: ${title}</p>`;
   }
 }
 
