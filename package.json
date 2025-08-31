@@ -1,7 +1,7 @@
 {
   "homepage": "https://alanmunirji.dev",
-  "name": "3d-interactive-portfolio",
-  "version": "1.0.0",
+  "name": "my-personal-website",
+  "version": "2.0.0",
   "scripts": {
     "deploy": "npm run build && gh-pages -d dist",
     "dev": "vite",
