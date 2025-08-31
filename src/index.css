@@ -165,3 +165,83 @@ p {
         font-size: 2vw;
     }
 }
+
+/* New single-page app layout */
+.app-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+  gap: 0;
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  padding: 1rem;
+  border-right: 1px solid rgba(255,255,255,0.08);
+  background: black;
+}
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.nav-button {
+  width: 100%;
+  text-align: left;
+}
+.nav-group summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.4rem 0;
+  font-weight: 600;
+}
+.nav-group[open] summary {
+  opacity: 1;
+}
+.blogs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 0.25rem;
+  margin-top: 0.25rem;
+}
+.blogs-month {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed rgba(255,255,255,0.15);
+}
+.blogs-month h4 {
+  margin: 0.25rem 0 0.25rem 0;
+  font-size: 0.95rem;
+  color: #c9cfd4;
+}
+.blogs-month ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+.blogs-month li {
+  margin: 0.15rem 0;
+}
+.content {
+  padding: 2rem 1.5rem;
+}
+.home-section {
+  max-width: 800px;
+}
+.socials {
+  margin: 0.25rem 0 0 0.5rem;
+  padding-left: 1rem;
+}
+@media (max-width: 900px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+}
