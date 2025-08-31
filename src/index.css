@@ -190,6 +190,7 @@ p {
 .nav-button {
   width: 100%;
   text-align: left;
+  border-radius: 0;
 }
 .nav-group summary {
   cursor: pointer;
