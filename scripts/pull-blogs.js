@@ -4,8 +4,9 @@
 const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
+require('dotenv').config();
 
-const SOURCE_DIR = "C:\\Users\\alanm\\Documents\\box\\blogs";
+const SOURCE_DIR = process.env.PATH_TO_OBSIDIAN_BLOGS_FOLDER || '';
 const DEST_DIR = path.join(process.cwd(), 'dist', 'blogs');
 
 function isMarkdown(file) {
@@ -56,6 +57,10 @@ async function walkAndCopy(srcDir, relBase, index) {
 
 async function main() {
   try {
+    if (!SOURCE_DIR) {
+      console.warn('[pull-blogs] PATH_TO_OBSIDIAN_BLOGS_FOLDER is not set. Skipping blog copy.');
+      return;
+    }
     if (!fs.existsSync(SOURCE_DIR)) {
       console.warn(`[pull-blogs] SOURCE_DIR not found: ${SOURCE_DIR}. Skipping blog copy.`);
       return;
