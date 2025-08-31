@@ -26,17 +26,6 @@ function groupByMonth(posts) {
   return Object.entries(buckets).sort((a,b) => (a[0] < b[0] ? 1 : -1));
 }
 
-// Rendering
-function renderHome() {
-  const content = document.getElementById('content');
-  if (!content) return;
-  content.innerHTML = `
-      <section class="home-section">
-        <h1>Welcome!</h1>
-        <p>Hi, I'm Alan. I build things across the stack, experiment with 3D/graphics, and write about what I learn. Use the navigation on the left to explore my projects, read my blogs, or connect via socials.</p>
-      </section>
-    `;
-}
 
 function renderBlogsList(posts) {
   const container = document.getElementById('blogs-list');
