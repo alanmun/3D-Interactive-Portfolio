@@ -5,7 +5,7 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 
-const SOURCE_DIR = "C:\\Users\\alanm\\Documents\\box\\blogs"; // Set this to your Obsidian vault's blogs folder
+const SOURCE_DIR = "C:\\Users\\alanm\\Documents\\box\\blogs";
 const DEST_DIR = path.join(process.cwd(), 'dist', 'blogs');
 
 function isMarkdown(file) {
