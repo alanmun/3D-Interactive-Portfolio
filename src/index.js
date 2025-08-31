@@ -3,7 +3,7 @@
  */
 
 const BLOG_INDEX_URL = './src/blogs.json';
-const RESUME_URL = 'https://drive.google.com/your-share-id/view?usp=sharing'; // Update to your public resume link
+const RESUME_URL = 'https://docs.google.com/document/d/1k2DykOWzGUJDyEUucN_9BKA7eyEeuJnOn75vVY4Cdjs/edit?tab=t.0'; // Update to your public resume link
 
 // Helpers
 function toMonthKey(dateStr) {
