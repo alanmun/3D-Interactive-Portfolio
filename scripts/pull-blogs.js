@@ -6,7 +6,21 @@ const fsp = fs.promises;
 const path = require('path');
 require('dotenv').config();
 
-const SOURCE_DIR = process.env.PATH_TO_OBSIDIAN_BLOGS_FOLDER || '';
+function toWSLPathMaybe(p) {
+  // Convert a Windows path like "C:\..." to "/mnt/c/..." when running under Linux/WSL
+  if (!p) return p;
+  const isLinux = process.platform === 'linux';
+  const winDrive = /^[A-Za-z]:\\/;
+  if (isLinux && winDrive.test(p)) {
+    const drive = p[0].toLowerCase();
+    const rest = p.slice(2).replace(/\\/g, '/');
+    return `/mnt/${drive}${rest.startsWith('/') ? '' : '/'}${rest}`;
+  }
+  return p;
+}
+
+const RAW_SOURCE_DIR = process.env.PATH_TO_OBSIDIAN_BLOGS_FOLDER || '';
+const SOURCE_DIR = toWSLPathMaybe(RAW_SOURCE_DIR);
 const DEST_DIR = path.join(process.cwd(), 'dist', 'blogs');
 
 function isMarkdown(file) {
@@ -62,7 +76,11 @@ async function main() {
       return;
     }
     if (!fs.existsSync(SOURCE_DIR)) {
-      console.warn(`[pull-blogs] SOURCE_DIR not found: ${SOURCE_DIR}. Skipping blog copy.`);
+      console.warn(
+        `[pull-blogs] SOURCE_DIR not found: ${SOURCE_DIR}` +
+        (RAW_SOURCE_DIR && RAW_SOURCE_DIR !== SOURCE_DIR ? ` (from ${RAW_SOURCE_DIR})` : '') +
+        `. Skipping blog copy.`
+      );
       return;
     }
 
