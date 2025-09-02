@@ -120,7 +120,14 @@ function wireNav() {
   const resume = document.getElementById('nav-resume');
   if (resume) resume.setAttribute('href', RESUME_URL);
 
-  // Projects button navigates via inline onclick in HTML
+  // Handle Projects in-page
+  const projects = document.getElementById('nav-projects');
+  if (projects) {
+    projects.addEventListener('click', (e) => {
+      e.preventDefault();
+      renderProjects();
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
