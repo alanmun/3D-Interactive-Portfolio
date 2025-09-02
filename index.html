@@ -5,6 +5,42 @@
     <link rel="icon" type="image/x-icon" href="./src/assets/googlemancomputeremoji.ico" />
     <link rel="stylesheet" href="./node_modules/@picocss/pico/css/pico.css">
     <link rel="stylesheet" href="./src/index.css"/>
+    <style>
+      /* Ensure consistent left alignment for all sidebar nav items */
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .sidebar nav .nav-button,
+      .sidebar nav details.nav-group > summary,
+      .sidebar nav a.nav-button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding-left: 1rem;
+        margin: 0;
+      }
+      /* Remove default disclosure marker from summary and add right-aligned caret */
+      .sidebar nav details.nav-group > summary {
+        list-style: none;
+      }
+      .sidebar nav details.nav-group > summary::-webkit-details-marker {
+        display: none;
+      }
+      .sidebar nav details.nav-group > summary::marker {
+        content: '';
+      }
+      .sidebar nav details.nav-group > summary::after {
+        content: '▸';
+        float: right;
+        transition: transform 0.2s ease;
+        opacity: 0.8;
+      }
+      .sidebar nav details[open] > summary::after {
+        transform: rotate(90deg);
+      }
+    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>alanmunirji.dev</title>
   </head>
@@ -20,7 +56,7 @@
           <div id="blogs-list" class="blogs-list"></div>
         </details>
 
-        <button id="nav-projects" class="nav-button outline" onclick="location.href='./src/portfolio.html'">Projects</button>
+        <button id="nav-projects" class="nav-button" onclick="location.href='./src/portfolio.html'">Projects</button>
 
         <details id="nav-socials" class="nav-group" open>
           <summary>Socials</summary>
