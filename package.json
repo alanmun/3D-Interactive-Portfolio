@@ -3,7 +3,7 @@
   "name": "my-personal-website",
   "version": "2.0.0",
   "engines": {
-    "node": "22.12.0"
+    "node": "^22.12.0"
   },
   "scripts": {
     "deploy": "npm run build && node scripts/pull-blogs.js && gh-pages -d dist",
