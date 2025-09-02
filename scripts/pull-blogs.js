@@ -1,5 +1,5 @@
-/* Copies Markdown blogs from your local Obsidian vault into public/blogs,
-   excluding any files with "WIP" in the filename, and generates public/blogs/index.json.
+/* Copies Markdown blogs from your local Obsidian vault into static/assets/blogs,
+   excluding any files with "WIP" in the filename, and generates static/assets/blogs/index.json.
 */
 const fs = require('fs');
 const fsp = fs.promises;
@@ -21,7 +21,7 @@ function toWSLPathMaybe(p) {
 
 const RAW_SOURCE_DIR = process.env.PATH_TO_OBSIDIAN_BLOGS_FOLDER || '';
 const SOURCE_DIR = toWSLPathMaybe(RAW_SOURCE_DIR);
-const DEST_DIR = path.join(process.cwd(), 'public', 'blogs');
+const DEST_DIR = path.join(process.cwd(), 'static', 'assets', 'blogs');
 
 function isMarkdown(file) {
   return path.extname(file).toLowerCase() === '.md';
@@ -60,7 +60,7 @@ async function walkAndCopy(srcDir, relBase, index) {
       await copyFile(abs, destAbs);
 
       const base = path.parse(entry.name).name; // filename without extension
-      const urlPath = toPosix(path.join('blogs', rel)); // e.g., blogs/subdir/file.md
+      const urlPath = toPosix(path.join('static', 'assets', 'blogs', rel)); // e.g., static/assets/blogs/subdir/file.md
       index.push({
         title: base,
         path: urlPath

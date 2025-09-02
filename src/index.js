@@ -4,7 +4,7 @@ import { marked } from 'marked';
  * SPA controller for sidebar + content
  */
 
-const BLOG_INDEX_URL = './blogs/index.json';
+const BLOG_INDEX_URL = './static/assets/blogs/index.json';
 const RESUME_URL = 'https://docs.google.com/document/d/1k2DykOWzGUJDyEUucN_9BKA7eyEeuJnOn75vVY4Cdjs/edit?tab=t.0'; // Update to your public resume link
 
 // Helpers
