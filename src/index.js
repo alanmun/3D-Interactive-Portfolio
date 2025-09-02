@@ -59,17 +59,6 @@ function renderBlogsList(posts) {
   container.appendChild(ul);
 }
 
-function renderHome() {
-  const content = document.getElementById('content');
-  if (!content) return;
-  content.innerHTML = `
-    <section id="home" class="home-section">
-      <h1>Welcome!</h1>
-      <p>Hi, I'm Alan. I'm a software engineer with a focus in backend and applied AI by career. I am an amateur game dev, and I like to write about what I learn.</p>
-    </section>
-  `;
-}
-
 async function showBlog(mdPath, title) {
   const content = document.getElementById('content');
   if (!content) return;
