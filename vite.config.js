@@ -12,7 +12,6 @@ export default defineConfig(({}) => {
         input: {
           main: resolve(__dirname, 'index.html'),
           portfolio: resolve(__dirname, './src/portfolio.html'),
-          whoami: resolve(__dirname, './src/whoami.html')
         }
       }
     }

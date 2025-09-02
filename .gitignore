@@ -5,5 +5,8 @@ dist-ssr
 /src/unused
 NotesToSelf.md
 
-//Build files
+# Build files
 /dist
+
+# AI assistant
+.aider*

@@ -1,0 +1,4 @@
+- Always use English for code and responses.
+- Do not alter comments written by developers unless they are factually incorrect or outdated now
+- Avoid commenting things unless it is to indicate hidden/confusing behaviors. Don't comment just to label things.
+- Never suggest any deployment command
