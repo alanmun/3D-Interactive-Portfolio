@@ -6,7 +6,9 @@
     "node": "^22.12.0"
   },
   "scripts": {
-    "deploy": "npm run build && node scripts/pull-blogs.js && gh-pages -d dist",
+    "predev": "node scripts/pull-blogs.js",
+    "prebuild": "node scripts/pull-blogs.js",
+    "deploy": "npm run build && gh-pages -d dist",
     "dev": "vite",
     "build": "tsc && vite build",
     "serve": "vite preview",
