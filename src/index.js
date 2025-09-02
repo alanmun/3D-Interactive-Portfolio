@@ -106,9 +106,10 @@ function wireNav() {
       }
     });
   }
-  // Resume is just a link; ensure href always up to date
+
   const resume = document.getElementById('nav-resume');
   if (resume) resume.setAttribute('href', RESUME_URL);
+
   // Projects button navigates via inline onclick in HTML
 }
 
