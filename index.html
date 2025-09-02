@@ -31,13 +31,18 @@
       .sidebar nav details.nav-group > summary::marker {
         content: '';
       }
-      .sidebar nav details.nav-group > summary::after {
-        content: '▸';
-        float: right;
-        transition: transform 0.2s ease;
-        opacity: 0.8;
+      /* Use an inline caret element to avoid conflicts with Pico's styles */
+      .sidebar nav details.nav-group > summary {
+        display: flex;
+        align-items: center;
+        padding-right: 0.5rem;
       }
-      .sidebar nav details[open] > summary::after {
+      .sidebar nav details.nav-group > summary .caret {
+        margin-left: auto;
+        opacity: 0.8;
+        transition: transform 0.2s ease;
+      }
+      .sidebar nav details[open] > summary .caret {
         transform: rotate(90deg);
       }
     </style>
@@ -52,14 +57,14 @@
         <button id="nav-home" class="nav-button">Home</button>
 
         <details id="nav-blogs" class="nav-group">
-          <summary>Blogs</summary>
+          <summary><span>Blogs</span><span class="caret" aria-hidden="true">▸</span></summary>
           <div id="blogs-list" class="blogs-list"></div>
         </details>
 
         <a id="nav-projects" class="nav-button" href="./src/portfolio.html">Projects</a>
 
         <details id="nav-socials" class="nav-group" open>
-          <summary>Socials</summary>
+          <summary><span>Socials</span><span class="caret" aria-hidden="true">▸</span></summary>
           <ul class="socials">
             <li><a href="https://github.com/alanmun/" target="_blank" rel="noopener">GitHub</a></li>
             <li><a href="https://linkedin.com/in/alan-munirji-" target="_blank" rel="noopener">LinkedIn</a></li>
