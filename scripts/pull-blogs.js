@@ -96,7 +96,8 @@ function rewriteObsidianEmbeds(md, assetIndex) {
     if (rel) {
       if (!used.includes(rel)) used.push(rel);
       const alt = path.parse(baseName).name;
-      return `![${alt}](${ASSET_URL_BASE}${toPosix(rel)})`;
+      const url = encodeURI(ASSET_URL_BASE + toPosix(rel));
+      return `![${alt}](${url})`;
     }
     // Leave unknown embeds untouched
     return match;
@@ -177,7 +178,7 @@ async function walkAndCopy(srcDir, relBase, index, assetIndex) {
       await fsp.writeFile(destAbs, rewritten, 'utf8');
 
       const base = path.parse(entry.name).name; // filename without extension
-      const urlPath = '/' + toPosix(path.join('assets', 'blogs', rel)); // e.g., /assets/blogs/subdir/file.md
+      const urlPath = encodeURI('/' + toPosix(path.join('assets', 'blogs', rel))); // e.g., /assets/blogs/subdir/file.md
       const date = await getDateForFile(abs);
       index.push({
         title: base,
