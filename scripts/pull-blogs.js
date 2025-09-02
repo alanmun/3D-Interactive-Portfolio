@@ -35,6 +35,28 @@ function toPosix(p) {
   return p.split(path.sep).join('/');
 }
 
+// Extract created date from front matter or fall back to file mtime
+async function getDateForFile(absPath) {
+  try {
+    const content = await fsp.readFile(absPath, 'utf8');
+    const fmMatch = content.match(/^---\s*[\s\S]*?---/);
+    if (fmMatch) {
+      const createdMatch = fmMatch[0].match(/^\s*created\s*:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})/m);
+      if (createdMatch) return createdMatch[1];
+    }
+  } catch (e) { /* ignore */ }
+  try {
+    const st = await fsp.stat(absPath);
+    const dt = new Date(st.mtime);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  } catch (e) {
+    return '1970-01-01';
+  }
+}
+
 async function ensureDir(dir) {
   await fsp.mkdir(dir, { recursive: true });
 }
@@ -61,9 +83,11 @@ async function walkAndCopy(srcDir, relBase, index) {
 
       const base = path.parse(entry.name).name; // filename without extension
       const urlPath = toPosix(path.join('static', 'assets', 'blogs', rel)); // e.g., static/assets/blogs/subdir/file.md
+      const date = await getDateForFile(abs);
       index.push({
         title: base,
-        path: urlPath
+        path: urlPath,
+        date
       });
     }
   }

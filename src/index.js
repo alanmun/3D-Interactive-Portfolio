@@ -19,7 +19,7 @@ function groupByMonth(posts) {
   // { 'YYYY-MM': [post, ...], ... } sorted desc by key
   const buckets = {};
   for (const p of posts) {
-    if (!p?.date || !p?.title || !p?.url) continue;
+    if (!p?.date || !p?.title || !p?.path) continue;
     const key = toMonthKey(p.date);
     (buckets[key] ||= []).push(p);
   }
@@ -40,24 +40,32 @@ function renderBlogsList(posts) {
     return;
   }
 
-  // Sort by title ascending
-  const sorted = [...posts].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  const grouped = groupByMonth(posts);
+  for (const [ym, list] of grouped) {
+    const section = document.createElement('section');
 
-  const ul = document.createElement('ul');
-  for (const post of sorted) {
-    if (!post?.title || !post?.path) continue;
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.href = '#';
-    a.textContent = post.title;
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      showBlog(post.path, post.title);
-    });
-    li.appendChild(a);
-    ul.appendChild(li);
+    const heading = document.createElement('h5');
+    heading.textContent = ym; // e.g., 2025-05
+    section.appendChild(heading);
+
+    const ul = document.createElement('ul');
+    for (const post of list) {
+      if (!post?.title || !post?.path) continue;
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = '#';
+      a.textContent = post.title;
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        showBlog(post.path, post.title);
+      });
+      li.appendChild(a);
+      ul.appendChild(li);
+    }
+
+    section.appendChild(ul);
+    container.appendChild(section);
   }
-  container.appendChild(ul);
 }
 
 async function showBlog(mdPath, title) {
