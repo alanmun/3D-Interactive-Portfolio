@@ -35,6 +35,13 @@ function toPosix(p) {
   return p.split(path.sep).join('/');
 }
 
+// Remove a leading Obsidian/YAML front matter block if present
+function stripFrontMatter(content) {
+  if (!content) return content;
+  const re = /^---\s*\r?\n[\s\S]*?\r?\n---\s*\r?\n?/;
+  return content.replace(re, '');
+}
+
 // Extract created date from front matter or fall back to file mtime
 async function getDateForFile(absPath) {
   try {
@@ -79,7 +86,10 @@ async function walkAndCopy(srcDir, relBase, index) {
       if (hasWipInName(entry.name)) continue;
 
       const destAbs = path.join(DEST_DIR, rel);
-      await copyFile(abs, destAbs);
+      await ensureDir(path.dirname(destAbs));
+      const raw = await fsp.readFile(abs, 'utf8');
+      const stripped = stripFrontMatter(raw);
+      await fsp.writeFile(destAbs, stripped, 'utf8');
 
       const base = path.parse(entry.name).name; // filename without extension
       const urlPath = toPosix(path.join('static', 'assets', 'blogs', rel)); // e.g., static/assets/blogs/subdir/file.md
