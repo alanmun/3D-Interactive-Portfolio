@@ -94,7 +94,7 @@ async function loadBlogs() {
 }
 
 function wireNav() {
-  document.getElementById('nav-home')?.addEventListener('click', renderHome);
+  // document.getElementById('nav-home')?.addEventListener('click', renderHome);
   // Resume is just a link; ensure href always up to date
   const resume = document.getElementById('nav-resume');
   if (resume) resume.setAttribute('href', RESUME_URL);
@@ -103,6 +103,6 @@ function wireNav() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   wireNav();
-  renderHome();
+  // renderHome();
   await loadBlogs();
 });
