@@ -6,6 +6,7 @@ import { marked } from 'marked';
 
 const BLOG_INDEX_URL = './static/assets/blogs/index.json';
 const RESUME_URL = 'https://docs.google.com/document/d/1k2DykOWzGUJDyEUucN_9BKA7eyEeuJnOn75vVY4Cdjs/edit?tab=t.0'; // Update to your public resume link
+let HOME_HTML = '';
 
 // Helpers
 function toMonthKey(dateStr) {
@@ -94,7 +95,17 @@ async function loadBlogs() {
 }
 
 function wireNav() {
-  // document.getElementById('nav-home')?.addEventListener('click', renderHome);
+  const homeBtn = document.getElementById('nav-home');
+  if (homeBtn) {
+    homeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const content = document.getElementById('content');
+      if (content) {
+        content.innerHTML = HOME_HTML;
+        window.scrollTo(0, 0);
+      }
+    });
+  }
   // Resume is just a link; ensure href always up to date
   const resume = document.getElementById('nav-resume');
   if (resume) resume.setAttribute('href', RESUME_URL);
@@ -102,7 +113,8 @@ function wireNav() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const content = document.getElementById('content');
+  if (content) HOME_HTML = content.innerHTML;
   wireNav();
-  // renderHome();
   await loadBlogs();
 });
