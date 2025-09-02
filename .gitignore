@@ -8,6 +8,9 @@ NotesToSelf.md
 # Build files
 /dist
 
+# Assets I don't want to track
+static/assets/blogs
+
 # AI assistant
 .aider*
 

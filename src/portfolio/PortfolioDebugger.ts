@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { CelestialEntity } from './CelestialEntity';
 import { UniverseBuilder } from './main';
 
-export module Debug {
+export namespace Debug {
   export let enabled: boolean = true; //Set to true to enable dev enabled
   let shouldOverrideSceneMaterial: boolean = false; //Makes everything green
   let orientationSensitivity = 0.1 //How fine to tune the entity's orientation

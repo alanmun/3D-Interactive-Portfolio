@@ -37,7 +37,7 @@ import twitterGrassMTLPath from './assets/grass/grass.mtl?url'
 import twitterObjPath from './assets/twitter.obj?url'
 import beatSaberGlbPath from './assets/block.glb?url'
 const finnGLTFPath = '../assets/leaf/scene.gltf'
-import maskPath from './assets/persona/p5_mask.fbx?url'
+import maskPath from './assets/persona/p5_mask.stl?url'
 
 let ub: UniverseBuilder;
 

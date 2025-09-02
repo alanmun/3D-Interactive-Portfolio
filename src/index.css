@@ -196,8 +196,8 @@ p {
 .nav-button {
   width: 100%;
   text-align: left;
-  border: none;
   color: inherit;
+  border: none;
   padding: 0.4rem 0;
   background: transparent;
   display: block;
@@ -218,6 +218,9 @@ p {
   gap: 0.5rem;
   padding-left: var(--sidebar-child-indent);
   margin-top: 0.25rem;
+}
+.blogs-list a {
+  font-size: 0.9rem;
 }
 .blogs-month {
   margin-top: 0.5rem;
@@ -241,8 +244,13 @@ p {
   margin-left: 0;
 }
 
-.content {
+.main-content {
   padding: 2rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .socials {
