@@ -22,6 +22,9 @@ function toWSLPathMaybe(p) {
 const RAW_SOURCE_DIR = process.env.PATH_TO_OBSIDIAN_BLOGS_FOLDER || '';
 const SOURCE_DIR = toWSLPathMaybe(RAW_SOURCE_DIR);
 const DEST_DIR = path.join(process.cwd(), 'static', 'assets', 'blogs');
+const DEST_ASSETS_DIR = path.join(DEST_DIR, 'assets');
+const ASSETS_SRC_DIR = path.resolve(SOURCE_DIR, '..', 'assets'); // Obsidian attachments live alongside "blogs"
+const ASSET_URL_BASE = '/assets/blogs/assets/'; // Public URL where copied blog assets are served
 
 function isMarkdown(file) {
   return path.extname(file).toLowerCase() === '.md';
@@ -40,6 +43,66 @@ function stripFrontMatter(content) {
   if (!content) return content;
   const re = /^---\s*\r?\n[\s\S]*?\r?\n---\s*\r?\n?/;
   return content.replace(re, '');
+}
+
+// Build a case-insensitive index of files in the Obsidian "assets" directory
+async function buildAssetIndex(root) {
+  try {
+    if (!fs.existsSync(root)) return null;
+    const map = new Map();
+    async function walk(dir, relBase = '') {
+      const entries = await fsp.readdir(dir, { withFileTypes: true });
+      for (const ent of entries) {
+        const abs = path.join(dir, ent.name);
+        const rel = relBase ? path.join(relBase, ent.name) : ent.name;
+        if (ent.isDirectory()) {
+          await walk(abs, rel);
+        } else if (ent.isFile()) {
+          map.set(ent.name.toLowerCase(), rel);
+        }
+      }
+    }
+    await walk(root, '');
+    return map;
+  } catch {
+    return null;
+  }
+}
+
+// Replace Obsidian embeds like ![[Pasted image 20250902124814.png]] with Markdown images,
+// copy referenced assets, and return the list of used asset relative paths.
+function rewriteObsidianEmbeds(md, assetIndex) {
+  if (!md) return { rewritten: md, usedAssets: [] };
+  if (!assetIndex) return { rewritten: md, usedAssets: [] };
+
+  const used = [];
+  const rewritten = md.replace(/!\[\[([^\]]+)\]\]/g, (match, inner) => {
+    // Support optional pipe (alt text or width), we only use the target before '|'
+    let target = inner;
+    const pipeIdx = inner.indexOf('|');
+    if (pipeIdx >= 0) target = inner.slice(0, pipeIdx);
+    target = target.trim();
+
+    // Resolve against assets index by basename
+    const baseName = path.basename(target).toLowerCase();
+    let rel = assetIndex.get(baseName);
+
+    // If not found and target contains "assets/...", try that subpath (minus the "assets/" prefix)
+    if (!rel) {
+      const cand = target.replace(/^assets[\\/]/i, '');
+      rel = assetIndex.get(cand.toLowerCase());
+    }
+
+    if (rel) {
+      if (!used.includes(rel)) used.push(rel);
+      const alt = path.parse(baseName).name;
+      return `![${alt}](${ASSET_URL_BASE}${toPosix(rel)})`;
+    }
+    // Leave unknown embeds untouched
+    return match;
+  });
+
+  return { rewritten, usedAssets: used };
 }
 
 // Extract created date from front matter or fall back to file mtime
@@ -73,14 +136,14 @@ async function copyFile(src, dest) {
   await fsp.copyFile(src, dest);
 }
 
-async function walkAndCopy(srcDir, relBase, index) {
+async function walkAndCopy(srcDir, relBase, index, assetIndex) {
   const entries = await fsp.readdir(srcDir, { withFileTypes: true });
   for (const entry of entries) {
     const abs = path.join(srcDir, entry.name);
     const rel = relBase ? path.join(relBase, entry.name) : entry.name;
 
     if (entry.isDirectory()) {
-      await walkAndCopy(abs, rel, index);
+      await walkAndCopy(abs, rel, index, assetIndex);
     } else if (entry.isFile()) {
       if (!isMarkdown(entry.name)) continue;
       if (hasWipInName(entry.name)) continue;
@@ -89,7 +152,29 @@ async function walkAndCopy(srcDir, relBase, index) {
       await ensureDir(path.dirname(destAbs));
       const raw = await fsp.readFile(abs, 'utf8');
       const stripped = stripFrontMatter(raw);
-      await fsp.writeFile(destAbs, stripped, 'utf8');
+
+      // Rewrite Obsidian embeds and stage assets for copy
+      let rewritten = stripped;
+      let usedAssets = [];
+      if (assetIndex) {
+        const result = rewriteObsidianEmbeds(stripped, assetIndex);
+        rewritten = result.rewritten;
+        usedAssets = result.usedAssets;
+
+        // Copy any referenced assets preserving relative structure
+        for (const relAsset of usedAssets) {
+          const srcAsset = path.join(ASSETS_SRC_DIR, relAsset);
+          const destAsset = path.join(DEST_ASSETS_DIR, relAsset);
+          await ensureDir(path.dirname(destAsset));
+          try {
+            await fsp.copyFile(srcAsset, destAsset);
+          } catch {
+            // Ignore missing assets; the embed will remain as-is
+          }
+        }
+      }
+
+      await fsp.writeFile(destAbs, rewritten, 'utf8');
 
       const base = path.parse(entry.name).name; // filename without extension
       const urlPath = toPosix(path.join('static', 'assets', 'blogs', rel)); // e.g., static/assets/blogs/subdir/file.md
@@ -120,7 +205,8 @@ async function main() {
 
     await ensureDir(DEST_DIR);
     const index = [];
-    await walkAndCopy(SOURCE_DIR, '', index);
+    const assetIndex = await buildAssetIndex(ASSETS_SRC_DIR);
+    await walkAndCopy(SOURCE_DIR, '', index, assetIndex);
 
     // Sort by title ascending for deterministic order
     index.sort((a, b) => a.title.localeCompare(b.title));
