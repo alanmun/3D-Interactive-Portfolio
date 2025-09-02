@@ -1,89 +1,102 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="./src/assets/googlemancomputeremoji.ico" />
-    <link rel="stylesheet" href="./node_modules/@picocss/pico/css/pico.css">
-    <link rel="stylesheet" href="./src/index.css"/>
-    <style>
-      /* Ensure consistent left alignment for all sidebar nav items */
-      .sidebar nav {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-      .sidebar nav .nav-button,
-      .sidebar nav details.nav-group > summary,
-      .sidebar nav a.nav-button {
-        display: block;
-        width: 100%;
-        text-align: left;
-        padding-left: 1rem;
-        margin: 0;
-      }
-      /* Remove default disclosure marker from summary and add right-aligned caret */
-      .sidebar nav details.nav-group > summary {
-        list-style: none;
-      }
-      .sidebar nav details.nav-group > summary::-webkit-details-marker {
-        display: none;
-      }
-      .sidebar nav details.nav-group > summary::marker {
-        content: '';
-      }
-      /* Use an inline caret element to avoid conflicts with Pico's styles */
-      .sidebar nav details.nav-group > summary {
-        display: flex;
-        align-items: center;
-        padding-right: 0.5rem;
-      }
-      .sidebar nav details.nav-group > summary .caret {
-        margin-left: auto;
-        opacity: 0.8;
-        transition: transform 0.2s ease;
-      }
-      .sidebar nav details[open] > summary .caret {
-        transform: rotate(90deg);
-      }
-    </style>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>alanmunirji.dev</title>
-  </head>
-  <body>
-    <main>
-      <div class="app-layout">
-    <aside class="sidebar">
-      <nav>
-        <button id="nav-home" class="nav-button">Home</button>
 
-        <details id="nav-blogs" class="nav-group">
-          <summary><span>Blogs</span><span class="caret" aria-hidden="true">▸</span></summary>
-          <div id="blogs-list" class="blogs-list"></div>
-        </details>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/x-icon" href="./src/assets/googlemancomputeremoji.ico" />
+  <link rel="stylesheet" href="./node_modules/@picocss/pico/css/pico.css">
+  <link rel="stylesheet" href="./src/index.css" />
+  <style>
+    /* Ensure consistent left alignment for all sidebar nav items */
+    .sidebar nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
 
-        <a id="nav-projects" class="nav-button" href="./src/portfolio.html">Projects</a>
+    .sidebar nav .nav-button,
+    .sidebar nav details.nav-group>summary,
+    .sidebar nav a.nav-button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding-left: 1rem;
+      margin: 0;
+    }
 
-        <details id="nav-socials" class="nav-group" open>
-          <summary><span>Socials</span><span class="caret" aria-hidden="true">▸</span></summary>
-          <ul class="socials">
-            <li><a href="https://github.com/alanmun/" target="_blank" rel="noopener">GitHub</a></li>
-            <li><a href="https://linkedin.com/in/alan-munirji-" target="_blank" rel="noopener">LinkedIn</a></li>
-          </ul>
-        </details>
+    /* Remove default disclosure marker from summary and add right-aligned caret */
+    .sidebar nav details.nav-group>summary {
+      list-style: none;
+    }
 
-        <a id="nav-resume" class="nav-button contrast outline" href="https://docs.google.com/document/d/1k2DykOWzGUJDyEUucN_9BKA7eyEeuJnOn75vVY4Cdjs/edit?tab=t.0" target="_blank" rel="noopener">Resume</a>
-      </nav>
-    </aside>
+    .sidebar nav details.nav-group>summary::-webkit-details-marker {
+      display: none;
+    }
 
-    <main id="content" class="content">
-      <section id="home" class="home-section">
-        <h2>Glad you could make it</h2>
-        <p>Hi, I'm Alan. I'm a software engineer with a focus in backend and applied AI by career. I am an amateur game dev, and I like to write about what I learn.</p>
-      </section>
-    </main>
-  </div>
-    </main>
-    <footer id="footer">Get in touch @munirjialan@gmail.com</footer>
-  </body>
-  <script type="module" src="./src/index.js"></script>
+    .sidebar nav details.nav-group>summary::marker {
+      content: '';
+    }
+
+    /* Use an inline caret element to avoid conflicts with Pico's styles */
+    .sidebar nav details.nav-group>summary {
+      display: flex;
+      align-items: center;
+      padding-right: 0.5rem;
+    }
+
+    .sidebar nav details.nav-group>summary .caret {
+      margin-left: auto;
+      opacity: 0.8;
+      transition: transform 0.2s ease;
+    }
+
+    .sidebar nav details[open]>summary .caret {
+      transform: rotate(90deg);
+    }
+  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>alanmunirji.dev</title>
+</head>
+
+<body>
+  <main>
+    <div class="app-layout">
+      <aside class="sidebar">
+        <nav>
+          <button id="nav-home" class="nav-button">Home</button>
+
+          <details id="nav-blogs" class="nav-group">
+            <summary><span>Blogs</span><span class="caret" aria-hidden="true"></span></summary>
+            <div id="blogs-list" class="blogs-list"></div>
+          </details>
+
+          <a id="nav-projects" class="nav-button" href="./src/portfolio.html">Projects</a>
+
+          <details id="nav-socials" class="nav-group" open>
+            <summary><span>Socials</span><span class="caret" aria-hidden="true"></span></summary>
+            <ul class="socials">
+              <li><a href="https://github.com/alanmun/" target="_blank" rel="noopener">GitHub</a></li>
+              <li><a href="https://linkedin.com/in/alan-munirji-" target="_blank" rel="noopener">LinkedIn</a></li>
+            </ul>
+          </details>
+
+          <a id="nav-resume" class="nav-button contrast outline"
+            href="https://docs.google.com/document/d/1k2DykOWzGUJDyEUucN_9BKA7eyEeuJnOn75vVY4Cdjs/edit?tab=t.0"
+            target="_blank" rel="noopener">Resume</a>
+        </nav>
+      </aside>
+
+      <main id="content" class="content">
+        <section id="home" class="home-section">
+          <h2>Glad you could make it</h2>
+          <p>Hi, I'm Alan. I'm a software engineer with a focus in backend and applied AI by career. I am an amateur
+            game dev, and I like to write about what I learn.</p>
+        </section>
+      </main>
+    </div>
+  </main>
+  <footer id="footer">Get in touch @munirjialan@gmail.com</footer>
+</body>
+<script type="module" src="./src/index.js"></script>
+
 </html>
