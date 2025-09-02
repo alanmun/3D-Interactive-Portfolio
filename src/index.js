@@ -80,6 +80,16 @@ async function showBlog(mdPath, title) {
   }
 }
 
+function renderProjects() {
+  const content = document.getElementById('content');
+  if (!content) return;
+  content.innerHTML = `
+    <section id="projects-host" class="projects-section">
+      <iframe class="projects-frame" src="./src/portfolio.html" title="Projects"></iframe>
+    </section>
+  `;
+  window.scrollTo(0, 0);
+}
 // Events + init
 async function loadBlogs() {
   try {
