@@ -22,9 +22,9 @@ function toWSLPathMaybe(p) {
 const RAW_SOURCE_DIR = process.env.PATH_TO_OBSIDIAN_BLOGS_FOLDER || '';
 const SOURCE_DIR = toWSLPathMaybe(RAW_SOURCE_DIR);
 const DEST_DIR = path.join(process.cwd(), 'static', 'assets', 'blogs');
-const DEST_ASSETS_DIR = path.join(DEST_DIR, 'assets');
+const DEST_ASSETS_DIR = path.join(DEST_DIR, 'attachments');
 const ASSETS_SRC_DIR = path.resolve(SOURCE_DIR, '..', 'assets'); // Obsidian attachments live alongside "blogs"
-const ASSET_URL_BASE = '/assets/blogs/assets/'; // Public URL where copied blog assets are served
+const ASSET_URL_BASE = '/assets/blogs/attachments/'; // Public URL where copied blog assets are served
 
 function isMarkdown(file) {
   return path.extname(file).toLowerCase() === '.md';
@@ -177,7 +177,7 @@ async function walkAndCopy(srcDir, relBase, index, assetIndex) {
       await fsp.writeFile(destAbs, rewritten, 'utf8');
 
       const base = path.parse(entry.name).name; // filename without extension
-      const urlPath = toPosix(path.join('static', 'assets', 'blogs', rel)); // e.g., static/assets/blogs/subdir/file.md
+      const urlPath = '/' + toPosix(path.join('assets', 'blogs', rel)); // e.g., /assets/blogs/subdir/file.md
       const date = await getDateForFile(abs);
       index.push({
         title: base,
