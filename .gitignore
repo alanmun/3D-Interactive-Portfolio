@@ -12,7 +12,7 @@ NotesToSelf.md
 static/assets/blogs
 
 # AI assistant
-.aider*
+.aider.*
 
 # Secrets
 .env

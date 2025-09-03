@@ -6,124 +6,98 @@
   <link rel="icon" type="image/x-icon" href="./src/assets/googlemancomputeremoji.ico" />
   <link rel="stylesheet" href="./node_modules/@picocss/pico/css/pico.css">
   <link rel="stylesheet" href="./src/index.css" />
-  <style>
-    /* Ensure consistent left alignment for all sidebar nav items */
-    .sidebar nav {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .sidebar nav .nav-button,
-    .sidebar nav details.nav-group>summary,
-    .sidebar nav a.nav-button {
-      display: block;
-      width: 100%;
-      text-align: left;
-      padding-left: 1rem;
-      margin: 0;
-    }
-
-    /* Remove default disclosure marker from summary and add right-aligned caret */
-    .sidebar nav details.nav-group>summary {
-      list-style: none;
-    }
-
-    .sidebar nav details.nav-group>summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .sidebar nav details.nav-group>summary::marker {
-      content: '';
-    }
-
-    /* Use an inline caret element to avoid conflicts with Pico's styles */
-    .sidebar nav details.nav-group>summary {
-      display: flex;
-      align-items: center;
-      padding-right: 0.5rem;
-    }
-
-    .sidebar nav details.nav-group>summary .caret {
-      margin-left: auto;
-      opacity: 0.8;
-      transition: transform 0.2s ease;
-    }
-
-    .sidebar nav details[open]>summary .caret {
-      transform: rotate(90deg);
-    }
-
-    /* Indent nested Socials and Blogs lists further than root buttons */
-    .sidebar nav .socials,
-    .sidebar nav .blogs-list {
-      margin-left: 1.125rem;
-    }
-
-    /* Projects iframe host styling */
-    .projects-frame {
-      width: 100%;
-      height: 85vh;
-      border: 0;
-      display: block;
-    }
-
-    /* Inline social icons */
-    .sidebar nav .socials a {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .sidebar nav .socials a .icon {
-      width: 1rem;
-      height: 1rem;
-    }
-    /* Thin white outline for GitHub icon to improve contrast */
-    .sidebar nav .socials a[href*="github"] .icon {
-      outline: 1px solid #ffffff;
-      outline-offset: 1px;
-    }
-  </style>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>alanmunirji.dev</title>
 </head>
 
 <body>
-    <div class="app-layout">
-      <aside class="sidebar">
-        <nav>
-          <span id="nav-home" class="nav-button" role="button" tabindex="0">Home</span>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <nav>
+        <span id="nav-home" class="nav-button" role="button" tabindex="0">Home</span>
 
-          <details id="nav-blogs" class="nav-group">
-            <summary><span>Blogs</span><span class="caret" aria-hidden="true"></span></summary>
-            <div id="blogs-list" class="blogs-list"></div>
-          </details>
+        <details id="nav-blogs" class="nav-group">
+          <summary><span>Blogs</span><span class="caret" aria-hidden="true"></span></summary>
+          <div id="blogs-list" class="blogs-list"></div>
+        </details>
 
-          <span id="nav-projects" class="nav-button" role="button" tabindex="0">Projects</span>
+        <!-- <span id="nav-projects" class="nav-button" role="button" tabindex="0">Projects</span> -->
 
-          <details id="nav-socials" class="nav-group" open>
-            <summary><span>Socials</span><span class="caret" aria-hidden="true"></span></summary>
-            <ul class="socials">
-              <li><a href="https://github.com/alanmun/" target="_blank" rel="noopener"><img src="./src/assets/github.svg" class="icon" alt="" aria-hidden="true" />GitHub</a></li>
-              <li><a href="https://linkedin.com/in/alan-munirji-" target="_blank" rel="noopener"><img src="./src/assets/linkedin.svg" class="icon" alt="" aria-hidden="true" />LinkedIn</a></li>
-            </ul>
-          </details>
+        <details id="nav-socials" class="nav-group" open>
+          <summary><span>Socials</span><span class="caret" aria-hidden="true"></span></summary>
+          <ul class="socials">
+            <li><a href="https://github.com/alanmun/" target="_blank" rel="noopener"><img src="./src/assets/github.svg"
+                  class="icon" alt="" aria-hidden="true" />GitHub</a></li>
+            <li><a href="https://linkedin.com/in/alan-munirji-" target="_blank" rel="noopener"><img
+                  src="./src/assets/linkedin.svg" class="icon" alt="" aria-hidden="true" />LinkedIn</a></li>
+          </ul>
+        </details>
 
-          <a id="nav-resume" class="nav-button contrast outline"
-            href="https://docs.google.com/document/d/1k2DykOWzGUJDyEUucN_9BKA7eyEeuJnOn75vVY4Cdjs/edit?tab=t.0"
-            target="_blank" rel="noopener">Resume</a>
-        </nav>
-      </aside>
+        <a id="nav-resume" class="nav-button contrast outline"
+          href="https://docs.google.com/document/d/1k2DykOWzGUJDyEUucN_9BKA7eyEeuJnOn75vVY4Cdjs/edit?tab=t.0"
+          target="_blank" rel="noopener">Resume</a>
+      </nav>
+    </aside>
 
-      <main id="content" class="main-content">
-        <section id="home" class="home-section">
-          <h2 style="color:lightgray;font-weight: 400;">glad you could make it</h2>
-          <p>Hey, my name is Alan. I'm a software engineer, these days focusing on backend and applied AI by career, game development by hobby. I like to write about what I learn and track my journey so I decided to create this website.</p>
-          <p>A little bit about my story:</p>
+    <main id="content" class="main-content">
+      <article id="home" class="home-content">
+        <h2 style="color:lightgray;font-weight: 400;">glad you could make it</h2>
+        <p>Hey, my name is Alan. I'm a software engineer, these days focusing on backend and applied AI by career, game
+          development by hobby. I like to write about what I learn and track my journey so I decided to create this
+          website.</p>
+        <p>A little bit about my story:</p>
+        <p>My first foray into software development began in university, actually. I think that's pretty late for most
+          diehard programmers, but before that my only experience was tweaking config scripts for video games and just
+          learning power user tricks on Windows machines from being a PC gamer growing up and just naturally having a
+          heavy amount of PC usage. I didn't know that my highschool (the same one Paul Graham went to!) offered a <s>AP
+            computer science</s> java bootcamp class. I did however manage to install and run Ubuntu as a kid once on a
+          piece of shit Toshiba laptop but promptly noped out after some time, bash was still too difficult for me and I
+          didn't get much past copy pasting commands from tutorials I found online. Switching to Linux in the aughts as
+          a kid seems scary to me in retrospect knowing how little I knew as a kid, but I guess I felt it was a
+          stay-in-the-burning-building-or-die-trying kind of thing with Windows Vista at the time.</p>
+        <p>Oh yeah, I actually got into programming by accident. I arrived to the University of Pittsburgh after having
+          only applied there and nowhere else because I was really dumb as a kid and didn't want to think about my
+          future. I'm so grateful I got in, because I don't know what would have happened to me if I didn't. My major
+          was effectively undecided during orientation week and a conversation I had with highschool friends I
+          rendezvoused with led me to trying Computer Science out as a major. They said it would be really cool and fun.
+          By the time we were entering our junior year, they'd both dropped out of the major while I was just falling in
+          love with the field. I actually ended up double majoring in Computer Science and Premedicine at the same. I
+          did that because at the time I didn't know what I wanted to do, follow my father and be a physician like my
+          mother desperately wanted, or be a software engineer.</p>
+        <figure>
+          <img src="./src/assets/pittcampus.webp" />
+          <figcaption class="figure-caption-text">Pitt campus, where
+            it all started.</figcaption>
+        </figure>
+        <p>After graduating, I continued volunteering and collecting clinical experience, but things just never felt
+          right. I realized that I didn't like the work lifestyle that comes with being someone that works in a hospital
+          or clinic and decided to "pivot" back to software. I got hired at a small company where I was immediately
+          thrusted into a position where I could have tons of impact, not really by choice. It was a sort of George
+          Washington kind of situation except I was way less experienced- at least he won a war before they made him be
+          president. I had no accomplishments of my own by this point. The whole thing was quite stressful, I felt like I didn't know what I was doing. I knew I wanted
+          this kind of control and impact level, but I hated feeling so inadequate and self-teaching could only get me
+          so far. I decided to enroll in masters programs for software engineering.</p>
+        <p>I got accepted! To Carnegie Mellon University, a highly esteemed school known for their computer science and
+          tech programs. This was a huge relief to me at the time, I didn't expect to get in anywhere. Maybe being from
+          Pittsburgh helped ¯\_(ツ)_/¯</p>
+        <figure>
+          <img src="./src/assets/cmucampus.jpg" />
+          <figcaption class="figure-caption-text">yup, that's the same tower in the distance from the Pitt photo. my mom was so happy that my pittsburgh stay would be extended</figcaption>
+        </figure>
+        <p>During my time at CMU, I worked an internship at the Aerospace Corporation. Nice huge org, but a little too
+          bureaucratic for my taste. I did a capstone experience with Troutwood where I worked in a team of five to
+          build an AI chatbot named Finn to live inside of their app. I had never been more impassioned to work on
+          something before in my life. It was the perfect intersection of technical intrigue (this is when the AI boom
+          just started), impact on helping real life users, and to top it off, my request to be the AI lead on the
+          project was accepted.</p>
 
-        </section>
-      </main>
-    </div>
+        <p>I think my passion to build something amazing was really showing during that time because Troutwood seemed to
+          notice and extended a full time offer. Since then, I've been working at Troutwood on applied AI services and
+          general backend work.</p>
+
+      </article>
+    </main>
+  </div>
   <footer id="footer">Get in touch @munirjialan@gmail.com</footer>
 </body>
 <script type="module" src="./src/index.js"></script>
