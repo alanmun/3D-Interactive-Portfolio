@@ -169,6 +169,10 @@ p {
   font-size: 0.9rem;
 }
 
+.blogs-list section {
+  margin: 0;
+}
+
 .datestamp {
   display: block;
   margin: 0 auto 0 auto;
