@@ -1,7 +1,12 @@
 [
   {
-    "title": "blog making",
-    "path": "/assets/blogs/blog%20making.md",
-    "date": "2025-09-02"
+    "title": "im bloggin",
+    "path": "/assets/blogs/im%20bloggin.md",
+    "date": "2025-08-31"
+  },
+  {
+    "title": "My Blogging Workflow",
+    "path": "/assets/blogs/My%20Blogging%20Workflow.md",
+    "date": "2025-09-01"
   }
 ]
