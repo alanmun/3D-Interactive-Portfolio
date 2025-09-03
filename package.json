@@ -6,13 +6,10 @@
     "node": "^22.12.0"
   },
   "scripts": {
-    "predev": "node scripts/pull-blogs.js",
-    "prebuild": "node scripts/pull-blogs.js",
     "deploy": "npm run build && gh-pages -d dist",
-    "dev": "vite",
+    "dev": "node scripts/pull-blogs.js && vite",
     "build": "tsc && vite build",
-    "serve": "vite preview",
-    "pull-blogs": "node scripts/pull-blogs.js"
+    "serve": "vite preview"
   },
   "devDependencies": {
     "@types/three": "^0.131.1",
