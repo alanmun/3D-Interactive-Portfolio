@@ -114,11 +114,26 @@ async function loadBlogs() {
   }
 }
 
+function makeAccessibleButton(el, onActivate) {
+  if (!el || typeof onActivate !== 'function') return;
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    onActivate(e);
+  });
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onActivate(e);
+    }
+  });
+}
+
 function wireNav() {
   const homeBtn = document.getElementById('nav-home');
   if (homeBtn) {
-    homeBtn.addEventListener('click', (e) => {
-      e.preventDefault();
+    makeAccessibleButton(homeBtn, () => {
       const content = document.getElementById('content');
       if (content) {
         content.innerHTML = HOME_HTML;
@@ -133,8 +148,7 @@ function wireNav() {
   // Handle Projects in-page
   const projects = document.getElementById('nav-projects');
   if (projects) {
-    projects.addEventListener('click', (e) => {
-      e.preventDefault();
+    makeAccessibleButton(projects, () => {
       renderProjects();
     });
   }
