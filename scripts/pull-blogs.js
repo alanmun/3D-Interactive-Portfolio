@@ -204,6 +204,10 @@ async function main() {
       return;
     }
 
+    // Clean destination before copy to ensure a fresh sync
+    if (fs.existsSync(DEST_DIR)) {
+      await fsp.rm(DEST_DIR, { recursive: true, force: true });
+    }
     await ensureDir(DEST_DIR);
     const index = [];
     const assetIndex = await buildAssetIndex(ASSETS_SRC_DIR);
