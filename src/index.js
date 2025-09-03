@@ -5,7 +5,7 @@ import { marked } from 'marked';
  */
 
 const BLOG_INDEX_URL = '/assets/blogs/index.json';
-const RESUME_URL = 'https://docs.google.com/document/d/1k2DykOWzGUJDyEUucN_9BKA7eyEeuJnOn75vVY4Cdjs/edit?tab=t.0'; // Update to your public resume link
+const RESUME_URL = 'https://docs.google.com/document/d/1k2DykOWzGUJDyEUucN_9BKA7eyEeuJnOn75vVY4Cdjs/edit?tab=t.0';
 let HOME_HTML = '';
 
 // Helpers
@@ -44,9 +44,11 @@ function renderBlogsList(posts) {
   for (const [ym, list] of grouped) {
     const section = document.createElement('section');
 
-    const heading = document.createElement('h5');
-    heading.textContent = ym; // e.g., 2025-05
-    section.appendChild(heading);
+
+    const dateStamp = document.createElement('small');
+    dateStamp.textContent = `--- ${ym} ---`; // e.g., 2025-05
+    dateStamp.classList.add('datestamp');
+    section.appendChild(dateStamp);
 
     const ul = document.createElement('ul');
     for (const post of list) {
