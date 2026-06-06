@@ -20,7 +20,7 @@ Anyways, none of the dynamics of the console wars stuff is in play anymore. Ther
 
 So, don't. If money/circumstances allow, try both. Try more than just both. Get an openrouter account. Deepseek v4 Pro is quite impressive, too. And you can believe me, I've sifted through so many garbage open weights LLMs before I make that statement about Deepseek's latest offering.
 
-<span style="background:black; color:black;">okay fine, I will say that Claude Code in the past 2 months has really shown itself to be more capable than Codex. On both harness's leading models and equivalent reasoning effort (high for CC, high for Codex), I've consistently noticed CC handle work for me with less hiccups. But I wouldn't be surprised if this trend reversed in a few months from now.</span>
+<span style="background:ghostwhite; color:ghostwhite;">okay fine, I will say that Claude Code in the past 2 months has really shown itself to be more capable than Codex. On both harness's leading models and equivalent reasoning effort (high for CC, high for Codex), I've consistently noticed CC handle work for me with less hiccups. But I wouldn't be surprised if this trend reversed in a few months from now.</span>
 ## The Fundamentals of Harness Engineering
 Both Anthropic and OpenAI have put out great resources on how good harness engineering is done, I've used a few of their articles as north stars for how I did my own work. I'll link them at the end of this post.
 
@@ -106,7 +106,7 @@ Some might wonder why not use worktrees. I am aware of git worktrees, but I am t
 In the future, I think the move is to switch to a single coordinator "master" agent. Think something like a Claude Code instance on xhigh reasoning that you talk to and send ALL revisions and requests to, and it dispatches subagents with the added knowledge of who is touching what and can then get them to coordinate changes. It could give task A.1 and B.1 to one agent, and the other agent could actually take on task A.2 and B.2, instead of the more intuitive all of A and all of B split up. This way only one agent works in one sector of the codebase at a time. I'll admit I need to research this more to see if the harnesses handle this kind of subagent dispatching, but last I had used subagents, they were a bit too undercooked to handle this kind of work. So, multiple panes and windows split up via `tmux` is the way for now.
 
 ## Filling in the Gaps
-There are some things that agents just can't do well, no matter what way you threaten or plead with the agent. For those times you're just gonna have to do it the old fashioned way: yourself :)
+There are some things that agents just can't do well, no matter what way you threaten or beg the agent. For those times you're just gonna have to do it the old fashioned way: yourself :)
 
 This hasn't sprung up too much in my case, mostly because I designed constraints to end up with Roblox games that aren't animation heavy, that don't require insane quality environment and character art. I am able to tell the agent the rough idea, it implements, then I open studio in play mode and tweak props around, scale something up, and save the finishing touches that way.
 
